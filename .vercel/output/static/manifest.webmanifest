@@ -1,0 +1,51 @@
+{
+  "name": "Soulrift Crusher",
+  "short_name": "Soulrift",
+  "description": "Idle dungeon RPG. Hire heroes, crush floors, craft gear, fight in the arena, and war across servers.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["games", "entertainment"],
+  "background_color": "#0c0a0b",
+  "theme_color": "#0c0a0b",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/pwa/phone-title.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Title"
+    },
+    {
+      "src": "/pwa/phone-fight.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Fight"
+    }
+  ]
+}

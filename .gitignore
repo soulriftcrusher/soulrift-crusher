@@ -1,0 +1,16 @@
+node_modules/
+.output/
+dist/
+.vinxi/
+.tanstack/
+*.log
+.env
+.env.*
+!.env.example
+artifacts/
+attachments/
+screenshots/
+.pglite/
+data/
+*.tgz
+.DS_Store
