@@ -14,7 +14,7 @@ function cleanName(raw: unknown): string {
 function clampPower(n: unknown): number {
   const v = Number(n);
   if (!Number.isFinite(v) || v < 0) return 0;
-  return Math.min(v, 1e15);
+  return Math.min(v, 1e100);
 }
 
 function clampFloor(n: unknown): number {

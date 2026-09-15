@@ -505,6 +505,7 @@ export class GameSim {
     if (bulk === -1) {
       const a = 2 * gilds + 1;
       const disc = a * a + 8 * souls;
+      if (!Number.isFinite(disc)) return 20000;
       const n = Math.floor((-a + Math.sqrt(Math.max(0, disc))) / 2);
       return Math.max(0, Math.min(20000, n));
     }
@@ -1033,10 +1034,10 @@ export class GameSim {
   }
 
   claimFounder(): boolean {
-    if (this.state.founderClaimed && (this.state.founderKit ?? 0) >= 5) return false;
+    if (this.state.founderClaimed && (this.state.founderKit ?? 0) >= 6) return false;
     this.state.founderClaimed = true;
     this.applyFounderMax();
-    this.state.founderKit = 5;
+    this.state.founderKit = 6;
     this.save();
     this.pingHeroes();
     return true;
@@ -1045,19 +1046,19 @@ export class GameSim {
   ensureFounderKit() {
     if (!this.state.founderClaimed) return;
     const kit = this.state.founderKit ?? 0;
-    if (kit >= 5) return;
+    if (kit >= 6) return;
     if (kit < 2) this.applyFounderMax();
-    this.state.souls = Math.max(this.state.souls, 1e15);
+    this.state.souls = Math.max(this.state.souls, 1e100);
     this.state.gems = Math.max(this.state.gems, 1e12);
     this.state.gold = Math.max(this.state.gold, 1e70);
-    this.state.founderKit = 5;
+    this.state.founderKit = 6;
     this.save();
     this.pingHeroes();
   }
 
   applyFounderMax() {
     this.state.gold = 1e70;
-    this.state.souls = 1e15;
+    this.state.souls = 1e100;
     this.state.gems = 1e12;
     this.state.influence = 50000;
     this.state.chests = 200;

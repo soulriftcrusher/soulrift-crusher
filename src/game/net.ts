@@ -80,7 +80,7 @@ function cleanName(raw: unknown): string {
 function clampPower(n: unknown): number {
   const v = Number(n);
   if (!Number.isFinite(v) || v < 0) return 0;
-  return Math.min(v, 1e15);
+  return Math.min(v, 1e100);
 }
 
 function clampFloor(n: unknown): number {
@@ -638,8 +638,8 @@ export const pushHeroRoster = createServerFn({ method: "POST" })
       const id = String(row.id ?? "").slice(0, 24);
       if (!id) continue;
       const level = Math.max(0, Math.min(10000, Math.floor(Number(row.level) || 0)));
-      const gild = Math.max(0, Math.min(200, Math.floor(Number(row.gild) || 0)));
-      const prestige = Math.max(0, Math.min(200, Math.floor(Number(row.prestige) || 0)));
+      const gild = Math.max(0, Math.min(1e9, Math.floor(Number(row.gild) || 0)));
+      const prestige = Math.max(0, Math.min(1000, Math.floor(Number(row.prestige) || 0)));
       const craft = Math.max(0, Math.min(20, Math.floor(Number(row.craft) || 0)));
       const down = Math.max(0, Math.floor(Number(row.down) || 0));
       await sql`
