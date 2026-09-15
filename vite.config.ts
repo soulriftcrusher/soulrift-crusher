@@ -146,6 +146,12 @@ function authPopupPlugin(): Plugin {
 // The dev server starts once `src/router.tsx` and `src/routes/` exist — see
 // AGENTS.md § "First scaffold".
 export default defineConfig(({ command, isPreview }) => ({
+  define: {
+    "process.env.BETTER_AUTH_SECRET": JSON.stringify(process.env.BETTER_AUTH_SECRET || ""),
+    "process.env.BETTER_AUTH_URL": JSON.stringify(process.env.BETTER_AUTH_URL || "https://www.soulriftcrusher.com"),
+    "process.env.GOOGLE_CLIENT_ID": JSON.stringify(process.env.GOOGLE_CLIENT_ID || ""),
+    "process.env.GOOGLE_CLIENT_SECRET": JSON.stringify(process.env.GOOGLE_CLIENT_SECRET || ""),
+  },
   server: {
     host: "0.0.0.0",
     port: 8080,

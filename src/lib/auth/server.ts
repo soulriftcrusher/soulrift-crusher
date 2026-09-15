@@ -91,7 +91,7 @@ export const authConfigured =
 // it derives the origin per-request from the (proxied) host, validated against the
 // preview allowlist, which makes the OAuth `redirect_uri` the concrete preview URL
 // the broker's preview client accepts.
-const explicitBaseURL = env("BETTER_AUTH_URL");
+const explicitBaseURL = process.env.BETTER_AUTH_URL?.trim() || env("BETTER_AUTH_URL");
 // Explicit `string[]` (not a readonly tuple) — Better Auth's DynamicBaseURLConfig
 // requires a mutable `allowedHosts: string[]`.
 const previewAllowedHosts: string[] = [...PREVIEW_ALLOWED_HOSTS];
@@ -191,7 +191,7 @@ export const auth = betterAuth({
   baseURL,
   // Deployed apps inject BETTER_AUTH_SECRET. Preview: process-stable secret on
   // globalThis so HMR doesn't invalidate PGLite-backed sessions (see above).
-  secret: env("BETTER_AUTH_SECRET") ?? previewAuthSecret(),
+  secret: (process.env.BETTER_AUTH_SECRET || "").trim() || previewAuthSecret(),
   database,
 
   // CSRF / origin check for credentialed auth POSTs (email sign-up/sign-in, …).

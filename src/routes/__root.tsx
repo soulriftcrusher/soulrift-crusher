@@ -41,7 +41,7 @@ export const Route = createRootRoute({
         <HeadContent />
         <script
           dangerouslySetInnerHTML={{
-            __html: `if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js',{scope:'/'})`,
+            __html: `if(location.hostname==='soulriftcrusher.com')location.replace('https://www.soulriftcrusher.com'+location.pathname+location.search+location.hash);if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js',{scope:'/'})`,
           }}
         />
       </head>
