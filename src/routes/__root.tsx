@@ -18,11 +18,30 @@ export const Route = createRootRoute({
       { name: "mobile-web-app-capable", content: "yes" },
       {
         name: "description",
-        content: "Idle dungeon RPG. Tap to strike, hire heroes, harvest souls, crush the rift.",
+        content: "Soulrift Crusher is a free idle dungeon RPG. Tap to strike, hire heroes, harvest souls, craft gear, fight in the arena, and war across servers.",
       },
       { name: "copyright", content: "© 2026 Soulrift Crusher. All rights reserved." },
+      { name: "robots", content: "index, follow" },
+      { name: "author", content: "Soulrift Crusher" },
+      { property: "og:type", content: "website" },
+      { property: "og:site_name", content: APP_NAME },
+      { property: "og:title", content: "Soulrift Crusher — Idle dungeon RPG" },
+      {
+        property: "og:description",
+        content: "Free idle dungeon hunt. Hire heroes, crush floors, craft gear, fight in the arena.",
+      },
+      { property: "og:url", content: "https://www.soulriftcrusher.com/" },
+      { property: "og:image", content: "https://www.soulriftcrusher.com/og.jpg" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Soulrift Crusher — Idle dungeon RPG" },
+      {
+        name: "twitter:description",
+        content: "Free idle dungeon hunt. Hire heroes, crush floors, craft gear.",
+      },
+      { name: "twitter:image", content: "https://www.soulriftcrusher.com/og.jpg" },
     ],
     links: [
+      { rel: "canonical", href: "https://www.soulriftcrusher.com/" },
       { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
       { rel: "stylesheet", href: appCss },
       { rel: "manifest", href: "/manifest.webmanifest" },
@@ -42,6 +61,23 @@ export const Route = createRootRoute({
         <script
           dangerouslySetInnerHTML={{
             __html: `if(location.hostname==='soulriftcrusher.com')location.replace('https://www.soulriftcrusher.com'+location.pathname+location.search+location.hash);if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js',{scope:'/'})`,
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "VideoGame",
+              name: "Soulrift Crusher",
+              url: "https://www.soulriftcrusher.com/",
+              description:
+                "Free idle dungeon RPG. Hire heroes, crush floors, craft gear, fight in the arena, and war across servers.",
+              genre: ["Idle", "RPG", "Action"],
+              applicationCategory: "GameApplication",
+              operatingSystem: "Web, Android, iOS",
+              offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+            }),
           }}
         />
       </head>
