@@ -33,12 +33,15 @@ function Login() {
   useEffect(() => {
     setOnCom(window.location.hostname.replace(/^www\./, "") === "soulriftcrusher.com");
     const q = new URLSearchParams(window.location.search);
-    if (q.get("err") === "google") {
+    if (q.get("err") === "google" || q.get("error")) {
       const extra = q.get("error") || q.get("error_description") || "";
+      const linked = /account.?not.?linked|unable to link/i.test(extra);
       setErr(
-        extra
-          ? `Google allowed it, but the hunt dropped the login (${extra}). Use email Sign in.`
-          : "Google allowed it, but the hunt didn’t keep you. Use email Sign in for now.",
+        linked
+          ? "That Gmail already has a hunter. Sign in with email and that password."
+          : extra
+            ? `Google allowed it, but the hunt dropped the login (${extra}). Sign in with email.`
+            : "Google allowed it, but the hunt didn’t keep you. Sign in with email.",
       );
     }
   }, []);

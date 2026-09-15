@@ -214,6 +214,8 @@ export const auth = betterAuth({
   // never merges them into one user — they stay separate identities.
   account: {
     encryptOAuthTokens: true,
+    storeStateStrategy: "database",
+    skipStateCookieCheck: true,
     accountLinking: {
       enabled: true,
       trustedProviders: [
@@ -243,12 +245,12 @@ export const auth = betterAuth({
   // Native Google on soulriftcrusher.com (Grok broker rejects custom domains).
   // Read process.env.GOOGLE_* by name (not env("…")) so the Vercel/Nitro build
   // keeps those keys in the server bundle.
-  ...(process.env.GOOGLE_CLIENT_ID?.trim() && process.env.GOOGLE_CLIENT_SECRET?.trim()
+  ...(googleClientId && googleClientSecret
     ? {
         socialProviders: {
           google: {
-            clientId: process.env.GOOGLE_CLIENT_ID.trim(),
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET.trim(),
+            clientId: googleClientId,
+            clientSecret: googleClientSecret,
           },
         },
       }
