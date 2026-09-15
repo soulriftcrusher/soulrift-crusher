@@ -35,6 +35,12 @@ export function PrivacyDoc({ onBack, onGo }: { onBack?: () => void; onGo?: (id: 
         We do not ask for your phone number, address, payment card, or precise location. In-hunt
         gems are not real-money purchases in this version.
       </p>
+      <h2 className="font-display text-lg text-gold">Your login</h2>
+      <p>
+        Never share your email, password, or hunt code with anyone. A hunt code can steal your
+        crusade and the founder seat. We will never ask you for your password in chat or by email.
+        Staff will never ask you to send a hunt code.
+      </p>
       <h2 className="font-display text-lg text-gold">Who can see it</h2>
       <p>
         Other players can see your crusader name, clan, power, and public chat. Staff can see the

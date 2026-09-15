@@ -110,7 +110,8 @@ function Login() {
         <p className="font-display text-xs tracking-[0.28em] text-muted uppercase">Required to hunt</p>
         <h1 className="font-display mt-2 text-3xl font-semibold tracking-tight">Sign in to hunt</h1>
         <p className="mt-3 text-sm leading-relaxed text-muted">
-          Continue with Google, or use email so your hunter stays on this name.
+          Continue with Google, or use email so your hunter stays on this name. Never share your
+          email, password, or hunt code with anyone.
         </p>
         {moveOpen() ? (
           <div className="mt-3 flex flex-col gap-2">

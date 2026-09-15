@@ -107,6 +107,7 @@ export function MoveHunt() {
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col gap-3 overflow-y-auto px-4 py-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
         <p className="text-sm leading-relaxed text-muted">
           Before {MOVE_LABEL}, tap through these. After that date only soulriftcrusher.com keeps saves.
+          Never share this hunt code. It is your crusade and founder seat.
         </p>
         {com ? (
           <>
@@ -140,7 +141,7 @@ export function MoveHunt() {
               Open soulriftcrusher.com
             </Button>
             <p className="text-xs text-muted">
-              There: Create hunter with email + password, then Settings → Move my hunt → Bring hunt I copied.
+              There: Continue with Google (same Gmail keeps this hunt) or Create hunter, then Move hunt → Bring hunt I copied.
             </p>
             {packText ? (
               <textarea readOnly value={packText} className="h-24 w-full rounded-md border border-border bg-bg px-2 py-2 text-[10px] text-fg" />

