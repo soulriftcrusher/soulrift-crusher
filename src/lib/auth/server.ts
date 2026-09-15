@@ -36,6 +36,12 @@ import { randomBytes } from "node:crypto";
 import { Pool } from "pg";
 import { ensureDbReady, getPglite } from "../db";
 import { emailAndPasswordEnabled } from "./email-password";
+import {
+  BAKED_BETTER_AUTH_SECRET,
+  BAKED_BETTER_AUTH_URL,
+  BAKED_GOOGLE_CLIENT_ID,
+  BAKED_GOOGLE_CLIENT_SECRET,
+} from "./baked-env";
 import { GATE_PROVIDER_ID, gateIdentitySessions } from "./gate-session.server";
 import { GROK_PROVIDERS } from "./providers";
 import { safeStartCookies } from "./safe-start-cookies";
@@ -91,7 +97,7 @@ export const authConfigured =
 // it derives the origin per-request from the (proxied) host, validated against the
 // preview allowlist, which makes the OAuth `redirect_uri` the concrete preview URL
 // the broker's preview client accepts.
-const explicitBaseURL = process.env.BETTER_AUTH_URL?.trim() || env("BETTER_AUTH_URL");
+const explicitBaseURL = (BAKED_BETTER_AUTH_URL || process.env.BETTER_AUTH_URL || env("BETTER_AUTH_URL") || "").trim() || undefined;
 // Explicit `string[]` (not a readonly tuple) — Better Auth's DynamicBaseURLConfig
 // requires a mutable `allowedHosts: string[]`.
 const previewAllowedHosts: string[] = [...PREVIEW_ALLOWED_HOSTS];
@@ -152,10 +158,11 @@ const database = databaseUrl
 export const SESSION_TOKEN_COOKIE = "__Host-grok-auth.session_token";
 
 const googleClientId = (
+  BAKED_GOOGLE_CLIENT_ID ||
   process.env.GOOGLE_CLIENT_ID ||
   "131281609025-ud94jb6kllp0qgedo9oi0rb4lcgqjfjp.apps.googleusercontent.com"
 ).trim();
-const googleClientSecret = (process.env.GOOGLE_CLIENT_SECRET || "").trim();
+const googleClientSecret = (BAKED_GOOGLE_CLIENT_SECRET || process.env.GOOGLE_CLIENT_SECRET || "").trim();
 
 // Built separately so the `betterAuth({...})` call stays easy to edit without
 // breaking brackets (models often trip on the conditional plugin spread).
@@ -180,7 +187,7 @@ const grokOAuthPlugin = authConfigured
           tokenUrl: "https://oauth2.googleapis.com/token",
           userInfoUrl: "https://openidconnect.googleapis.com/v1/userinfo",
           scopes: ["openid", "profile", "email"],
-          pkce: true,
+          pkce: false,
           authorizationUrlParams: { prompt: "select_account", access_type: "online" },
         },
       ],
@@ -191,7 +198,7 @@ export const auth = betterAuth({
   baseURL,
   // Deployed apps inject BETTER_AUTH_SECRET. Preview: process-stable secret on
   // globalThis so HMR doesn't invalidate PGLite-backed sessions (see above).
-  secret: (process.env.BETTER_AUTH_SECRET || "").trim() || previewAuthSecret(),
+  secret: (BAKED_BETTER_AUTH_SECRET || process.env.BETTER_AUTH_SECRET || "").trim() || previewAuthSecret(),
   database,
 
   // CSRF / origin check for credentialed auth POSTs (email sign-up/sign-in, …).

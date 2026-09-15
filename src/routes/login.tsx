@@ -26,12 +26,21 @@ function Login() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [forgot, setForgot] = useState(false);
+  const [onCom, setOnCom] = useState(false);
   const social = grokSocialOk();
   const afterLogin = "/?tab=fight";
 
   useEffect(() => {
-    const q = new URLSearchParams(window.location.search).get("err");
-    if (q === "google") setErr("Google allowed it, but the hunt didn’t keep you. Try Continue with Google again, or Sign in with email.");
+    setOnCom(window.location.hostname.replace(/^www\./, "") === "soulriftcrusher.com");
+    const q = new URLSearchParams(window.location.search);
+    if (q.get("err") === "google") {
+      const extra = q.get("error") || q.get("error_description") || "";
+      setErr(
+        extra
+          ? `Google allowed it, but the hunt dropped the login (${extra}). Use email Sign in.`
+          : "Google allowed it, but the hunt didn’t keep you. Use email Sign in for now.",
+      );
+    }
   }, []);
 
   async function googleSignIn() {
@@ -113,7 +122,7 @@ function Login() {
           Continue with Google, or use email so your hunter stays on this name. Never share your
           email, password, or hunt code with anyone.
         </p>
-        {moveOpen() ? (
+        {moveOpen() && !onCom ? (
           <div className="mt-3 flex flex-col gap-2">
             <a
               href={COM_HUNT}
