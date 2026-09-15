@@ -3,6 +3,7 @@ node_modules/
 dist/
 .vinxi/
 .tanstack/
+.vercel/
 *.log
 .env
 .env.*
