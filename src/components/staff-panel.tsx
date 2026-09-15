@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { claimStaff, listReports, staffBan, staffGift, staffRoster, staffStatus, staffUnban } from "@/game/net";
+import { claimStaff, listReports, staffBan, staffGift, staffRoster, staffSetPassword, staffStatus, staffUnban } from "@/game/net";
 import { formatNum } from "@/game/format";
 import { sfx, unlockAudio } from "@/game/audio";
 import { sim } from "@/game/sim";
@@ -47,6 +47,8 @@ export function StaffPanel() {
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [code, setCode] = useState("RIFT");
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetPass, setResetPass] = useState("");
   const [q, setQ] = useState("");
   const [server, setServer] = useState("all");
   const [roster, setRoster] = useState<Row[]>([]);
@@ -176,6 +178,34 @@ export function StaffPanel() {
               }
             >
               Mint 80-gem code
+            </Button>
+          </div>
+          <div className="mt-3 rounded-md border border-gold/40 p-3">
+            <p className="text-xs tracking-wide text-gold uppercase">Forgot password</p>
+            <input
+              value={resetEmail}
+              onChange={(e) => setResetEmail(e.target.value)}
+              placeholder="Hunter email"
+              className="mt-2 h-11 w-full rounded-md border border-border bg-bg px-3 text-sm"
+            />
+            <input
+              type="text"
+              value={resetPass}
+              onChange={(e) => setResetPass(e.target.value)}
+              placeholder="New password (8+)"
+              className="mt-2 h-11 w-full rounded-md border border-border bg-bg px-3 text-sm"
+            />
+            <Button
+              className="mt-2 h-11 w-full"
+              disabled={busy || !resetEmail || resetPass.length < 8}
+              onClick={() =>
+                run(
+                  () => staffSetPassword({ data: { email: resetEmail.trim(), password: resetPass } }),
+                  `Password set for ${resetEmail.trim().toLowerCase()}. Tell them to Sign in.`,
+                )
+              }
+            >
+              Set password
             </Button>
           </div>
           <input

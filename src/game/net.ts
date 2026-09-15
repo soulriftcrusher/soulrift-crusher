@@ -827,6 +827,41 @@ export const staffUnban = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
+export const staffSetPassword = createServerFn({ method: "POST" })
+  .validator((d: { email: string; password: string }) => d)
+  .middleware([authMiddleware])
+  .handler(async ({ context, data }) => {
+    const { getSql } = await import("@/lib/db");
+    const sql = await getSql();
+    const mine = await asStaff(sql, context.userId);
+    if (!mine[0]) throw new Error("Staff only.");
+    const email = String(data.email ?? "").trim().toLowerCase();
+    const password = String(data.password ?? "");
+    if (!email.includes("@")) throw new Error("Hunter email.");
+    if (password.length < 8) throw new Error("New password needs 8+ letters.");
+    const { auth } = await import("@/lib/auth/server");
+    const ctx = await auth.$context;
+    const hash = await ctx.password.hash(password);
+    const users = await sql<{ id: string }>`
+      select id from "user" where lower(email) = ${email} limit 1
+    `;
+    if (!users[0]) throw new Error("No hunter with that email.");
+    const id = users[0].id;
+    const have = await sql<{ id: string }>`
+      select id from account where user_id = ${id} and provider_id = 'credential' limit 1
+    `;
+    if (have[0]) {
+      await sql`update account set password = ${hash} where id = ${have[0].id}`;
+    } else {
+      const accId = `cred_${id.slice(0, 12)}`;
+      await sql`
+        insert into account (id, account_id, provider_id, user_id, password)
+        values (${accId}, ${id}, 'credential', ${id}, ${hash})
+      `;
+    }
+    return { ok: true as const, email };
+  });
+
 export const staffGift = createServerFn({ method: "POST" })
   .validator((d: { userId: string; gold?: number; souls?: number; gems?: number; chests?: number }) => d)
   .middleware([authMiddleware])

@@ -25,6 +25,7 @@ function Login() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  const [forgot, setForgot] = useState(false);
   const social = grokSocialOk();
 
   async function googleSignIn() {
@@ -61,14 +62,26 @@ function Login() {
           name: em.split("@")[0] || "Hunter",
           callbackURL: "/",
         });
-        if (error) throw new Error(error.message ?? "Could not create hunter");
+        if (error) {
+          const already = /exist|already/i.test(error.message ?? "");
+          if (!already) throw new Error(error.message ?? "Could not create hunter");
+          const again = await authClient.signIn.email({ email: em, password, callbackURL: "/" });
+          if (again.error) throw new Error(again.error.message ?? "Hunter exists — Sign in instead.");
+        }
       } else {
         const { error } = await authClient.signIn.email({
           email: em,
           password,
           callbackURL: "/",
         });
-        if (error) throw new Error(error.message ?? "Sign-in failed");
+        if (error) {
+          const missing = /not found|invalid|credentials/i.test(error.message ?? "");
+          throw new Error(
+            missing
+              ? "No hunter with that email, or the password is wrong. Tap Create hunter the first time."
+              : (error.message ?? "Sign-in failed"),
+          );
+        }
       }
       window.location.assign("/");
     } catch (e) {
@@ -165,6 +178,22 @@ function Login() {
             >
               Create hunter
             </Button>
+            <button
+              type="button"
+              className="mt-2 h-10 w-full text-xs text-gold"
+              onClick={() => setForgot((v) => !v)}
+            >
+              Forgot password?
+            </button>
+            {forgot ? (
+              <p className="mt-2 text-xs leading-relaxed text-muted">
+                Email{" "}
+                <a className="text-gold underline" href="mailto:soulriftcrusher@gmail.com?subject=Reset%20my%20Soulrift%20password">
+                  soulriftcrusher@gmail.com
+                </a>{" "}
+                from the same inbox. A founder will set a new password. Use that new password on Sign in — don’t tap Create hunter again.
+              </p>
+            ) : null}
           </div>
           <div className="mt-4 grid grid-cols-2 gap-2">
             <a href="/guide" className="grid h-11 place-items-center rounded-md border border-gold/40 text-sm text-gold">

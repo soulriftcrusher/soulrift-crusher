@@ -57,7 +57,6 @@ export type VerifiedUser = { id: string; email: string | null };
 export async function getSessionUser(
   bearerToken?: string,
 ): Promise<VerifiedUser | null> {
-  if (!authConfigured && !gateIdentityEnabled()) return null;
   const request = getRequest();
   if (!request) return null;
   let headers = request.headers;
@@ -65,9 +64,14 @@ export async function getSessionUser(
     headers = new Headers(request.headers);
     headers.set("Authorization", `Bearer ${bearerToken}`);
   }
-  const session = await auth.api.getSession({ headers });
-  if (!session?.user) return null;
-  return { id: session.user.id, email: session.user.email ?? null };
+  try {
+    const session = await auth.api.getSession({ headers });
+    if (session?.user) return { id: session.user.id, email: session.user.email ?? null };
+  } catch {
+    /* no session */
+  }
+  if (!authConfigured && !gateIdentityEnabled()) return null;
+  return null;
 }
 
 /**
@@ -82,16 +86,11 @@ export async function getSessionUser(
  * - Auth disabled + no database -> the shared dev user id.
  */
 export async function requireUserId(bearerToken?: string): Promise<string> {
+  const user = await getSessionUser(bearerToken);
+  if (user) return user.id;
   if (!authConfigured && !gateIdentityEnabled()) {
-    if (databaseConfigured) {
-      throw new Error(
-        "Auth is disabled (VITE_AUTH_ENABLED=false) but DATABASE_URL is set — " +
-          "refusing to fall back to the shared dev user against a real database.",
-      );
-    }
+    if (databaseConfigured) throw new UnauthorizedError();
     return DEV_USER_ID;
   }
-  const user = await getSessionUser(bearerToken);
-  if (!user) throw new UnauthorizedError();
-  return user.id;
+  throw new UnauthorizedError();
 }
