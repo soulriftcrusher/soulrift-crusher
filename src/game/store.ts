@@ -54,6 +54,7 @@ type GameUI = {
   skillSfx: boolean;
   reduceFx: boolean;
   settingsOpen: boolean;
+  moveHuntOpen: boolean;
   ritualOpen: boolean;
   summonOpen: boolean;
   patchOpen: boolean;
@@ -79,6 +80,7 @@ type GameUI = {
   setSkillSfx: (v: boolean) => void;
   setReduceFx: (v: boolean) => void;
   setSettingsOpen: (v: boolean) => void;
+  setMoveHuntOpen: (v: boolean) => void;
   setRitualOpen: (v: boolean) => void;
   setSummonOpen: (v: boolean) => void;
   setPatchOpen: (v: boolean) => void;
@@ -144,6 +146,7 @@ export const useGame = create<GameUI>((set, get) => {
   skillSfx: prefs.skillSfx,
   reduceFx: prefs.reduceFx,
   settingsOpen: false,
+  moveHuntOpen: false,
   ritualOpen: false,
   summonOpen: false,
   patchOpen: patchIsNew(),
@@ -183,6 +186,7 @@ export const useGame = create<GameUI>((set, get) => {
     set({ reduceFx });
   },
   setSettingsOpen: (settingsOpen) => set({ settingsOpen }),
+  setMoveHuntOpen: (moveHuntOpen) => set({ moveHuntOpen }),
   setRitualOpen: (ritualOpen) => set({ ritualOpen }),
   setSummonOpen: (summonOpen) => set({ summonOpen }),
   setPatchOpen: (patchOpen) => set({ patchOpen }),

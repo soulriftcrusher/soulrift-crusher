@@ -1,6 +1,7 @@
 /** Move-window: grok.me hunters bring their save to soulriftcrusher.com. */
 export const MOVE_UNTIL = Date.parse("2026-10-01T23:59:59-04:00");
 export const MOVE_LABEL = "October 1, 2026";
+export const COM_HUNT = "https://www.soulriftcrusher.com";
 
 export function moveOpen(now = Date.now()): boolean {
   return now <= MOVE_UNTIL;

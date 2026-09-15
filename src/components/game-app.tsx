@@ -29,6 +29,7 @@ import { HuntPanel } from "@/components/hunt-panel";
 import { HeroFace } from "@/components/hero-face";
 import { HunterCard } from "@/components/hunter-card";
 import { LegalOverlay } from "@/components/legal-overlay";
+import { MoveHunt } from "@/components/move-hunt";
 import { RealmPanel } from "@/components/realm-panel";
 import { StaffPanel } from "@/components/staff-panel";
 import { SummonGame } from "@/components/summon-game";
@@ -36,7 +37,7 @@ import { exitLocalDemo } from "@/game/demo";
 import { isDemoHunt } from "@/game/demo-flag";
 import { HEROES, SKILLS, heroPortrait, type HeroId, type SkillId } from "@/game/data";
 import { formatNum, formatTime } from "@/game/format";
-import { setHuntName, staffStatus, claimStaff, pullCloudSave, pullHeroRoster, importHuntPack } from "@/game/net";
+import { setHuntName, staffStatus, claimStaff } from "@/game/net";
 import { redeemCode } from "@/game/live-net";
 import { readHuntName, writeHuntName } from "@/game/name";
 import { stackRunes, describeRune, runeArt, RARITY_NAME, RARITY_RING, RUNE_BLURB, RUNE_JOB, type OwnedRune } from "@/game/gear";
@@ -45,8 +46,8 @@ import { APP_VERSION, PATCHES } from "@/game/patch-notes";
 import { markPatchSeen } from "@/game/prefs";
 import { alertsPermission, alertsWanted, sendTestAlert } from "@/game/push-client";
 import { Renderer, preloadHuntArt } from "@/game/renderer";
-import { clearSave, hasSave, applyIncoming, applyRoster, rosterFromState } from "@/game/save";
-import { encodeHuntPack, decodeHuntPack, moveOpen, MOVE_LABEL } from "@/game/migrate";
+import { clearSave, hasSave } from "@/game/save";
+import { moveOpen } from "@/game/migrate";
 import { seasonClock, formatSeasonLeft } from "@/game/shards";
 import { sim } from "@/game/sim";
 import { sfx, setMuted, unlockAudio } from "@/game/audio";
@@ -64,6 +65,7 @@ function huntUrl(): string {
 
 export function GameApp() {
   const screen = useGame((s) => s.screen);
+  const moveHuntOpen = useGame((s) => s.moveHuntOpen);
   const desk = useDesk();
   const { user, isPending } = useCurrentUserState();
   const demoHunt = useGame((s) => s.demoHunt);
@@ -87,6 +89,7 @@ export function GameApp() {
         <div className={shell}>
           <TitleScreen />
           <LegalOverlay />
+          {moveHuntOpen ? <MoveHunt /> : null}
         </div>
       </div>
     );
@@ -98,6 +101,7 @@ export function GameApp() {
       <div className={shell}>
         {screen === "title" ? <TitleScreen /> : <PlayScreen />}
         <LegalOverlay />
+        {moveHuntOpen ? <MoveHunt /> : null}
       </div>
     </div>
   );
@@ -178,6 +182,16 @@ function TitleScreen() {
                   <Button size="lg" className="h-12 w-full font-display tracking-wide" onClick={() => enter(!continueAvailable)}>
                     {continueAvailable ? "Enter the rift" : "Begin the hunt"}
                   </Button>
+                  {user && moveOpen() ? (
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      className="h-12 w-full font-display tracking-wide"
+                      onClick={() => useGame.getState().setMoveHuntOpen(true)}
+                    >
+                      Move my hunt
+                    </Button>
+                  ) : null}
                   {continueAvailable ? (
                     <Button size="lg" variant="secondary" className="h-12 w-full" onClick={() => enter(true)}>
                       New crusade
@@ -345,6 +359,15 @@ function Hud() {
         {formatNum(snap.gems)} gems
         {snap.shieldOn ? <span className="text-gold">· shield {formatTime(snap.shieldLeft / 1000)}</span> : <span>· no shield</span>}
         {onlineCount > 0 ? <span className="text-gold">· {onlineCount} online</span> : null}
+        {moveOpen() ? (
+          <button
+            type="button"
+            className="rounded-md border border-gold/40 px-2 py-0.5 text-[10px] text-gold"
+            onClick={() => useGame.getState().setMoveHuntOpen(true)}
+          >
+            Move hunt
+          </button>
+        ) : null}
         <span className="ml-auto flex items-center gap-1">
           <AuthChip />
           <button
@@ -1082,9 +1105,6 @@ function SettingsModal() {
   const [huntName, setNameField] = useState("");
   const [nameNote, setNameNote] = useState("");
   const [nameBusy, setNameBusy] = useState(false);
-  const [moveNote, setMoveNote] = useState("");
-  const [moveBusy, setMoveBusy] = useState(false);
-  const [moveCode, setMoveCode] = useState("");
   const [board, setBoard] = useState<BoardPref>("auto");
   const [out, setOut] = useState(false);
   const { user } = useCurrentUserState();
@@ -1176,73 +1196,15 @@ function SettingsModal() {
           <p className="mt-3 text-xs text-muted">Sign in to set a hunter name that stays.</p>
         )}
         {user && moveOpen() ? (
-          <div className="mt-3 rounded-md border border-gold/40 bg-wood p-3">
-            <p className="font-display text-sm text-gold">Move my hunt</p>
-            <p className="mt-1 text-xs text-muted">
-              Before {MOVE_LABEL}: copy your hunt here, then on soulriftcrusher.com Create hunter → paste the code. After that date only the .com keeps saves.
-            </p>
-            <Button
-              className="mt-2 h-11 w-full"
-              disabled={moveBusy}
-              onClick={() => {
-                setMoveBusy(true);
-                setMoveNote("");
-                void (async () => {
-                  try {
-                    const [cloud, heroes] = await Promise.all([
-                      pullCloudSave(),
-                      pullHeroRoster().catch(() => ({ roster: [] })),
-                    ]);
-                    const payload = cloud.payload || JSON.stringify(sim.state);
-                    const roster = heroes.roster?.length ? heroes.roster : rosterFromState(sim.state);
-                    const pack = encodeHuntPack({ v: 1, payload, roster, name: huntName });
-                    await navigator.clipboard.writeText(pack);
-                    setMoveNote("Hunt code copied. Paste it on soulriftcrusher.com after you Create hunter.");
-                  } catch (e) {
-                    setMoveNote(e instanceof Error ? e.message : "Could not copy hunt.");
-                  } finally {
-                    setMoveBusy(false);
-                  }
-                })();
-              }}
-            >
-              {moveBusy ? "Copying…" : "Copy hunt code"}
-            </Button>
-            <textarea
-              value={moveCode}
-              onChange={(e) => setMoveCode(e.target.value)}
-              placeholder="Paste hunt code to bring a hunt over"
-              className="mt-2 h-20 w-full rounded-md border border-border bg-bg px-2 py-2 text-xs text-fg"
-            />
-            <Button
-              variant="outline"
-              className="mt-2 h-11 w-full"
-              disabled={moveBusy || !moveCode.trim()}
-              onClick={() => {
-                setMoveBusy(true);
-                setMoveNote("");
-                void (async () => {
-                  try {
-                    const pack = decodeHuntPack(moveCode);
-                    await importHuntPack({ data: { payload: pack.payload, roster: pack.roster } });
-                    sim.hydrate(applyIncoming(JSON.parse(pack.payload)));
-                    if (pack.roster.length) applyRoster(sim.state, pack.roster);
-                    sim.save();
-                    useGame.getState().refresh();
-                    setMoveNote("Hunt is on this account. Keep using this login.");
-                    setMoveCode("");
-                  } catch (e) {
-                    setMoveNote(e instanceof Error ? e.message : "Could not bring hunt over.");
-                  } finally {
-                    setMoveBusy(false);
-                  }
-                })();
-              }}
-            >
-              Bring my hunt
-            </Button>
-            {moveNote ? <p className="mt-1 text-xs text-muted">{moveNote}</p> : null}
-          </div>
+          <Button
+            className="mt-3 h-12 w-full font-display"
+            onClick={() => {
+              close();
+              useGame.getState().setMoveHuntOpen(true);
+            }}
+          >
+            Move my hunt
+          </Button>
         ) : null}
         <TitlePicker />
         <RedeemBox />

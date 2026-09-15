@@ -4,7 +4,7 @@ import { GROK_PROVIDERS, authClient, authEnabled, signIn } from "@/lib/auth/clie
 import { REVIEWER_EMAIL } from "@/lib/auth/reviewer";
 import { ensureReviewer } from "@/game/reviewer-net";
 import { Button } from "@/components/ui/button";
-import { MOVE_LABEL, moveOpen } from "@/game/migrate";
+import { MOVE_LABEL, moveOpen, COM_HUNT } from "@/game/migrate";
 
 export const Route = createFileRoute("/login")({ component: Login });
 
@@ -94,9 +94,17 @@ function Login() {
           Continue with Google, or use email so your hunter stays on this name.
         </p>
         {moveOpen() ? (
-          <p className="mt-3 rounded-md border border-gold/40 bg-bg/50 p-3 text-xs leading-relaxed text-gold">
-            Before {MOVE_LABEL}: Create hunter with email + password. Then Settings → Bring my hunt (paste the code from grok.me). After that date, only this site keeps saves.
-          </p>
+          <div className="mt-3 flex flex-col gap-2">
+            <a
+              href={COM_HUNT}
+              className="grid h-12 place-items-center rounded-md border border-gold/40 bg-bg/50 font-display text-sm text-gold"
+            >
+              Open soulriftcrusher.com
+            </a>
+            <p className="text-xs leading-relaxed text-muted">
+              Before {MOVE_LABEL}: Create hunter below, then tap Move hunt → Bring hunt I copied.
+            </p>
+          </div>
         ) : null}
         <div className="mt-8 flex flex-col gap-3">
           {authEnabled ? (
