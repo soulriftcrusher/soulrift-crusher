@@ -151,8 +151,11 @@ const database = databaseUrl
 /** Session token cookie name — also read by the live-preview popup completion page. */
 export const SESSION_TOKEN_COOKIE = "__Host-grok-auth.session_token";
 
-const googleClientId = GOOGLE_OAUTH_CLIENT_ID;
-const googleClientSecret = GOOGLE_OAUTH_CLIENT_SECRET;
+const googleClientId = (
+  process.env.GOOGLE_CLIENT_ID ||
+  "131281609025-ud94jb6kllp0qgedo9oi0rb4lcgqjfjp.apps.googleusercontent.com"
+).trim();
+const googleClientSecret = (process.env.GOOGLE_CLIENT_SECRET || "").trim();
 
 // Built separately so the `betterAuth({...})` call stays easy to edit without
 // breaking brackets (models often trip on the conditional plugin spread).
