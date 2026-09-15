@@ -51,8 +51,9 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { cn } from "@/lib/utils";
 
 function errMessage(e: unknown): string {
-  if (e && typeof e === "object" && "message" in e) return String((e as { message: string }).message);
-  return "The rift refused.";
+  const m = e && typeof e === "object" && "message" in e ? String((e as { message: string }).message) : "";
+  if (/unauthorized/i.test(m)) return "Sign out and Sign in again, then open Clans.";
+  return m || "The rift refused.";
 }
 
 export function ClanSync() {

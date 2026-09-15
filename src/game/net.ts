@@ -848,15 +848,15 @@ export const staffSetPassword = createServerFn({ method: "POST" })
     if (!users[0]) throw new Error("No hunter with that email.");
     const id = users[0].id;
     const have = await sql<{ id: string }>`
-      select id from account where user_id = ${id} and provider_id = 'credential' limit 1
+      select id from account where "userId" = ${id} and "providerId" = 'credential' limit 1
     `;
     if (have[0]) {
-      await sql`update account set password = ${hash} where id = ${have[0].id}`;
+      await sql`update account set password = ${hash}, "updatedAt" = now() where id = ${have[0].id}`;
     } else {
-      const accId = `cred_${id.slice(0, 12)}`;
+      const accId = `cred_${id.slice(0, 18)}`;
       await sql`
-        insert into account (id, account_id, provider_id, user_id, password)
-        values (${accId}, ${id}, 'credential', ${id}, ${hash})
+        insert into account (id, "accountId", "providerId", "userId", password, "createdAt", "updatedAt")
+        values (${accId}, ${id}, 'credential', ${id}, ${hash}, now(), now())
       `;
     }
     return { ok: true as const, email };

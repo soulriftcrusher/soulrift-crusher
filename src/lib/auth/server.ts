@@ -215,7 +215,7 @@ export const auth = betterAuth({
   session: { cookieCache: { enabled: true, maxAge: 300 } },
 
   // Local email/password — toggled only via `./email-password` (not a plugin).
-  ...(emailAndPasswordEnabled ? { emailAndPassword: { enabled: true } } : {}),
+  ...(emailAndPasswordEnabled ? { emailAndPassword: { enabled: true, requireEmailVerification: false } } : {}),
 
   // Native Google on soulriftcrusher.com (Grok broker rejects custom domains).
   ...(env("GOOGLE_CLIENT_ID") && env("GOOGLE_CLIENT_SECRET")
