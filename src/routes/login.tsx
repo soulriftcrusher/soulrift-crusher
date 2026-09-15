@@ -36,12 +36,7 @@ function Login() {
         await signIn("grok-google", { callbackURL: "/" });
         return;
       }
-      const { data, error } = await authClient.signIn.social({
-        provider: "google",
-        callbackURL: "/",
-      });
-      if (error) throw new Error(error.message ?? "Google sign-in failed");
-      if (data?.url) window.location.assign(data.url);
+      await signIn("google", { callbackURL: "/" });
     } catch (e) {
       const m = e instanceof Error ? e.message : "Google sign-in failed";
       setErr(

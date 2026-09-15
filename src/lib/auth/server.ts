@@ -151,27 +151,38 @@ const database = databaseUrl
 /** Session token cookie name — also read by the live-preview popup completion page. */
 export const SESSION_TOKEN_COOKIE = "__Host-grok-auth.session_token";
 
+const googleClientId =
+  (env("GOOGLE_CLIENT_ID") ||
+    "131281609025-ud94jb6kllp0qgedo9oi0rb4lcgqjfjp.apps.googleusercontent.com").trim();
+const googleClientSecret = env("GOOGLE_CLIENT_SECRET") || "";
+
 // Built separately so the `betterAuth({...})` call stays easy to edit without
 // breaking brackets (models often trip on the conditional plugin spread).
 const grokOAuthPlugin = authConfigured
   ? genericOAuth({
-      config: GROK_PROVIDERS.map(({ providerId, idp }) => ({
-        providerId,
-        clientId: grokClientId as string,
-        clientSecret: grokClientSecret as string,
-        // Prefer static endpoints over `discoveryUrl` so initiating (and
-        // completing) OAuth does not wait on a broker discovery fetch.
-        authorizationUrl: grokAuthorizationUrl,
-        tokenUrl: grokTokenUrl,
-        userInfoUrl: grokUserInfoUrl,
-        scopes: ["openid", "profile", "email"],
-        // `prompt: "login"` forces the broker to re-authenticate against the
-        // upstream on every sign-in instead of silently reusing an existing
-        // broker session. Combined with the broker sending Google
-        // `prompt=select_account`, the user always gets the account chooser
-        // and can pick (or switch) which account to sign in with.
-        authorizationUrlParams: { idp, prompt: "login" },
-      })),
+      config: [
+        ...GROK_PROVIDERS.map(({ providerId, idp }) => ({
+          providerId,
+          clientId: grokClientId as string,
+          clientSecret: grokClientSecret as string,
+          authorizationUrl: grokAuthorizationUrl,
+          tokenUrl: grokTokenUrl,
+          userInfoUrl: grokUserInfoUrl,
+          scopes: ["openid", "profile", "email"],
+          authorizationUrlParams: { idp, prompt: "login" },
+        })),
+        {
+          providerId: "google",
+          clientId: googleClientId,
+          clientSecret: googleClientSecret || "pending",
+          authorizationUrl: "https://accounts.google.com/o/oauth2/v2/auth",
+          tokenUrl: "https://oauth2.googleapis.com/token",
+          userInfoUrl: "https://openidconnect.googleapis.com/v1/userinfo",
+          scopes: ["openid", "profile", "email"],
+          pkce: true,
+          authorizationUrlParams: { prompt: "select_account", access_type: "online" },
+        },
+      ],
     })
   : null;
 
