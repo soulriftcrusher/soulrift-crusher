@@ -1319,6 +1319,11 @@ function SettingsModal() {
             onClick={() => {
               setOut(true);
               sim.save();
+              try {
+                localStorage.removeItem("soulrift-in-hunt");
+              } catch {
+                /* ignore */
+              }
               void signOut().catch(() => setOut(false));
             }}
           >

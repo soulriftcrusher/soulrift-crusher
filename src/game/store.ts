@@ -99,7 +99,7 @@ const STAFF_FLAG = "soulrift.staff";
 
 function wasHunting(): boolean {
   try {
-    return sessionStorage.getItem(HUNT_FLAG) === "1";
+    return localStorage.getItem(HUNT_FLAG) === "1";
   } catch {
     return false;
   }
@@ -107,8 +107,8 @@ function wasHunting(): boolean {
 
 function markHunting(on: boolean) {
   try {
-    if (on) sessionStorage.setItem(HUNT_FLAG, "1");
-    else sessionStorage.removeItem(HUNT_FLAG);
+    if (on) localStorage.setItem(HUNT_FLAG, "1");
+    else localStorage.removeItem(HUNT_FLAG);
   } catch {
     /* ignore */
   }
