@@ -126,11 +126,11 @@ function TitleScreen() {
   }, []);
 
   useEffect(() => {
-    if (load < 100) return;
+    if (load < 100 || isPending || !user) return;
     const tab = new URLSearchParams(window.location.search).get("tab");
     if (tab) enter(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [load]);
+  }, [load, user, isPending]);
 
   function enter(fresh: boolean) {
     if (authEnabled && !user) return;

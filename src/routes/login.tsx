@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { GROK_PROVIDERS, authClient, authEnabled, signIn } from "@/lib/auth/client";
 import { REVIEWER_EMAIL } from "@/lib/auth/reviewer";
@@ -27,16 +27,22 @@ function Login() {
   const [err, setErr] = useState("");
   const [forgot, setForgot] = useState(false);
   const social = grokSocialOk();
+  const afterLogin = "/?tab=fight";
+
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("err");
+    if (q === "google") setErr("Google allowed it, but the hunt didn’t keep you. Try Continue with Google again, or Sign in with email.");
+  }, []);
 
   async function googleSignIn() {
     setErr("");
     setBusy(true);
     try {
       if (grokSocialOk()) {
-        await signIn("grok-google", { callbackURL: "/" });
+        await signIn("grok-google", { callbackURL: afterLogin, errorCallbackURL: "/login?err=google" });
         return;
       }
-      await signIn("google", { callbackURL: "/" });
+      await signIn("google", { callbackURL: afterLogin, errorCallbackURL: "/login?err=google" });
     } catch (e) {
       const m = e instanceof Error ? e.message : "Google sign-in failed";
       setErr(
@@ -60,7 +66,7 @@ function Login() {
           email: em,
           password,
           name: em.split("@")[0] || "Hunter",
-          callbackURL: "/",
+          callbackURL: afterLogin,
         });
         if (error) {
           const already = /exist|already/i.test(error.message ?? "");
@@ -72,7 +78,7 @@ function Login() {
         const { error } = await authClient.signIn.email({
           email: em,
           password,
-          callbackURL: "/",
+          callbackURL: afterLogin,
         });
         if (error) {
           const missing = /not found|invalid|credentials/i.test(error.message ?? "");
@@ -83,7 +89,7 @@ function Login() {
           );
         }
       }
-      window.location.assign("/");
+      window.location.assign(afterLogin);
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Sign-in failed");
     } finally {

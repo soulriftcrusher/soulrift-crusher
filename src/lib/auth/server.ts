@@ -35,7 +35,7 @@ import { getCookie } from "@tanstack/react-start/server";
 import { randomBytes } from "node:crypto";
 import { Pool } from "pg";
 import { ensureDbReady, getPglite } from "../db";
-import { emailAndPasswordEnabled } from "./email-password";
+import { GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET } from "./google-creds.server";
 import { GATE_PROVIDER_ID, gateIdentitySessions } from "./gate-session.server";
 import { GROK_PROVIDERS } from "./providers";
 import { safeStartCookies } from "./safe-start-cookies";
@@ -151,10 +151,8 @@ const database = databaseUrl
 /** Session token cookie name — also read by the live-preview popup completion page. */
 export const SESSION_TOKEN_COOKIE = "__Host-grok-auth.session_token";
 
-const googleClientId =
-  (env("GOOGLE_CLIENT_ID") ||
-    "131281609025-ud94jb6kllp0qgedo9oi0rb4lcgqjfjp.apps.googleusercontent.com").trim();
-const googleClientSecret = env("GOOGLE_CLIENT_SECRET") || "";
+const googleClientId = GOOGLE_OAUTH_CLIENT_ID;
+const googleClientSecret = GOOGLE_OAUTH_CLIENT_SECRET;
 
 // Built separately so the `betterAuth({...})` call stays easy to edit without
 // breaking brackets (models often trip on the conditional plugin spread).
@@ -174,7 +172,7 @@ const grokOAuthPlugin = authConfigured
         {
           providerId: "google",
           clientId: googleClientId,
-          clientSecret: googleClientSecret || "pending",
+          clientSecret: googleClientSecret,
           authorizationUrl: "https://accounts.google.com/o/oauth2/v2/auth",
           tokenUrl: "https://oauth2.googleapis.com/token",
           userInfoUrl: "https://openidconnect.googleapis.com/v1/userinfo",
