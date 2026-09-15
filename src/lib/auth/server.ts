@@ -218,12 +218,14 @@ export const auth = betterAuth({
   ...(emailAndPasswordEnabled ? { emailAndPassword: { enabled: true, requireEmailVerification: false } } : {}),
 
   // Native Google on soulriftcrusher.com (Grok broker rejects custom domains).
-  ...(env("GOOGLE_CLIENT_ID") && env("GOOGLE_CLIENT_SECRET")
+  // Read process.env.GOOGLE_* by name (not env("…")) so the Vercel/Nitro build
+  // keeps those keys in the server bundle.
+  ...(process.env.GOOGLE_CLIENT_ID?.trim() && process.env.GOOGLE_CLIENT_SECRET?.trim()
     ? {
         socialProviders: {
           google: {
-            clientId: env("GOOGLE_CLIENT_ID") as string,
-            clientSecret: env("GOOGLE_CLIENT_SECRET") as string,
+            clientId: process.env.GOOGLE_CLIENT_ID.trim(),
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET.trim(),
           },
         },
       }

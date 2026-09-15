@@ -43,7 +43,12 @@ function Login() {
       if (error) throw new Error(error.message ?? "Google sign-in failed");
       if (data?.url) window.location.assign(data.url);
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Google sign-in failed");
+      const m = e instanceof Error ? e.message : "Google sign-in failed";
+      setErr(
+        /provider not found/i.test(m)
+          ? "Google isn’t live on this build yet. Use email, or Redeploy after the Google keys."
+          : m,
+      );
       setBusy(false);
     }
   }
