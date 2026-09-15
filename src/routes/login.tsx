@@ -4,6 +4,7 @@ import { GROK_PROVIDERS, authClient, authEnabled, signIn } from "@/lib/auth/clie
 import { REVIEWER_EMAIL } from "@/lib/auth/reviewer";
 import { ensureReviewer } from "@/game/reviewer-net";
 import { Button } from "@/components/ui/button";
+import { MOVE_LABEL, moveOpen } from "@/game/migrate";
 
 export const Route = createFileRoute("/login")({ component: Login });
 
@@ -92,6 +93,11 @@ function Login() {
         <p className="mt-3 text-sm leading-relaxed text-muted">
           Continue with Google, or use email so your hunter stays on this name.
         </p>
+        {moveOpen() ? (
+          <p className="mt-3 rounded-md border border-gold/40 bg-bg/50 p-3 text-xs leading-relaxed text-gold">
+            Before {MOVE_LABEL}: Create hunter with email + password. Then Settings → Bring my hunt (paste the code from grok.me). After that date, only this site keeps saves.
+          </p>
+        ) : null}
         <div className="mt-8 flex flex-col gap-3">
           {authEnabled ? (
             <Button

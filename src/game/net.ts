@@ -657,6 +657,45 @@ export const pushHeroRoster = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
+export const importHuntPack = createServerFn({ method: "POST" })
+  .validator((d: { payload: string; roster?: { id: string; level: number; gild: number; prestige: number; craft: number; down?: number }[] }) => d)
+  .middleware([authMiddleware])
+  .handler(async ({ context, data }) => {
+    const raw = String(data.payload ?? "");
+    if (!raw || raw.length > PAYLOAD_MAX) throw new Error("Hunt code is too large.");
+    JSON.parse(raw);
+    const { getSql } = await import("@/lib/db");
+    const sql = await getSql();
+    await assertNotBanned(sql, context.userId);
+    await sql`
+      insert into game_saves (user_id, payload, updated_at)
+      values (${context.userId}, ${raw}, now())
+      on conflict (user_id) do update set payload = excluded.payload, updated_at = now()
+    `;
+    const roster = Array.isArray(data.roster) ? data.roster : [];
+    for (const row of roster) {
+      const id = String(row.id ?? "").slice(0, 24);
+      if (!id) continue;
+      const level = Math.max(0, Math.min(10000, Math.floor(Number(row.level) || 0)));
+      const gild = Math.max(0, Math.min(1e9, Math.floor(Number(row.gild) || 0)));
+      const prestige = Math.max(0, Math.min(1000, Math.floor(Number(row.prestige) || 0)));
+      const craft = Math.max(0, Math.min(20, Math.floor(Number(row.craft) || 0)));
+      const down = Math.max(0, Math.floor(Number(row.down) || 0));
+      await sql`
+        insert into hero_progress (user_id, hero_id, level, gild, prestige, craft, down_until, updated_at)
+        values (${context.userId}, ${id}, ${level}, ${gild}, ${prestige}, ${craft}, ${down}, now())
+        on conflict (user_id, hero_id) do update set
+          level = greatest(hero_progress.level, excluded.level),
+          gild = greatest(hero_progress.gild, excluded.gild),
+          prestige = greatest(hero_progress.prestige, excluded.prestige),
+          craft = greatest(hero_progress.craft, excluded.craft),
+          down_until = excluded.down_until,
+          updated_at = now()
+      `;
+    }
+    return { ok: true as const };
+  });
+
 export const staffStatus = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
