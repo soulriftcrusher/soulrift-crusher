@@ -26,6 +26,26 @@ function Login() {
   const [err, setErr] = useState("");
   const social = grokSocialOk();
 
+  async function googleSignIn() {
+    setErr("");
+    setBusy(true);
+    try {
+      if (grokSocialOk()) {
+        await signIn("grok-google", { callbackURL: "/" });
+        return;
+      }
+      const { data, error } = await authClient.signIn.social({
+        provider: "google",
+        callbackURL: "/",
+      });
+      if (error) throw new Error(error.message ?? "Google sign-in failed");
+      if (data?.url) window.location.assign(data.url);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Google sign-in failed");
+      setBusy(false);
+    }
+  }
+
   async function emailAuth(mode: "in" | "up") {
     setErr("");
     setBusy(true);
@@ -70,9 +90,32 @@ function Login() {
         <p className="font-display text-xs tracking-[0.28em] text-muted uppercase">Required to hunt</p>
         <h1 className="font-display mt-2 text-3xl font-semibold tracking-tight">Sign in to hunt</h1>
         <p className="mt-3 text-sm leading-relaxed text-muted">
-          Use your email on this site. Google login only works on the old grok.me link.
+          Continue with Google, or use email so your hunter stays on this name.
         </p>
         <div className="mt-8 flex flex-col gap-3">
+          {authEnabled ? (
+            <Button
+              size="lg"
+              className="h-12 w-full font-display tracking-wide"
+              disabled={busy}
+              onClick={() => void googleSignIn()}
+            >
+              Continue with Google
+            </Button>
+          ) : null}
+          {authEnabled && social
+            ? GROK_PROVIDERS.filter((p) => p.providerId !== "grok-google").map((p) => (
+                <Button
+                  key={p.providerId}
+                  size="lg"
+                  variant="outline"
+                  className="h-12 w-full font-display tracking-wide"
+                  onClick={() => signIn(p.providerId, { callbackURL: "/" })}
+                >
+                  Continue with {p.label}
+                </Button>
+              ))
+            : null}
           <div className="rounded-md border border-gold/40 bg-bg/50 p-3">
             <input
               type="email"
@@ -109,19 +152,6 @@ function Login() {
               Create hunter
             </Button>
           </div>
-          {authEnabled && social
-            ? GROK_PROVIDERS.map((p) => (
-                <Button
-                  key={p.providerId}
-                  size="lg"
-                  variant="outline"
-                  className="h-12 w-full font-display tracking-wide"
-                  onClick={() => signIn(p.providerId, { callbackURL: "/" })}
-                >
-                  Continue with {p.label}
-                </Button>
-              ))
-            : null}
           <div className="mt-4 grid grid-cols-2 gap-2">
             <a href="/guide" className="grid h-11 place-items-center rounded-md border border-gold/40 text-sm text-gold">
               How to hunt
