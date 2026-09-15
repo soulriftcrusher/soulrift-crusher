@@ -13,4 +13,6 @@ screenshots/
 .pglite/
 data/
 *.tgz
+*.tar.gz
+snapshots/*.tar.gz
 .DS_Store

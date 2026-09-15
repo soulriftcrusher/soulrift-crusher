@@ -72,6 +72,19 @@ export const RUNE_JOB: Record<RuneStat, string> = {
   luck: "Chest drops",
 };
 
+export const RUNE_BLURB: Record<RuneStat, string> = {
+  dps: "The whole warband hits harder. Socket it on anyone — the bonus is shared.",
+  gold: "Every kill drops more gold.",
+  crit: "More of your hits land as criticals.",
+  click: "Your taps hit harder.",
+  soul: "Kills and bosses drop more souls.",
+  siege: "Your clan earns more siege points.",
+  boss: "Bosses take extra damage.",
+  haste: "Party skills come back faster.",
+  idle: "More gold while you're away from the hunt.",
+  luck: "Chests drop more often from kills.",
+};
+
 export const RUNE_STATS: RuneStat[] = [
   "dps",
   "gold",
@@ -106,6 +119,17 @@ export function describeRune(r: Pick<OwnedRune, "stat" | "value">): string {
   const job = RUNE_JOB[r.stat] ?? "Power";
   return `${job} +${pct}%`;
 }
+
+export function runeArt(stat: RuneStat): string {
+  return RUNE_STATS.includes(stat) ? `/sprites/runes/${stat}.jpg` : "/sprites/runes/dps.jpg";
+}
+
+export const RARITY_RING: Record<RuneRarity, string> = {
+  1: "border-muted",
+  2: "border-soul",
+  3: "border-accent",
+  4: "border-gold",
+};
 
 export const RARITY_NAME = ["", "Common", "Rare", "Epic", "Legend"] as const;
 export const RARITY_VALUE: Record<RuneRarity, number> = { 1: 0.04, 2: 0.08, 3: 0.14, 4: 0.22 };

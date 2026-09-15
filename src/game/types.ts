@@ -139,6 +139,7 @@ export type HeroSnap = {
   canAfford: boolean;
   unlocked: boolean;
   gildCost: number;
+  gildCount: number;
   canGild: boolean;
   acquire: "gold" | "gems" | "summon";
   gemCost: number;

@@ -32,7 +32,7 @@ export const WHEEL_SLICES: WheelSlice[] = [
   { id: "dust", name: "Dust", gold: 40, weight: 14 },
   { id: "g6", name: "6 gems", gems: 6, weight: 7 },
   { id: "souls", name: "2 souls", souls: 2, weight: 3 },
-  { id: "jack", name: "JACKPOT", jackpot: true, weight: 2 },
+  { id: "jack", name: "A spark", jackpot: true, weight: 2 },
 ];
 
 function rng(): number {

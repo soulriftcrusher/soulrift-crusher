@@ -57,7 +57,7 @@ export function HuntPanel() {
     const items: { id: HuntPage; label: string; blurb: string; icon: typeof Trophy; ping?: boolean }[] = [
       { id: "inbox", label: "Inbox", blurb: "Mail and free gifts.", icon: Inbox },
       { id: "shop", label: "Shop", blurb: "Gems, Soul Well, relics, weapons.", icon: ShoppingBag },
-      { id: "wheel", label: "Fortune wheel", blurb: "2% jackpot. Gems feed the pot.", icon: CircleDot, ping: snap.wheelReady },
+      { id: "wheel", label: "Fortune wheel", blurb: "Daily spin. Gold, souls, chests, gems.", icon: CircleDot, ping: snap.wheelReady },
       { id: "raid", label: "Raids", blurb: "Shield up. Hit unshielded camps.", icon: Shield, ping: !snap.shieldOn },
       { id: "looks", label: "Looks", blurb: "Frames, name color, kill splash. No power.", icon: Palette },
       { id: "daily", label: "Daily login", blurb: "Free gems every day.", icon: Sparkles, ping: snap.dailyReady },

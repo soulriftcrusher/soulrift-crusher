@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { formatNum, formatTime } from "@/game/format";
+import { formatTime } from "@/game/format";
 import { WHEEL_SLICES, type WheelSlice } from "@/game/cash";
 import { sfx, unlockAudio } from "@/game/audio";
 import { sim } from "@/game/sim";
 import { useGame } from "@/game/store";
-import { cn } from "@/lib/utils";
 
 const SLICE = 360 / WHEEL_SLICES.length;
 
@@ -60,11 +59,7 @@ export function WheelPage({ onClose }: { onClose: () => void }) {
         </button>
       </div>
       <p className="mt-1 text-sm text-muted">
-        Jackpot {((snap.wheelChance ?? 0.02) * 100).toFixed(1)}%. Gem spins raise it. Hit it, or wait 24h, and it drops back to 2%.
-      </p>
-      <p className="text-[11px] text-muted">
-        Pot {formatNum(snap.wheelPot)} gems
-        {snap.wheelDecayIn > 0 ? ` · chance drops in ${formatTime(snap.wheelDecayIn / 1000)}` : ""}
+        One free spin a day. Extra spins cost gems.
       </p>
       <div className="relative mx-auto mt-4 size-64">
         <div className="absolute left-1/2 top-0 z-10 h-4 w-3 -translate-x-1/2 rounded-b-sm bg-gold" />
@@ -77,22 +72,16 @@ export function WheelPage({ onClose }: { onClose: () => void }) {
           }}
         />
         <div className="pointer-events-none absolute inset-8 grid place-items-center rounded-full border border-gold/40 bg-bg/80">
-          <p className="font-display text-center text-sm text-gold">{formatNum(snap.wheelPot)}</p>
-          <p className="text-[10px] text-muted">JACKPOT</p>
+          <p className="font-display text-center text-sm text-gold">SPIN</p>
         </div>
       </div>
       <ul className="mt-3 grid grid-cols-2 gap-1 text-[11px] text-muted">
         {WHEEL_SLICES.map((s) => (
-          <li key={s.id} className={cn(s.jackpot && "text-gold")}>
-            {s.name}
-            {s.jackpot ? ` · ${((snap.wheelChance ?? 0.02) * 100).toFixed(1)}%` : ""}
-          </li>
+          <li key={s.id}>{s.name}</li>
         ))}
       </ul>
       {hit ? (
-        <p className="mt-3 text-center font-display text-gold">
-          {hit.jackpot ? hit.name : `Landed · ${hit.name}`}
-        </p>
+        <p className="mt-3 text-center font-display text-gold">Landed · {hit.name}</p>
       ) : null}
       <div className="mt-3 grid grid-cols-2 gap-2">
         <Button className="h-12" disabled={spinning || !snap.wheelReady} onClick={() => spin(false)}>
@@ -107,19 +96,17 @@ export function WheelPage({ onClose }: { onClose: () => void }) {
           Spin · {snap.wheelCost} gems
         </Button>
       </div>
-      <p className="mt-2 text-center text-[11px] text-muted">
-        80% of gems spent go into the pot. Chance +0.5% per gem spin, cap 20%. Resets to 2% on jackpot or after 24h.
-      </p>
+      <p className="mt-2 text-center text-[11px] text-muted">Close anytime. The wheel keeps spinning until it lands.</p>
     </div>
   );
 }
 
 function conic(): string {
   const n = WHEEL_SLICES.length;
-  const bits = WHEEL_SLICES.map((s, i) => {
+  const bits = WHEEL_SLICES.map((_, i) => {
     const a = (i / n) * 360;
     const b = ((i + 1) / n) * 360;
-    const c = s.jackpot ? "#d4b483" : i % 2 === 0 ? "#2a1f1c" : "#1a1413";
+    const c = i % 2 === 0 ? "#2a1f1c" : "#1a1413";
     return `${c} ${a}deg ${b}deg`;
   });
   return `conic-gradient(from -90deg, ${bits.join(", ")})`;

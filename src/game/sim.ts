@@ -500,13 +500,39 @@ export class GameSim {
     return true;
   }
 
-  gildHero(id: HeroId): boolean {
+  gildCount(gilds: number, souls: number, bulk: Bulk): number {
+    if (souls < 1 + gilds) return 0;
+    if (bulk === -1) {
+      const a = 2 * gilds + 1;
+      const disc = a * a + 8 * souls;
+      const n = Math.floor((-a + Math.sqrt(Math.max(0, disc))) / 2);
+      return Math.max(0, Math.min(20000, n));
+    }
+    let n = 0;
+    let left = souls;
+    while (n < bulk) {
+      const c = 1 + gilds + n;
+      if (left < c) break;
+      left -= c;
+      n += 1;
+    }
+    return n;
+  }
+
+  gildSpend(gilds: number, n: number): number {
+    if (n <= 0) return 0;
+    return n * (1 + gilds) + (n * (n - 1)) / 2;
+  }
+
+  gildHero(id: HeroId, bulk: Bulk = 1): boolean {
     if ((this.state.heroLevel[id] ?? 0) <= 0) return false;
     const gilds = this.state.heroGild[id] ?? 0;
-    const cost = 1 + gilds;
+    const n = this.gildCount(gilds, this.state.souls, bulk);
+    if (n <= 0) return false;
+    const cost = this.gildSpend(gilds, n);
     if (this.state.souls < cost) return false;
     this.state.souls -= cost;
-    this.state.heroGild[id] = gilds + 1;
+    this.state.heroGild[id] = gilds + n;
     this.save();
     this.pingHeroes();
     return true;
@@ -1473,7 +1499,7 @@ export class GameSim {
       this.state.wheelChance = WHEEL_JACKPOT_CHANCE;
       this.state.wheelBoostAt = now;
       this.save();
-      return { ...hit, name: `JACKPOT · ${pot} gems`, gems: pot };
+      return { ...hit, name: `${pot} gems`, gems: pot };
     }
     if (hit.gems) this.state.gems += hit.gems;
     if (hit.gold) this.state.gold += hit.gold * this.goldMult();
@@ -1677,7 +1703,8 @@ export class GameSim {
       const n = this.bulkLevels(h.id, bulk);
       const cost = this.heroCost(h.id, level, Math.max(1, n));
       const gilds = this.state.heroGild[h.id] ?? 0;
-      const gildCost = 1 + gilds;
+      const gildN = this.gildCount(gilds, this.state.souls, bulk);
+      const gildCost = gildN > 0 ? this.gildSpend(gilds, gildN) : 1 + gilds;
       const craft = this.state.heroCraft[h.id] ?? 0;
       const cc = craftCost(craft);
       const prestige = this.state.heroPrestige?.[h.id] ?? 0;
@@ -1699,7 +1726,8 @@ export class GameSim {
         canAfford: this.state.gold >= cost && level < HERO_LEVEL_CAP && (level > 0 || (h.acquire === "gold" && this.state.maxFloor >= h.unlockFloor)),
         unlocked: level > 0 || (h.acquire === "gold" && this.state.maxFloor >= h.unlockFloor),
         gildCost,
-        canGild: this.state.souls >= gildCost && level > 0,
+        gildCount: Math.max(1, gildN),
+        canGild: gildN > 0,
         acquire: h.acquire,
         gemCost: h.gemCost,
         canGemHire: h.acquire === "gems" && level <= 0 && this.state.gems >= h.gemCost,

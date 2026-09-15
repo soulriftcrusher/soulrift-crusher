@@ -39,7 +39,7 @@ import { formatNum, formatTime } from "@/game/format";
 import { setHuntName, staffStatus, claimStaff } from "@/game/net";
 import { redeemCode } from "@/game/live-net";
 import { readHuntName, writeHuntName } from "@/game/name";
-import { stackRunes, describeRune, RARITY_NAME } from "@/game/gear";
+import { stackRunes, describeRune, runeArt, RARITY_NAME, RARITY_RING, RUNE_BLURB, RUNE_JOB, type OwnedRune } from "@/game/gear";
 import { NAME_CLASS, SPLASH_COLOR, type LookId } from "@/game/cash";
 import { APP_VERSION, PATCHES } from "@/game/patch-notes";
 import { markPatchSeen } from "@/game/prefs";
@@ -474,14 +474,26 @@ function Battle() {
           <Ghost className="size-3 text-soul" />
           {(snap.floor % 10) || 10} / 10
         </p>
-        <div className="h-2 w-40 overflow-hidden rounded-full border border-gold/40 bg-bg/70">
-          <div className="h-full bg-accent" style={{ width: `${Math.max(2, (snap.monsterHp / Math.max(1, snap.monsterMax)) * 100)}%` }} />
+        <div className="h-2.5 w-44 overflow-hidden rounded-full border border-gold/40 bg-bg/80">
+          <div
+            className={cn(
+              "h-full",
+              snap.monsterHp / Math.max(1, snap.monsterMax) > 0.5
+                ? "bg-hp"
+                : snap.monsterHp / Math.max(1, snap.monsterMax) > 0.2
+                  ? "bg-gold"
+                  : "bg-danger",
+            )}
+            style={{ width: `${Math.max(2, (snap.monsterHp / Math.max(1, snap.monsterMax)) * 100)}%` }}
+          />
         </div>
         <p className="font-display text-sm tracking-wide text-[#f0e6d8] uppercase">
           {snap.monsterName}
           {snap.isBoss ? " · Boss" : ""}
         </p>
-        <p className="text-[11px] text-gold">{formatNum(snap.monsterHp)}</p>
+        <p className="text-[11px] text-gold">
+          {formatNum(snap.monsterHp)} / {formatNum(snap.monsterMax)}
+        </p>
         {snap.isBoss && snap.bossMaxTime > 0 ? (
           <div className="h-1.5 w-40 overflow-hidden rounded-full border border-gold/30 bg-bg/70">
             <div className="h-full bg-accent" style={{ width: `${Math.max(2, (snap.bossTime / snap.bossMaxTime) * 100)}%` }} />
@@ -643,33 +655,58 @@ function HeroPanel() {
   const refresh = useGame((s) => s.refresh);
   const bulk = useGame((s) => s.bulk);
   const selected = useGame((s) => s.selectedHero);
+  const [runesOpen, setRunesOpen] = useState(false);
+  const [peek, setPeek] = useState<RunePeek | null>(null);
+  const target = (selected as HeroId) || (snap.heroes.find((h) => h.level > 0)?.id as HeroId | undefined) || "kael";
   return (
     <div className="pt-3">
       <div className="mb-2 flex gap-1">
-        {([1, 10, 25, 100] as const).map((n) => (
+        {([1, 10, 25, 100, -1] as const).map((n) => (
           <button
             key={n}
             type="button"
             className={cn("h-9 flex-1 rounded-md border text-xs", bulk === n ? "border-gold text-gold" : "border-border text-muted")}
             onClick={() => useGame.getState().setBulk(n)}
           >
-            x{n}
+            {n === -1 ? "MAX" : `x${n}`}
           </button>
         ))}
       </div>
-      <Button className="mb-3 h-11 w-full" onClick={() => { if (sim.hireOrUpgradeAll(bulk)) { sfx.ui(); refresh(); } }}>
+      <Button className="mb-2 h-11 w-full" onClick={() => { if (sim.hireOrUpgradeAll(bulk)) { sfx.ui(); refresh(); } }}>
         Hire / upgrade all
+      </Button>
+      <Button variant="secondary" className="mb-3 h-11 w-full" onClick={() => { sfx.ui(); setRunesOpen(true); }}>
+        Runes
       </Button>
       <ul className="flex flex-col gap-2">
         {snap.heroes.map((hero) => (
-          <HeroRow key={hero.id} hero={hero} open={selected === hero.id} />
+          <HeroRow key={hero.id} hero={hero} open={selected === hero.id} onPeek={setPeek} />
         ))}
       </ul>
+      {runesOpen && !peek ? <RuneBagModal target={target} onPeek={setPeek} onClose={() => setRunesOpen(false)} /> : null}
+      {peek ? (
+        <RuneSheet
+          peek={peek}
+          onClose={() => setPeek(null)}
+          onChange={() => {
+            refresh();
+            setPeek(null);
+          }}
+        />
+      ) : null}
     </div>
   );
 }
 
-function HeroRow({ hero, open }: { hero: HeroSnap; open: boolean }) {
+type RunePeek = {
+  rune: OwnedRune;
+  count: number;
+  ids: string[];
+  worn?: { heroId: HeroId; slot: number };
+  target: HeroId;
+};
+
+function HeroRow({ hero, open, onPeek }: { hero: HeroSnap; open: boolean; onPeek: (p: RunePeek) => void }) {
   const refresh = useGame((s) => s.refresh);
   const bulk = useGame((s) => s.bulk);
   const snap = useGame((s) => s.snap);
@@ -744,14 +781,23 @@ function HeroRow({ hero, open }: { hero: HeroSnap; open: boolean }) {
             <Button
               variant="secondary"
               onClick={() => {
-                if (sim.gildHero(hero.id as HeroId)) {
+                if (sim.gildHero(hero.id as HeroId, bulk)) {
                   sfx.ui();
                   refresh();
                 }
               }}
             >
-              Gild {hero.gildCost} souls · ★{hero.stars}
+              {bulk === -1
+                ? `Gild MAX · ${formatNum(hero.gildCost)} souls`
+                : bulk > 1
+                  ? `Gild x${hero.gildCount} · ${formatNum(hero.gildCost)} souls`
+                  : `Gild ${formatNum(hero.gildCost)} souls · ★${hero.stars}`}
             </Button>
+          ) : null}
+          {hero.level > 0 ? (
+            <p className="text-[11px] text-muted">
+              Gild stamps this hero with souls. Each stamp +50% their damage forever. Stars stop at 5. Stamped {hero.gilds} times. The x10 / x25 / x100 / MAX row applies here too.
+            </p>
           ) : null}
           {hero.canCraft ? (
             <Button
@@ -791,18 +837,29 @@ function HeroRow({ hero, open }: { hero: HeroSnap; open: boolean }) {
                   <button
                     key={`${hero.id}-slot-${i}`}
                     type="button"
-                    className="h-11 min-w-0 flex-1 rounded-md border border-gold/40 px-1 text-[10px] text-gold"
+                    className={cn(
+                      "flex h-16 min-w-0 flex-1 items-center gap-1 rounded-md border px-1 text-left text-[10px] text-gold",
+                      rune ? RARITY_RING[rune.rarity] : "border-gold/40",
+                    )}
                     onClick={() => {
-                      if (rune && sim.detachRune(hero.id as HeroId, i)) {
-                        sfx.ui();
-                        refresh();
-                      }
+                      if (!rune) return;
+                      sfx.ui();
+                      onPeek({
+                        rune,
+                        count: 1,
+                        ids: [rune.id],
+                        worn: { heroId: hero.id as HeroId, slot: i },
+                        target: hero.id as HeroId,
+                      });
                     }}
                   >
                     {rune ? (
                       <>
-                        {rune.name}
-                        <span className="block text-muted">{describeRune(rune)}</span>
+                        <img src={runeArt(rune.stat)} alt="" className="size-10 shrink-0 rounded object-cover" />
+                        <span className="min-w-0">
+                          {rune.name}
+                          <span className="block text-muted">{describeRune(rune)}</span>
+                        </span>
                       </>
                     ) : (
                       "Empty"
@@ -814,13 +871,28 @@ function HeroRow({ hero, open }: { hero: HeroSnap; open: boolean }) {
                 <ul className="mt-2 flex flex-col gap-1">
                   {bag.map((row) => (
                     <li key={row.sample.id} className="flex items-center gap-2 rounded-md border border-border px-2 py-1">
-                      <p className="min-w-0 flex-1 text-[11px] text-fg">
-                        {row.sample.name}
-                        {row.count > 1 ? ` ×${row.count}` : ""}
-                        <span className="block text-muted">
-                          {RARITY_NAME[row.sample.rarity]} · {describeRune(row.sample)}
-                        </span>
-                      </p>
+                      <button
+                        type="button"
+                        className="flex min-w-0 flex-1 items-center gap-2 text-left"
+                        onClick={() => {
+                          sfx.ui();
+                          onPeek({
+                            rune: row.sample,
+                            count: row.count,
+                            ids: row.ids,
+                            target: hero.id as HeroId,
+                          });
+                        }}
+                      >
+                        <img src={runeArt(row.sample.stat)} alt="" className="size-10 shrink-0 rounded object-cover" />
+                        <p className="min-w-0 flex-1 text-[11px] text-fg">
+                          {row.sample.name}
+                          {row.count > 1 ? ` ×${row.count}` : ""}
+                          <span className="block text-muted">
+                            {RARITY_NAME[row.sample.rarity]} · {describeRune(row.sample)}
+                          </span>
+                        </p>
+                      </button>
                       <button
                         type="button"
                         className="h-9 shrink-0 rounded-md bg-surface-2 px-3 text-xs text-gold"
@@ -839,13 +911,157 @@ function HeroRow({ hero, open }: { hero: HeroSnap; open: boolean }) {
                   ))}
                 </ul>
               ) : (
-                <p className="mt-2 text-[11px] text-fg/70">Bosses, chests, and the event shop drop runes. Socket one per empty slot. Tap a socketed rune to pull it off.</p>
+                <p className="mt-2 text-[11px] text-fg/70">Bosses, chests, and the event shop drop runes. Tap a rune for its picture and what it does. Socket from there.</p>
               )}
             </div>
           ) : null}
         </div>
       ) : null}
     </li>
+  );
+}
+
+function RuneBagModal({
+  target,
+  onPeek,
+  onClose,
+}: {
+  target: HeroId;
+  onPeek: (p: RunePeek) => void;
+  onClose: () => void;
+}) {
+  const snap = useGame((s) => s.snap);
+  const wornIds = new Set(snap.heroes.flatMap((h) => h.attached.map((a) => a?.id).filter(Boolean) as string[]));
+  const bag = stackRunes(snap.runeBag.filter((r) => !wornIds.has(r.id)));
+  const worn = snap.heroes.flatMap((h) =>
+    h.attached
+      .map((rune, slot) => (rune ? { rune, heroId: h.id as HeroId, slot, heroName: HEROES.find((x) => x.id === h.id)?.name ?? h.id } : null))
+      .filter(Boolean) as { rune: OwnedRune; heroId: HeroId; slot: number; heroName: string }[],
+  );
+  return (
+    <Modal onClose={onClose} title="Runes">
+      {worn.length ? (
+        <>
+          <p className="text-[11px] tracking-wide text-gold uppercase">Socketed</p>
+          <ul className="mt-1 flex flex-col gap-1">
+            {worn.map((row) => (
+              <li key={row.rune.id}>
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-3 rounded-md border border-gold/40 bg-wood px-2 py-2 text-left"
+                  onClick={() =>
+                    onPeek({
+                      rune: row.rune,
+                      count: 1,
+                      ids: [row.rune.id],
+                      worn: { heroId: row.heroId, slot: row.slot },
+                      target: row.heroId,
+                    })
+                  }
+                >
+                  <img src={runeArt(row.rune.stat)} alt="" className="size-14 rounded object-cover" />
+                  <span className="min-w-0">
+                    <span className="font-display text-gold">{row.rune.name}</span>
+                    <span className="block text-[11px] text-muted">
+                      On {row.heroName} · {describeRune(row.rune)}
+                    </span>
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
+      <p className="mt-3 text-[11px] tracking-wide text-gold uppercase">In bag</p>
+      {bag.length ? (
+        <ul className="mt-1 flex flex-col gap-1">
+          {bag.map((row) => (
+            <li key={row.sample.id}>
+              <button
+                type="button"
+                className="flex w-full items-center gap-3 rounded-md border border-border bg-surface px-2 py-2 text-left"
+                onClick={() =>
+                  onPeek({
+                    rune: row.sample,
+                    count: row.count,
+                    ids: row.ids,
+                    target,
+                  })
+                }
+              >
+                <img src={runeArt(row.sample.stat)} alt="" className="size-14 rounded object-cover" />
+                <span className="min-w-0">
+                  <span className="font-display text-gold">
+                    {row.sample.name}
+                    {row.count > 1 ? ` ×${row.count}` : ""}
+                  </span>
+                  <span className="block text-[11px] text-muted">
+                    {RARITY_NAME[row.sample.rarity]} · {describeRune(row.sample)}
+                  </span>
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-1 text-sm text-muted">Bag is empty. Bosses, chests, and the event shop drop runes.</p>
+      )}
+    </Modal>
+  );
+}
+
+function RuneSheet({ peek, onClose, onChange }: { peek: RunePeek; onClose: () => void; onChange: () => void }) {
+  const snap = useGame((s) => s.snap);
+  const hero = HEROES.find((h) => h.id === peek.target);
+  const wornHero = peek.worn ? HEROES.find((h) => h.id === peek.worn!.heroId) : null;
+  const openHero = snap.heroes.find((h) => h.id === peek.target);
+  const empty = openHero ? openHero.attached.findIndex((a, i) => i < openHero.runeSlots && !a) : -1;
+  const wornId = peek.ids.find((id) => snap.heroes.some((h) => h.attached.some((a) => a?.id === id))) ?? peek.ids[0];
+  return (
+    <Modal onClose={onClose} title={peek.rune.name}>
+      <img
+        src={runeArt(peek.rune.stat)}
+        alt=""
+        className="mx-auto aspect-square w-40 rounded-lg border border-gold/40 object-cover"
+      />
+      <p className="mt-3 text-center text-sm text-gold">
+        {RARITY_NAME[peek.rune.rarity]}
+        {peek.count > 1 ? ` · ×${peek.count}` : ""}
+      </p>
+      <p className="mt-2 text-center font-display text-lg text-fg">{describeRune(peek.rune)}</p>
+      <p className="mt-2 text-center text-sm text-muted">{RUNE_BLURB[peek.rune.stat] ?? RUNE_JOB[peek.rune.stat]}</p>
+      {wornHero ? (
+        <p className="mt-2 text-center text-[11px] text-gold">Socketed on {wornHero.name}</p>
+      ) : (
+        <p className="mt-2 text-center text-[11px] text-muted">In your bag{hero ? ` · socket on ${hero.name}` : ""}</p>
+      )}
+      {peek.worn ? (
+        <Button
+          className="mt-4 h-12 w-full"
+          onClick={() => {
+            if (sim.detachRune(peek.worn!.heroId, peek.worn!.slot)) {
+              sfx.ui();
+              onChange();
+            }
+          }}
+        >
+          Pull off
+        </Button>
+      ) : (
+        <Button
+          className="mt-4 h-12 w-full"
+          disabled={empty < 0 || !wornId}
+          onClick={() => {
+            if (empty >= 0 && wornId && sim.attachRune(peek.target, empty, wornId)) {
+              sfx.ui();
+              onChange();
+            }
+          }}
+        >
+          {empty < 0 ? "No empty slot" : `Socket on ${hero?.name ?? "hero"}`}
+        </Button>
+      )}
+    </Modal>
   );
 }
 
