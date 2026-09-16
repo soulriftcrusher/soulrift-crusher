@@ -61,7 +61,7 @@ export function HuntPanel() {
       { id: "calendar", label: "30-day stamp", blurb: "Bigger gems all month.", icon: CalendarDays, ping: snap.monthReady },
       { id: "pass", label: "Battle pass", blurb: "Kill monsters, climb ranks.", icon: Trophy, ping: snap.bpFreeReady + snap.bpPremReady > 0 },
       { id: "market", label: "Black market", blurb: "Today's cheap deals.", icon: ShoppingBag },
-      { id: "jobs", label: "Contracts", blurb: "Jobs for gold and chests.", icon: ScrollText, ping: snap.contracts.some((c) => c.ready && !c.claimed) },
+      { id: "jobs", label: "Contracts", blurb: "Jobs for gold and chests.", icon: ScrollText, ping: snap.contracts?.some((c) => c.ready && !c.claimed) },
       { id: "chests", label: "Chests", blurb: "Open loot you earned.", icon: Gem, ping: snap.chests > 0 },
       { id: "expedition", label: "Expedition", blurb: "Send one hero away 2 hours. Gold, a soul, maybe a chest.", icon: Flag, ping: snap.expeditionReady },
       { id: "arena", label: "Arena", blurb: "Duel. Fallen heroes need revive.", icon: Swords },
@@ -239,7 +239,7 @@ export function HuntPanel() {
             </Button>
           </div>
         ) : null}
-        {snap.contracts.some((c) => c.ready && !c.claimed) ? (
+        {snap.contracts?.some((c) => c.ready && !c.claimed) ? (
           <Button
             className="mb-2 h-11 w-full"
             onClick={() => {
@@ -254,7 +254,7 @@ export function HuntPanel() {
           </Button>
         ) : null}
         <ul className="flex flex-col gap-2">
-          {snap.contracts.filter((c) => !c.claimed).map((c) => (
+          {(snap.contracts ?? []).filter((c) => !c.claimed).map((c) => (
             <ContractRow
               key={c.kind}
               contract={c}

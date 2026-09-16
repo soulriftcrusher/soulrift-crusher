@@ -96,9 +96,16 @@ export function CloudSync() {
       void flushHeroes().catch(() => undefined);
     };
     const onHeroes = () => {
+      if (useGame.getState().kicked) return;
       sim.save();
       void flushHeroes().catch(() => undefined);
-      if (ready.current) pushCloudSave({ data: { payload: dump() } }).catch(() => undefined);
+      if (ready.current) {
+        pushCloudSave({ data: { payload: dump(), device: getDeviceId(), steal: false } })
+          .then((r) => {
+            if (r.kicked) useGame.getState().setKicked(true);
+          })
+          .catch(() => undefined);
+      }
     };
     const id = window.setInterval(push, 20000);
     const onHide = () => {
