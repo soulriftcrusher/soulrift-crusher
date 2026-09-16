@@ -47,6 +47,13 @@ export function PrivacyDoc({ onBack, onGo }: { onBack?: () => void; onGo?: (id: 
         roster to run the hunt. The live hunt is hosted by the app publisher’s cloud. Google Play
         sees only what you give Play (your Google account, installs, reviews).
       </p>
+      <h2 className="font-display text-lg text-gold">Ads</h2>
+      <p>
+        Ads are not on yet. When they go live they will be from a real network (AdMob or AdSense),
+        with a banner and optional rewarded spins. We will not invent fake ads. Device advertising
+        IDs, if used then, follow that network’s policy. You can keep hunting without watching a
+        rewarded ad.
+      </p>
       <h2 className="font-display text-lg text-gold">Kids</h2>
       <p>Soulrift Crusher is for ages 13 and up. Do not make an account for a younger child.</p>
       <h2 className="font-display text-lg text-gold">Your choices</h2>

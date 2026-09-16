@@ -54,12 +54,19 @@ function Login() {
         await signIn("grok-google", { callbackURL: afterLogin, errorCallbackURL: "/login?err=google" });
         return;
       }
-      await signIn("google", { callbackURL: afterLogin, errorCallbackURL: "/login?err=google" });
+      const { data, error } = await authClient.signIn.oauth2({
+        providerId: "google",
+        callbackURL: afterLogin,
+        errorCallbackURL: "/login?err=google",
+      });
+      if (error) throw new Error(error.message ?? "Google sign-in failed");
+      if (!data?.url) throw new Error("Google didn’t open. Sign in with email.");
+      window.location.assign(data.url);
     } catch (e) {
       const m = e instanceof Error ? e.message : "Google sign-in failed";
       setErr(
         /provider not found/i.test(m)
-          ? "Google isn’t live on this build yet. Use email, or Redeploy after the Google keys."
+          ? "Google isn’t live on this build yet. Use email."
           : m,
       );
       setBusy(false);
@@ -118,7 +125,7 @@ function Login() {
         crossOrigin="anonymous"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/80 to-bg/40" />
-      <div className="relative z-10 mx-auto flex w-full max-w-sm flex-1 flex-col justify-end px-5 pb-[max(2rem,env(safe-area-inset-bottom))] pt-16">
+      <div className="relative z-10 mx-auto flex min-h-0 w-full max-w-sm flex-1 flex-col overflow-y-auto px-5 pt-12">
         <p className="font-display text-xs tracking-[0.28em] text-muted uppercase">Required to hunt</p>
         <h1 className="font-display mt-2 text-3xl font-semibold tracking-tight">Sign in to hunt</h1>
         <p className="mt-3 text-sm leading-relaxed text-muted">
@@ -138,7 +145,7 @@ function Login() {
             </p>
           </div>
         ) : null}
-        <div className="mt-8 flex flex-col gap-3">
+        <div className="mt-5 flex flex-col gap-3 pb-3">
           {authEnabled ? (
             <Button
               size="lg"
@@ -146,7 +153,7 @@ function Login() {
               disabled={busy}
               onClick={() => void googleSignIn()}
             >
-              Continue with Google
+              {busy ? "Opening Google…" : "Continue with Google"}
             </Button>
           ) : null}
           {authEnabled && social
@@ -214,22 +221,24 @@ function Login() {
               </p>
             ) : null}
           </div>
-          <div className="mt-4 grid grid-cols-2 gap-2">
-            <a href="/guide" className="grid h-11 place-items-center rounded-md border border-gold/40 text-sm text-gold">
-              How to hunt
-            </a>
-            <a href="/privacy" className="grid h-11 place-items-center rounded-md border border-gold/40 text-sm text-gold">
-              Privacy Policy
-            </a>
-            <a href="/support" className="grid h-11 place-items-center rounded-md border border-gold/40 text-sm text-gold">
-              Support
-            </a>
-            <a href="/copyright" className="grid h-11 place-items-center rounded-md border border-gold/40 text-sm text-gold">
-              Copyright
-            </a>
-          </div>
-          <p className="mt-2 text-center text-[10px] text-muted">© 2026 Soulrift Crusher. All rights reserved.</p>
         </div>
+      </div>
+      <div className="relative z-10 mx-auto w-full max-w-sm shrink-0 bg-gradient-to-t from-bg via-bg/95 to-transparent px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2">
+        <div className="grid grid-cols-2 gap-2">
+          <a href="/guide" className="grid h-11 place-items-center rounded-md border border-gold/40 bg-bg/70 text-sm text-gold">
+            How to hunt
+          </a>
+          <a href="/privacy" className="grid h-11 place-items-center rounded-md border border-gold/40 bg-bg/70 text-sm text-gold">
+            Privacy Policy
+          </a>
+          <a href="/support" className="grid h-11 place-items-center rounded-md border border-gold/40 bg-bg/70 text-sm text-gold">
+            Support
+          </a>
+          <a href="/copyright" className="grid h-11 place-items-center rounded-md border border-gold/40 bg-bg/70 text-sm text-gold">
+            Copyright
+          </a>
+        </div>
+        <p className="mt-2 text-center text-[10px] text-muted">© 2026 Soulrift Crusher. All rights reserved.</p>
       </div>
     </main>
   );

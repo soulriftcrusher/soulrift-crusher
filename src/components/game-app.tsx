@@ -28,7 +28,9 @@ import { CraftPage } from "@/components/craft-page";
 import { HuntPanel } from "@/components/hunt-panel";
 import { HeroFace } from "@/components/hero-face";
 import { HunterCard } from "@/components/hunter-card";
+import { AdBanner } from "@/components/ad-banner";
 import { LegalOverlay } from "@/components/legal-overlay";
+import { adsReady } from "@/game/ads";
 import { MoveHunt } from "@/components/move-hunt";
 import { RealmPanel } from "@/components/realm-panel";
 import { StaffPanel } from "@/components/staff-panel";
@@ -154,7 +156,7 @@ function TitleScreen() {
         crossOrigin="anonymous"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/35 to-transparent" />
-      <div className="relative z-10 flex h-full flex-col items-center px-5 pt-12 pb-[max(2rem,env(safe-area-inset-bottom))]">
+      <div className="relative z-10 flex h-full flex-col items-center overflow-y-auto px-5 pt-12 pb-[max(2rem,env(safe-area-inset-bottom))]">
         <p className="font-display text-xs tracking-[0.32em] text-gold uppercase">Idle dungeon RPG</p>
         <h1 className="font-display mt-2 text-center text-5xl leading-none font-semibold text-gold drop-shadow">
           Soulrift
@@ -219,18 +221,18 @@ function TitleScreen() {
                 Share this hunt
               </Button>
               <div className="mt-2 grid grid-cols-2 gap-2">
-                <button type="button" onClick={() => useGame.getState().setLegalPage("guide")} className="grid h-11 place-items-center rounded-md border border-gold/40 text-sm text-gold">
+                <button type="button" onClick={() => useGame.getState().setLegalPage("guide")} className="grid h-11 place-items-center rounded-md border border-gold/40 bg-bg/60 text-sm text-gold">
                   How to hunt
                 </button>
-                <Link to="/privacy" className="grid h-11 place-items-center rounded-md border border-gold/40 text-sm text-gold">
+                <button type="button" onClick={() => useGame.getState().setLegalPage("privacy")} className="grid h-11 place-items-center rounded-md border border-gold/40 bg-bg/60 text-sm text-gold">
                   Privacy Policy
-                </Link>
-                <button type="button" onClick={() => useGame.getState().setLegalPage("support")} className="grid h-11 place-items-center rounded-md border border-gold/40 text-sm text-gold">
+                </button>
+                <button type="button" onClick={() => useGame.getState().setLegalPage("support")} className="grid h-11 place-items-center rounded-md border border-gold/40 bg-bg/60 text-sm text-gold">
                   Support
                 </button>
-                <Link to="/copyright" className="grid h-11 place-items-center rounded-md border border-gold/40 text-sm text-gold">
+                <button type="button" onClick={() => useGame.getState().setLegalPage("copyright")} className="grid h-11 place-items-center rounded-md border border-gold/40 bg-bg/60 text-sm text-gold">
                   Copyright
-                </Link>
+                </button>
               </div>
               <p className="text-center text-[10px] text-muted">© 2026 Soulrift Crusher. All rights reserved.</p>
             </div>
@@ -329,7 +331,12 @@ function PlayScreen() {
           ) : (
             <Battle />
           )}
-          {desk ? null : <TabBar />}
+          {desk ? null : (
+            <>
+              <AdBanner />
+              <TabBar />
+            </>
+          )}
         </div>
       </div>
       {offlineGold > 0 ? <OfflineModal gold={offlineGold} /> : null}
@@ -1150,6 +1157,9 @@ function SettingsModal() {
           <span>Reduce particles</span>
           <input type="checkbox" checked={reduceFx} onChange={(e) => useGame.getState().setReduceFx(e.target.checked)} className="size-5 accent-accent" />
         </label>
+        <p className="mt-2 text-xs leading-relaxed text-muted">
+          Ads: {adsReady() ? "live on this hunt." : "wired, waiting on a network ID. No fake ads, no extra gem buttons until then."}
+        </p>
         <div className="mt-2">
           <p className="text-xs text-gold">Board</p>
           <div className="mt-1 flex gap-1">

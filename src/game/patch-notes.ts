@@ -1,6 +1,6 @@
 /** Simple update number you and Grok share. Say "go back to Update N" to restore that snapshot. */
-export const APP_VERSION = "2";
-export const UPDATE_NO = 2;
+export const APP_VERSION = "3";
+export const UPDATE_NO = 3;
 
 export type Patch = {
   version: string;
@@ -10,6 +10,18 @@ export type Patch = {
 };
 
 export const PATCHES: Patch[] = [
+  {
+    version: "3",
+    date: "Sep 16, 2026",
+    title: "Wheel, legal row, color",
+    lines: [
+      "Fortune wheel is a real Wheel of Fortune — slices, pointer, it spins.",
+      "Support and Copyright stay on screen at login. Privacy and Copyright on the title stay in the hunt.",
+      "Richer gold, ember, teal, and green. No pink.",
+      "Ads are wired and off until a real network ID is set.",
+      "If this update bugs out, tell Grok: go back to Update 2.",
+    ],
+  },
   {
     version: "2",
     date: "Sep 14, 2026",

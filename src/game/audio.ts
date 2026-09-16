@@ -159,6 +159,9 @@ export const sfx = {
   ui() {
     tone(520, "sine", 0.05, 0.03);
   },
+  tick() {
+    tone(880 + Math.random() * 80, "square", 0.03, 0.025);
+  },
   fail() {
     tone(110, "square", 0.2, 0.07);
     tone(82, "sawtooth", 0.28, 0.05);
