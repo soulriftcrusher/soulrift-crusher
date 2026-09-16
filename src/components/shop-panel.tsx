@@ -177,12 +177,12 @@ export function ShopPanel() {
           <h3 className="font-display text-base font-semibold">Gem shop</h3>
         </div>
         <p className="mt-2 text-sm leading-relaxed text-muted">
-          Apple and Google only take card money inside their stores. First Blood is $0.99 once — 10× the purse, plus looks.
+          Apple and Google only take card money inside their stores. First Blood is $0.99 once — 10× the purse.
         </p>
         {!snap.firstBuy ? (
           <div className="mt-3 rounded-md border border-gold/50 bg-gold/10 px-3 py-3">
             <p className="font-display text-sm text-gold">First Blood · {FIRST_PACK_USD}</p>
-            <p className="text-xs text-muted">{FIRST_PACK_GEMS} gems · gilt frame · gold name · First Coin title. Once.</p>
+            <p className="text-xs text-muted">{FIRST_PACK_GEMS} gems. Once.</p>
             <Button
               className="mt-2 h-12 w-full"
               onClick={() => {
@@ -194,11 +194,11 @@ export function ShopPanel() {
                 queueIap({ data: { packId: "firstblood" } })
                   .then((r) => {
                     useGame.getState().setShopNote(
-                      `${r.pack} (${r.usd}) queued for Play. Gems and looks are on you now.`,
+                      `${r.pack} (${r.usd}) queued for Play. Gems are on you now.`,
                     );
                   })
                   .catch(() => {
-                    useGame.getState().setShopNote("Looks and gems are yours. Play charges $0.99 when the listing is live.");
+                    useGame.getState().setShopNote("Gems are yours. Play charges $0.99 when the listing is live.");
                   });
               }}
             >

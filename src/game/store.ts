@@ -35,8 +35,7 @@ export type HuntPage =
   | "ritual"
   | "shop"
   | "wheel"
-  | "raid"
-  | "looks";
+  | "raid";
 
 export type LegalPageId = "privacy" | "copyright" | "support" | "guide" | null;
 
