@@ -46,11 +46,10 @@ function Back({ children }: { children: ReactNode }) {
 }
 
 export function HuntPanel() {
-  const pageRaw = useGame((s) => s.huntPage);
+  const page = useGame((s) => s.huntPage);
   const setPage = useGame((s) => s.setHuntPage);
   const snap = useGame((s) => s.snap);
   const refresh = useGame((s) => s.refresh);
-  const page = (pageRaw as string) === "looks" ? "hub" : pageRaw;
 
   if (page === "hub") {
     const items: { id: HuntPage; label: string; blurb: string; icon: typeof Trophy; ping?: boolean }[] = [

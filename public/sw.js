@@ -1,4 +1,4 @@
-const CACHE = "soulrift-shell-v7";
+const CACHE = "soulrift-shell-v8";
 const PRECACHE = ["/", "/manifest.webmanifest", "/icon-192.png", "/icon-512.png"];
 const BG_DB = "soulrift-bg";
 const BG_STORE = "kv";
@@ -42,8 +42,6 @@ self.addEventListener("fetch", (event) => {
           res.ok &&
           (url.pathname.endsWith(".png") ||
             url.pathname.endsWith(".webmanifest") ||
-            url.pathname.endsWith(".js") ||
-            url.pathname.endsWith(".css") ||
             url.pathname === "/")
         ) {
           const copy = res.clone();
