@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
+import { cleanChat } from "@/game/guard";
 import { LOOT, type LootId } from "./loot";
 
 export type ChatMsg = {
@@ -52,14 +53,6 @@ const NPC_CHAT: { name: string; body: string }[] = [
   { name: "Void Choir", body: "Anyone selling soul plumes?" },
   { name: "Iron Hymn", body: "Hammer's hot. Random smash ate my jaw." },
 ];
-
-function cleanChat(raw: unknown): string {
-  return String(raw ?? "")
-    .replace(/[<>]/g, "")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, 120);
-}
 
 function cleanItems(raw: unknown): Record<LootId, number> {
   const out = {} as Record<LootId, number>;

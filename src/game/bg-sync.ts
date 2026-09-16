@@ -8,6 +8,7 @@ export type BgPayload = {
   power?: number;
   maxFloor?: number;
   avatar?: string;
+  device?: string;
   alerts?: boolean;
   at?: number;
 };
@@ -98,6 +99,7 @@ export async function flushBackgroundNow(): Promise<void> {
       power: payload.power,
       maxFloor: payload.maxFloor,
       avatar: payload.avatar,
+      device: payload.device,
     }),
   });
 }

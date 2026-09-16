@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { formatNum, formatTime } from "@/game/format";
 import { HunterName } from "@/components/hunter-card";
+import { getDeviceId } from "@/game/device";
 import { readHuntName } from "@/game/name";
 import { ARENA_REVIVE_GEMS, HEROES, heroPortrait } from "@/game/data";
 import { challengeCrusader, heartbeat, type RivalSnap } from "@/game/net";
@@ -34,9 +35,17 @@ export function ArenaDuel() {
         name: readHuntName(user.displayName ?? "Crusader"),
         power: snap.dps + snap.clickDmg * 0.35,
         maxFloor: snap.maxFloor,
+        device: getDeviceId(),
+        steal: false,
       },
     })
-      .then((w) => setRivals(w.rivals))
+      .then((w) => {
+        if (w.kicked) {
+          useGame.getState().setKicked(true);
+          return;
+        }
+        setRivals(w.rivals);
+      })
       .catch(() => undefined);
   }, [user, snap.dps, snap.maxFloor]);
 

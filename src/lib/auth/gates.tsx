@@ -55,7 +55,7 @@ export function UserButton() {
   // shows it is working and cannot be fired twice.
   const [signingOut, setSigningOut] = useState(false);
   if (!user) return null;
-  const label = user.displayName ?? user.primaryEmail ?? "Account";
+  const label = user.displayName ?? "Account";
   return (
     <div className="flex items-center gap-2">
       {user.profileImageUrl ? (

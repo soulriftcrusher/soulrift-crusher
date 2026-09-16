@@ -63,6 +63,7 @@ export type WorldSnap = {
   members: ClanMemberSnap[];
   rivals: RivalSnap[];
   board: BoardClan[];
+  kicked?: boolean;
 };
 
 const PAYLOAD_MAX = 400_000;
@@ -292,28 +293,49 @@ async function loadWorld(sql: Sql, userId: string): Promise<WorldSnap> {
 }
 
 export const heartbeat = createServerFn({ method: "POST" })
-  .validator((d: { name: string; power: number; maxFloor: number; avatar?: string }) => d)
+  .validator((d: { name: string; power: number; maxFloor: number; avatar?: string; device?: string; steal?: boolean }) => d)
   .middleware([authMiddleware])
   .handler(async ({ context, data }): Promise<WorldSnap> => {
     const { getSql } = await import("@/lib/db");
     const sql = await getSql();
     await ensureCrusader(sql, context.userId, data);
+    const { takeSeat } = await import("./seat.server");
+    const seat = await takeSeat(sql, context.userId, data.device ?? "", Boolean(data.steal));
+    if (seat === "kicked") {
+      return {
+        kicked: true,
+        name: "",
+        power: 0,
+        maxFloor: 1,
+        online: 0,
+        avatar: "kael",
+        raidReadyIn: 0,
+        duelReadyIn: 0,
+        clan: null,
+        members: [],
+        rivals: [],
+        board: [],
+      };
+    }
     const { ensureShard } = await import("./shard-net");
     await ensureShard(sql, context.userId);
     return loadWorld(sql, context.userId);
   });
 
 export const pulse = createServerFn({ method: "POST" })
-  .validator((d: { name: string; power: number; maxFloor: number; avatar?: string }) => d)
+  .validator((d: { name: string; power: number; maxFloor: number; avatar?: string; device?: string; steal?: boolean }) => d)
   .middleware([authMiddleware])
   .handler(async ({ context, data }) => {
     const { getSql } = await import("@/lib/db");
     const sql = await getSql();
     await ensureCrusader(sql, context.userId, data);
+    const { takeSeat } = await import("./seat.server");
+    const seat = await takeSeat(sql, context.userId, data.device ?? "", Boolean(data.steal));
+    if (seat === "kicked") return { online: 0, kicked: true as const };
     const online = await sql<{ n: number }>`
       select count(*)::int as n from crusaders where last_seen > now() - interval '2 minutes'
     `;
-    return { online: Number(online[0]?.n ?? 1) };
+    return { online: Number(online[0]?.n ?? 1), kicked: false as const };
   });
 
 export const setHuntName = createServerFn({ method: "POST" })
@@ -583,7 +605,7 @@ export const pullCloudSave = createServerFn({ method: "GET" })
   });
 
 export const pushCloudSave = createServerFn({ method: "POST" })
-  .validator((d: { payload: string }) => d)
+  .validator((d: { payload: string; device?: string; steal?: boolean }) => d)
   .middleware([authMiddleware])
   .handler(async ({ context, data }) => {
     const raw = String(data.payload ?? "");
@@ -592,6 +614,9 @@ export const pushCloudSave = createServerFn({ method: "POST" })
     const { getSql } = await import("@/lib/db");
     const sql = await getSql();
     await assertNotBanned(sql, context.userId);
+    const { takeSeat } = await import("./seat.server");
+    const seat = await takeSeat(sql, context.userId, data.device ?? "", Boolean(data.steal));
+    if (seat === "kicked") return { ok: false as const, kicked: true as const };
     const { applyIncoming, mergeProgress } = await import("./save");
     const incoming = applyIncoming(JSON.parse(raw));
     const have = await sql<{ payload: string }>`select payload from game_saves where user_id = ${context.userId}`;
@@ -604,7 +629,7 @@ export const pushCloudSave = createServerFn({ method: "POST" })
       values (${context.userId}, ${payload}, now())
       on conflict (user_id) do update set payload = excluded.payload, updated_at = now()
     `;
-    return { ok: true as const };
+    return { ok: true as const, kicked: false as const };
   });
 
 export const pullHeroRoster = createServerFn({ method: "GET" })

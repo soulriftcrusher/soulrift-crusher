@@ -166,6 +166,8 @@ export function Guide({ onBack }: { onBack?: () => void } = {}) {
         <ul className="mt-3 list-disc space-y-2 pl-5 text-sm">
           <li>Don’t tap Reset crusade unless you mean to wipe the phone save.</li>
           <li>Don’t skip sign-in if you want to play with friends. Local save stays on one device.</li>
+          <li>Don’t play the same hunter on two devices at once — the new one kicks the old one off.</li>
+          <li>Don’t share your email, password, or hunt code. Staff will never ask for them in chat.</li>
         </ul>
 
         <p className="mt-8 text-sm text-muted">

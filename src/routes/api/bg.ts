@@ -13,6 +13,7 @@ export const Route = createFileRoute("/api/bg")({
             power?: number;
             maxFloor?: number;
             avatar?: string;
+            device?: string;
           };
           const { applyBackgroundSync } = await import("@/game/bg.server");
           const result = await applyBackgroundSync(userId, body ?? {});

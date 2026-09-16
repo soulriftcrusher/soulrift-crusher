@@ -29,6 +29,7 @@ import { HuntPanel } from "@/components/hunt-panel";
 import { HeroFace } from "@/components/hero-face";
 import { HunterCard } from "@/components/hunter-card";
 import { AdBanner } from "@/components/ad-banner";
+import { DeviceGate } from "@/components/device-gate";
 import { LegalOverlay } from "@/components/legal-overlay";
 import { adsReady } from "@/game/ads";
 import { MoveHunt } from "@/components/move-hunt";
@@ -103,6 +104,7 @@ export function GameApp() {
       <div className={shell}>
         {screen === "title" ? <TitleScreen /> : <PlayScreen />}
         <LegalOverlay />
+        <DeviceGate />
         {moveHuntOpen ? <MoveHunt /> : null}
       </div>
     </div>

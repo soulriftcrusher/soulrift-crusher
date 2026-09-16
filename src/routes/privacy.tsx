@@ -33,7 +33,13 @@ export function PrivacyDoc({ onBack, onGo }: { onBack?: () => void; onGo?: (id: 
       <h2 className="font-display text-lg text-gold">What we do not collect</h2>
       <p>
         We do not ask for your phone number, address, payment card, or precise location. In-hunt
-        gems are not real-money purchases in this version.
+        gems are not real-money purchases in this version. Other hunters never see your email,
+        password, or hunt code. Chat strips emails and hunt codes if someone tries to paste them.
+      </p>
+      <h2 className="font-display text-lg text-gold">One device</h2>
+      <p>
+        A crusade can only be live on one device at a time. Opening it on a second phone or PC
+        kicks the first off. You can switch devices; you cannot play both at once.
       </p>
       <h2 className="font-display text-lg text-gold">Your login</h2>
       <p>

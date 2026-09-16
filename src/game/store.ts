@@ -65,6 +65,7 @@ type GameUI = {
   onlineCount: number;
   isStaff: boolean;
   demoHunt: boolean;
+  kicked: boolean;
   snap: Snapshot;
   setScreen: (s: GameUI["screen"]) => void;
   setTab: (t: Tab) => void;
@@ -91,6 +92,7 @@ type GameUI = {
   setOnlineCount: (n: number) => void;
   setIsStaff: (v: boolean) => void;
   setDemoHunt: (v: boolean) => void;
+  setKicked: (v: boolean) => void;
   refresh: () => void;
 };
 
@@ -157,6 +159,7 @@ export const useGame = create<GameUI>((set, get) => {
   onlineCount: 0,
   isStaff: readStaffFlag(),
   demoHunt: isDemoHunt(),
+  kicked: false,
   snap: sim.snapshot(1),
   setScreen: (screen) => {
     markHunting(screen === "play");
@@ -200,6 +203,7 @@ export const useGame = create<GameUI>((set, get) => {
     set({ isStaff });
   },
   setDemoHunt: (demoHunt) => set({ demoHunt }),
+  setKicked: (kicked) => set({ kicked }),
   refresh: () => set({ snap: sim.snapshot(get().bulk) }),
   };
 });

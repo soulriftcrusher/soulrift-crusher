@@ -47,10 +47,13 @@ async function touchCrusader(
 
 export async function applyBackgroundSync(
   userId: string,
-  body: { save?: string; name?: string; power?: number; maxFloor?: number; avatar?: string },
-): Promise<{ ok: true; saved: boolean }> {
+  body: { save?: string; name?: string; power?: number; maxFloor?: number; avatar?: string; device?: string },
+): Promise<{ ok: true; saved: boolean; kicked?: boolean }> {
   const { getSql } = await import("@/lib/db");
   const sql = await getSql();
+  const { takeSeat } = await import("./seat.server");
+  const seat = await takeSeat(sql, userId, body.device ?? "", false);
+  if (seat === "kicked") return { ok: true, saved: false, kicked: true };
   let saved = false;
   const raw = typeof body.save === "string" ? body.save : "";
   if (raw) {

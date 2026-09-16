@@ -19,6 +19,8 @@ export const PATCHES: Patch[] = [
       "Support and Copyright stay on screen at login. Privacy and Copyright on the title stay in the hunt.",
       "Richer gold, ember, teal, and green. No pink.",
       "Ads are wired and off until a real network ID is set.",
+      "One live device per hunt — a second phone or PC kicks the first off.",
+      "Chat hides emails and hunt codes. Other hunters never see your login.",
       "If this update bugs out, tell Grok: go back to Update 2.",
     ],
   },

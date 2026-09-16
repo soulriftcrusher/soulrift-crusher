@@ -6,6 +6,7 @@ import { applyIncoming, applyRoster, recoverSave, rosterFromState } from "@/game
 import { sim } from "@/game/sim";
 import { useGame } from "@/game/store";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { getDeviceId } from "@/game/device";
 import { isDemoHunt } from "@/game/demo-flag";
 
 function dump(): string {
@@ -13,6 +14,7 @@ function dump(): string {
 }
 
 function queueCloud(name: string) {
+  if (useGame.getState().kicked) return;
   const snap = useGame.getState().snap;
   void queueBackgroundSync({
     save: dump(),
@@ -20,6 +22,7 @@ function queueCloud(name: string) {
     power: snap.dps + snap.clickDmg * 0.35,
     maxFloor: snap.maxFloor,
     avatar: snap.avatarHero,
+    device: getDeviceId(),
   });
 }
 
@@ -39,7 +42,8 @@ export function CloudSync() {
     }
     let alive = true;
     ready.current = false;
-    const name = readHuntName(user.displayName ?? user.primaryEmail ?? "Crusader");
+    const name = readHuntName(user.displayName ?? "Crusader");
+    let steal = true;
 
     async function boot() {
       try {
@@ -65,7 +69,11 @@ export function CloudSync() {
         sim.save();
         useGame.getState().refresh();
         queueCloud(name);
-        await Promise.all([pushCloudSave({ data: { payload: dump() } }), flushHeroes().catch(() => undefined)]);
+        await Promise.all([
+          pushCloudSave({ data: { payload: dump(), device: getDeviceId(), steal: true } }),
+          flushHeroes().catch(() => undefined),
+        ]);
+        steal = false;
         ready.current = true;
       } catch {
         queueCloud(name);
@@ -76,10 +84,15 @@ export function CloudSync() {
     void boot();
 
     const push = () => {
-      if (!ready.current) return;
+      if (!ready.current || useGame.getState().kicked) return;
       sim.save();
       queueCloud(name);
-      pushCloudSave({ data: { payload: dump() } }).catch(() => queueCloud(name));
+      pushCloudSave({ data: { payload: dump(), device: getDeviceId(), steal } })
+        .then((r) => {
+          steal = false;
+          if (r.kicked) useGame.getState().setKicked(true);
+        })
+        .catch(() => queueCloud(name));
       void flushHeroes().catch(() => undefined);
     };
     const onHeroes = () => {

@@ -20,6 +20,7 @@ import { ArenaDuel } from "@/components/arena-duel";
 import { HunterName } from "@/components/hunter-card";
 import { FriendsPanel } from "@/components/friends-panel";
 import { queueBackgroundSync } from "@/game/bg-sync";
+import { getDeviceId } from "@/game/device";
 import { readHuntName } from "@/game/name";
 import { formatNum, formatTime } from "@/game/format";
 import { HeroFace } from "@/components/hero-face";
@@ -61,18 +62,27 @@ export function ClanSync() {
 
   useEffect(() => {
     if (isPending || !user) return;
+    let steal = true;
     const tick = () => {
       if (document.visibilityState === "hidden") return;
+      if (useGame.getState().kicked) return;
       const snap = useGame.getState().snap;
       const body = {
-        name: readHuntName(user.displayName ?? user.primaryEmail ?? "Crusader"),
+        name: readHuntName(user.displayName ?? "Crusader"),
         power: snap.dps + snap.clickDmg * 0.35,
         maxFloor: snap.maxFloor,
         avatar: snap.avatarHero || "kael",
+        device: getDeviceId(),
+        steal,
       };
+      steal = false;
       void queueBackgroundSync(body);
       heartbeat({ data: body })
         .then((next) => {
+          if (next.kicked) {
+            useGame.getState().setKicked(true);
+            return;
+          }
           useGame.getState().setOnlineCount(next.online);
           if (next.clan) {
             const b = clanBonuses(next.clan.influence, next.clan.science, next.clan.memberCount);
@@ -115,12 +125,18 @@ export function ClanPanel() {
     if (!user) return;
     const next = await heartbeat({
       data: {
-        name: readHuntName(user.displayName ?? user.primaryEmail ?? "Crusader"),
+        name: readHuntName(user.displayName ?? "Crusader"),
         power: snap.dps + snap.clickDmg * 0.35,
         maxFloor: snap.maxFloor,
         avatar: snap.avatarHero || "kael",
+        device: getDeviceId(),
+        steal: false,
       },
     });
+    if (next.kicked) {
+      useGame.getState().setKicked(true);
+      return;
+    }
     setWorld(next);
     useGame.getState().setOnlineCount(next.online);
     if (next.clan) {
