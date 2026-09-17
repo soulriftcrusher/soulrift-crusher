@@ -126,15 +126,15 @@ export function WheelPage({ onClose }: { onClose: () => void }) {
           <circle cx="100" cy="100" r="18" fill="url(#hubGem)" stroke="#5a2010" strokeWidth="2" />
         </svg>
         <img
-          src="/wheel/rim.png?v=2"
+          src="/wheel/rim.png?v=4"
           alt=""
-          className="pointer-events-none absolute inset-0 z-10 size-full object-contain"
+          className="pointer-events-none absolute inset-0 z-10 size-full"
           crossOrigin="anonymous"
         />
         <img
-          src="/wheel/rim-lights.png?v=1"
+          src="/wheel/rim-lights.png?v=4"
           alt=""
-          className="wheel-lights pointer-events-none absolute inset-0 z-[11] size-full object-contain"
+          className="wheel-lights pointer-events-none absolute inset-0 z-[11] size-full"
           crossOrigin="anonymous"
         />
         <div className="pointer-events-none absolute top-[7%] left-1/2 z-20 -translate-x-1/2 drop-shadow">
