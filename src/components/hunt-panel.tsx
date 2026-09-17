@@ -6,7 +6,7 @@ import { HuntCalendar, HuntPass, HuntPlay, HuntCard, HuntCodex } from "@/compone
 import { WheelPage } from "@/components/wheel-page";
 import { RaidPage } from "@/components/raid-page";
 import { WEEKLY_LOGIN, marketPrize } from "@/game/liveops";
-import { HEROES } from "@/game/data";
+import { HEROES, heroPortrait } from "@/game/data";
 import { EVENT_SHOP } from "@/game/gear";
 import { prizeArt } from "@/game/prize-art";
 import { formatNum, formatTime } from "@/game/format";
@@ -568,9 +568,17 @@ function ExpeditionBox() {
       </p>
       {snap.expeditionHero ? (
         <>
-          <p className="mt-3 text-sm">
-            {snap.expeditionName} {snap.expeditionReady ? "is back with loot." : `returns in ${formatTime(snap.expeditionLeft / 1000)}`}
-          </p>
+          <div className="mt-3 flex items-center gap-3">
+            <img
+              src={heroPortrait(snap.expeditionHero)}
+              alt=""
+              className="size-16 rounded-lg border-2 border-gold object-cover"
+              crossOrigin="anonymous"
+            />
+            <p className="text-sm">
+              {snap.expeditionName} {snap.expeditionReady ? "is back with loot." : `returns in ${formatTime(snap.expeditionLeft / 1000)}`}
+            </p>
+          </div>
           {snap.expeditionReady ? (
             <Button
               className="mt-2 h-12 w-full"
@@ -589,12 +597,12 @@ function ExpeditionBox() {
           )}
         </>
       ) : (
-        <div className="mt-3 flex flex-wrap gap-1">
+        <div className="mt-3 grid grid-cols-4 gap-2">
           {ready.slice(0, 8).map((h) => (
             <button
               key={h.id}
               type="button"
-              className="h-11 rounded-md border border-gold/40 px-3 text-sm text-gold"
+              className="flex flex-col items-center gap-1 rounded-lg border border-gold/40 bg-bg/50 p-1.5 text-gold"
               onClick={() => {
                 unlockAudio();
                 if (sim.startExpedition(h.id)) {
@@ -603,7 +611,13 @@ function ExpeditionBox() {
                 }
               }}
             >
-              Send {HEROES.find((x) => x.id === h.id)?.name ?? h.id}
+              <img
+                src={heroPortrait(h.id)}
+                alt=""
+                className="size-14 rounded-md object-cover"
+                crossOrigin="anonymous"
+              />
+              <span className="font-display text-[11px] leading-tight">{HEROES.find((x) => x.id === h.id)?.name ?? h.id}</span>
             </button>
           ))}
           {ready.length === 0 ? <p className="text-xs text-muted">Hire someone first, then send them out.</p> : null}
