@@ -296,7 +296,7 @@ export class Renderer {
       "hound",
     ]) {
       jobs.push(
-        loadImage(`/sprites/monsters/${kind}.png?v=5`)
+        loadImage(`/sprites/monsters/${kind}.png?v=6`)
           .then((img) => {
             this.monsters.set(kind, img);
           })

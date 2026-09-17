@@ -118,7 +118,7 @@ export const HEROES: HeroDef[] = [
     costScale: 1.07,
     baseDps: 1.4,
     baseClick: 3,
-    sprite: "/sprites/kael.png?v=4",
+    sprite: "/sprites/kael.png?v=5",
     passive: "Click damage",
     unlockFloor: 1,
     mark: "K",
@@ -135,7 +135,7 @@ export const HEROES: HeroDef[] = [
     costScale: 1.07,
     baseDps: 6,
     baseClick: 0,
-    sprite: "/sprites/rook.png?v=4",
+    sprite: "/sprites/rook.png?v=5",
     passive: "+8% party damage",
     unlockFloor: 1,
     mark: "R",
@@ -152,7 +152,7 @@ export const HEROES: HeroDef[] = [
     costScale: 1.07,
     baseDps: 28,
     baseClick: 0,
-    sprite: "/sprites/lyra.png?v=4",
+    sprite: "/sprites/lyra.png?v=5",
     passive: "+12% critical chance",
     unlockFloor: 1,
     mark: "L",
@@ -169,7 +169,7 @@ export const HEROES: HeroDef[] = [
     costScale: 1.07,
     baseDps: 96,
     baseClick: 0,
-    sprite: "/sprites/vex.png?v=4",
+    sprite: "/sprites/vex.png?v=5",
     passive: "+18% gold",
     unlockFloor: 1,
     mark: "V",
@@ -186,7 +186,7 @@ export const HEROES: HeroDef[] = [
     costScale: 1.07,
     baseDps: 340,
     baseClick: 0,
-    sprite: "/sprites/thane.png?v=4",
+    sprite: "/sprites/thane.png?v=5",
     passive: "+25% boss damage",
     unlockFloor: 1,
     mark: "T",
@@ -203,7 +203,7 @@ export const HEROES: HeroDef[] = [
     costScale: 1.07,
     baseDps: 720,
     baseClick: 0,
-    sprite: "/sprites/sable.png?v=4",
+    sprite: "/sprites/sable.png?v=5",
     passive: "+40% critical damage",
     unlockFloor: 8,
     mark: "S",
@@ -220,7 +220,7 @@ export const HEROES: HeroDef[] = [
     costScale: 1.07,
     baseDps: 1280,
     baseClick: 0,
-    sprite: "/sprites/morr.png?v=4",
+    sprite: "/sprites/morr.png?v=5",
     passive: "+20% souls",
     unlockFloor: 1,
     mark: "M",
@@ -237,7 +237,7 @@ export const HEROES: HeroDef[] = [
     costScale: 1.07,
     baseDps: 3100,
     baseClick: 0,
-    sprite: "/sprites/iskra.png?v=4",
+    sprite: "/sprites/iskra.png?v=5",
     passive: "+22% click damage",
     unlockFloor: 12,
     mark: "I",
@@ -254,7 +254,7 @@ export const HEROES: HeroDef[] = [
     costScale: 1.07,
     baseDps: 6400,
     baseClick: 0,
-    sprite: "/sprites/brann.png?v=4",
+    sprite: "/sprites/brann.png?v=5",
     passive: "+24% gold",
     unlockFloor: 16,
     mark: "B",
@@ -271,7 +271,7 @@ export const HEROES: HeroDef[] = [
     costScale: 1.07,
     baseDps: 9800,
     baseClick: 0,
-    sprite: "/sprites/devourer.png?v=4",
+    sprite: "/sprites/devourer.png?v=5",
     passive: "+30% all damage, soul steal",
     unlockFloor: 22,
     mark: "D",
@@ -288,7 +288,7 @@ export const HEROES: HeroDef[] = [
     costScale: 1.07,
     baseDps: 22000,
     baseClick: 0,
-    sprite: "/sprites/nyx.png?v=4",
+    sprite: "/sprites/nyx.png?v=5",
     passive: "+18% skill haste",
     unlockFloor: 30,
     mark: "N",
@@ -305,7 +305,7 @@ export const HEROES: HeroDef[] = [
     costScale: 1.07,
     baseDps: 41000,
     baseClick: 0,
-    sprite: "/sprites/kira.png?v=4",
+    sprite: "/sprites/kira.png?v=5",
     passive: "+10% click and crit",
     unlockFloor: 1,
     mark: "J",
@@ -322,7 +322,7 @@ export const HEROES: HeroDef[] = [
     costScale: 1.07,
     baseDps: 88000,
     baseClick: 0,
-    sprite: "/sprites/orin.png?v=4",
+    sprite: "/sprites/orin.png?v=5",
     passive: "+28% gold",
     unlockFloor: 1,
     mark: "O",
@@ -339,7 +339,7 @@ export const HEROES: HeroDef[] = [
     costScale: 1.07,
     baseDps: 4.2e5,
     baseClick: 0,
-    sprite: "/sprites/vorr.png?v=4",
+    sprite: "/sprites/vorr.png?v=5",
     passive: "+40% all damage",
     unlockFloor: 1,
     mark: "V",
@@ -356,7 +356,7 @@ export const HEROES: HeroDef[] = [
     costScale: 1.07,
     baseDps: 8e6,
     baseClick: 0,
-    sprite: "/sprites/selene.png?v=4",
+    sprite: "/sprites/selene.png?v=5",
     passive: "+35% souls and gold",
     unlockFloor: 1,
     mark: "E",
@@ -373,7 +373,7 @@ export const HEROES: HeroDef[] = [
     costScale: 1.07,
     baseDps: 3e8,
     baseClick: 0,
-    sprite: "/sprites/ashur.png?v=4",
+    sprite: "/sprites/ashur.png?v=5",
     passive: "+50% gold",
     unlockFloor: 1,
     mark: "A",
@@ -390,7 +390,7 @@ export const HEROES: HeroDef[] = [
     costScale: 1.07,
     baseDps: 1.2e5,
     baseClick: 0,
-    sprite: "/sprites/dax.png?v=4",
+    sprite: "/sprites/dax.png?v=5",
     passive: "+16% boss damage",
     unlockFloor: 18,
     mark: "X",
@@ -407,7 +407,7 @@ export const HEROES: HeroDef[] = [
     costScale: 1.07,
     baseDps: 1.8e5,
     baseClick: 0,
-    sprite: "/sprites/wren.png?v=4",
+    sprite: "/sprites/wren.png?v=5",
     passive: "+12% party damage",
     unlockFloor: 20,
     mark: "W",
@@ -424,7 +424,7 @@ export const HEROES: HeroDef[] = [
     costScale: 1.07,
     baseDps: 2.6e5,
     baseClick: 0,
-    sprite: "/sprites/jora.png?v=4",
+    sprite: "/sprites/jora.png?v=5",
     passive: "+10% critical chance",
     unlockFloor: 24,
     mark: "J",
@@ -441,7 +441,7 @@ export const HEROES: HeroDef[] = [
     costScale: 1.07,
     baseDps: 4.1e5,
     baseClick: 0,
-    sprite: "/sprites/pike.png?v=4",
+    sprite: "/sprites/pike.png?v=5",
     passive: "+14% click damage",
     unlockFloor: 28,
     mark: "P",
@@ -557,19 +557,19 @@ export function heroPortrait(id: HeroId): string {
 export function arenaFoeArt(name: string): string {
   switch (name) {
     case "Ashen Pact":
-      return "/sprites/monsters/wraith.png?v=5";
+      return "/sprites/monsters/wraith.png?v=6";
     case "Rime Banner":
-      return "/sprites/monsters/rimeknight.png?v=5";
+      return "/sprites/monsters/rimeknight.png?v=6";
     case "Cinder Host":
-      return "/sprites/monsters/harpy.png?v=5";
+      return "/sprites/monsters/harpy.png?v=6";
     case "Void Choir":
-      return "/sprites/monsters/lich.png?v=5";
+      return "/sprites/monsters/lich.png?v=6";
     case "Gilded Teeth":
-      return "/sprites/monsters/hound.png?v=5";
+      return "/sprites/monsters/hound.png?v=6";
     case "Nightwell":
       return "/portraits/selene.jpg?v=4";
     case "Iron Hymn":
-      return "/sprites/monsters/golem.png?v=5";
+      return "/sprites/monsters/golem.png?v=6";
     case "Last Coin":
       return "/portraits/ashur.jpg?v=4";
     default:
