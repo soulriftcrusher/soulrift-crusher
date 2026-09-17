@@ -1,5 +1,4 @@
 import { useMemo, useState, type ReactNode } from "react";
-import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ShopPanel } from "@/components/shop-panel";
 import { formatNum } from "@/game/format";
@@ -259,7 +258,7 @@ function FullShell({
         )}
         <h2 className="font-display flex-1 text-center text-xl text-gold">{title}</h2>
         <button type="button" aria-label="Close" className="grid size-11 place-items-center text-gold" onClick={onClose}>
-          <X className="size-6" />
+          <img src="/tiles/hud-close.png" alt="" className="size-7 object-contain" crossOrigin="anonymous" />
         </button>
       </div>
       <div className="scroll-pane min-h-0 flex-1 px-2 pb-[max(1rem,env(safe-area-inset-bottom))]">{children}</div>

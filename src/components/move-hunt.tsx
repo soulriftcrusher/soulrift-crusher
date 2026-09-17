@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { pullCloudSave, pullHeroRoster, importHuntPack } from "@/game/net";
 import { encodeHuntPack, decodeHuntPack, MOVE_LABEL, COM_HUNT } from "@/game/migrate";
@@ -101,7 +100,7 @@ export function MoveHunt() {
       <header className="flex items-center justify-between border-b border-border px-3 py-2 pt-[max(0.5rem,env(safe-area-inset-top))]">
         <h1 className="font-display text-lg text-gold">Move my hunt</h1>
         <button type="button" aria-label="Close" className="grid size-11 place-items-center" onClick={close}>
-          <X className="size-5" />
+          <img src="/tiles/hud-close.png" alt="" className="size-6 object-contain" crossOrigin="anonymous" />
         </button>
       </header>
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col gap-3 overflow-y-auto px-4 py-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">

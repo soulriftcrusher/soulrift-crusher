@@ -1,13 +1,5 @@
 import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import {
-  Settings,
-  Share2,
-  TimerReset,
-  Volume2,
-  VolumeX,
-  X,
-} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ClanPanel, ClanSync } from "@/components/clan-panel";
 import { CloudSync } from "@/components/cloud-sync";
@@ -207,7 +199,7 @@ function TitleScreen() {
                   setShareOpen(true);
                 }}
               >
-                <Share2 className="size-4" />
+                <img src="/tiles/hud-share.png" alt="" className="size-5 object-contain" crossOrigin="anonymous" />
                 Share this hunt
               </Button>
               <div className="mt-2 grid grid-cols-2 gap-2">
@@ -385,10 +377,14 @@ function Hud() {
               unlockAudio();
             }}
           >
-            {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
+            {muted ? (
+              <img src="/tiles/hud-mute.png" alt="" className="size-6 object-contain" crossOrigin="anonymous" />
+            ) : (
+              <img src="/tiles/hud-volume.png" alt="" className="size-6 object-contain" crossOrigin="anonymous" />
+            )}
           </button>
           <button type="button" aria-label="Settings" className="grid size-9 place-items-center rounded-md" onClick={() => setSettingsOpen(true)}>
-            <Settings className="size-4" />
+            <img src="/tiles/hud-gear.png" alt="" className="size-6 object-contain" crossOrigin="anonymous" />
           </button>
         </span>
       </div>
@@ -688,8 +684,8 @@ function MenuPage({ title, bg, children }: { title: string; parchment?: boolean;
         <div className="flex shrink-0 items-center bg-wood/90 px-3 py-1">
           <span className="w-11" />
           <h2 className="font-display flex-1 text-center text-xl text-[#f0e6d8]">{title}</h2>
-          <button type="button" aria-label="Close" className="grid size-11 place-items-center text-[#f0e6d8]" onClick={() => setTab("fight")}>
-            <X className="size-6" />
+          <button type="button" aria-label="Close" className="grid size-11 place-items-center" onClick={() => setTab("fight")}>
+            <img src="/tiles/hud-close.png" alt="" className="size-7 object-contain" crossOrigin="anonymous" />
           </button>
         </div>
         <div className="scroll-pane min-h-0 flex-1 px-2 pb-[max(1rem,env(safe-area-inset-bottom))]">{children}</div>
@@ -1326,7 +1322,7 @@ function SettingsModal() {
             setShareOpen(true);
           }}
         >
-          <Share2 className="size-4" />
+          <img src="/tiles/hud-share.png" alt="" className="size-5 object-contain" crossOrigin="anonymous" />
           Share this hunt
         </Button>
         <Button
@@ -1412,7 +1408,6 @@ function SettingsModal() {
             close();
           }}
         >
-          <TimerReset className="size-4" />
           Reset crusade
         </Button>
       </Modal>
@@ -1566,20 +1561,29 @@ function ChestModal({ loot }: { loot: { gold: number; souls: number; influence: 
     loot.souls > 0 ? { art: prizeArt("souls"), label: formatNum(loot.souls), name: "Souls" } : null,
     loot.influence > 0 ? { art: "/tiles/clan.png", label: formatNum(loot.influence), name: "Influence" } : null,
   ].filter(Boolean) as { art: string; label: string; name: string }[];
+  const spots = [
+    { x: "-5.5rem", y: "-6.2rem" },
+    { x: "0rem", y: "-7.4rem" },
+    { x: "5.5rem", y: "-6.2rem" },
+  ];
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4" onClick={() => useGame.getState().setChestLoot(null)}>
       <div className="flex w-full max-w-sm flex-col items-center" onClick={(e) => e.stopPropagation()}>
-        <img src={prizeArt("chest")} alt="" className="chest-burst size-32 object-contain" crossOrigin="anonymous" />
-        <ul className="mt-4 flex flex-wrap justify-center gap-4">
+        <div className="relative h-56 w-full">
+          <img src={prizeArt("chest")} alt="" className="chest-burst absolute bottom-2 left-1/2 size-36 -translate-x-1/2 object-contain" crossOrigin="anonymous" />
           {bits.map((b, i) => (
-            <li key={b.name} className="loot-fly flex w-20 flex-col items-center" style={{ animationDelay: `${0.12 + i * 0.12}s` }}>
-              <img src={b.art} alt="" className="size-16 object-contain drop-shadow" crossOrigin="anonymous" />
-              <p className="mt-1 font-display text-sm text-gold">{b.label}</p>
+            <div
+              key={b.name}
+              className="loot-pop absolute bottom-16 left-1/2 flex w-24 flex-col items-center"
+              style={{ ["--dx" as string]: spots[i]?.x ?? "0rem", ["--dy" as string]: spots[i]?.y ?? "-6rem", animationDelay: `${0.08 + i * 0.1}s` }}
+            >
+              <img src={b.art} alt="" className="size-14 object-contain drop-shadow" crossOrigin="anonymous" />
+              <p className="font-display text-sm text-gold">{b.label}</p>
               <p className="text-[10px] tracking-wide text-muted uppercase">{b.name}</p>
-            </li>
+            </div>
           ))}
-        </ul>
-        <Button className="mt-5 h-12 w-full" onClick={() => useGame.getState().setChestLoot(null)}>
+        </div>
+        <Button className="mt-2 h-12 w-full" onClick={() => useGame.getState().setChestLoot(null)}>
           Take loot
         </Button>
       </div>
@@ -1608,7 +1612,7 @@ function Modal({ onClose, title, children }: { onClose: () => void; title: strin
         <div className="mb-3 flex items-center justify-between">
           <h3 className="font-display text-xl text-gold">{title}</h3>
           <button type="button" className="grid size-11 place-items-center rounded-md text-muted" onClick={onClose} aria-label="Close">
-            <X className="size-5" />
+            <img src="/tiles/hud-close.png" alt="" className="size-6 object-contain" crossOrigin="anonymous" />
           </button>
         </div>
         {children}

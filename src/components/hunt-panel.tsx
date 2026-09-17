@@ -294,12 +294,22 @@ export function HuntPanel() {
       <Back>
         <p className="text-center font-display text-lg text-gold">{snap.chests} chest{snap.chests === 1 ? "" : "s"}</p>
         <div className="mt-3 flex justify-center">
-          <img
-            src={prizeArt("chest")}
-            alt=""
-            className={cn("size-28 object-contain drop-shadow", snap.chests <= 0 ? "opacity-40" : "")}
-            crossOrigin="anonymous"
-          />
+          <button
+            type="button"
+            disabled={snap.chests <= 0}
+            className="disabled:opacity-40"
+            onClick={() => {
+              unlockAudio();
+              const loot = sim.openChest();
+              if (loot) {
+                sfx.chest();
+                useGame.getState().setChestLoot(loot);
+                refresh();
+              }
+            }}
+          >
+            <img src={prizeArt("chest")} alt="" className="size-28 object-contain drop-shadow" crossOrigin="anonymous" />
+          </button>
         </div>
         <div className="mt-3 flex gap-2">
           <Button
