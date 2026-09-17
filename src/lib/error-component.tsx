@@ -1,21 +1,28 @@
 import type { ErrorComponentProps } from "@tanstack/react-router";
-import { TriangleAlert } from "lucide-react";
 
 export function AppErrorComponent({ error }: ErrorComponentProps) {
+  const msg = error?.message || "";
+  const translateCrash = /removeChild|NotFoundError/i.test(msg);
+
+  function reload() {
+    window.location.href = "/";
+  }
+
   return (
-    <main
-      className={
-        "flex min-h-screen flex-col items-center justify-center gap-3 px-6 text-center " +
-        "bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50"
-      }
-    >
-      <span className="text-red-500" aria-hidden="true">
-        <TriangleAlert className="size-10" strokeWidth={2} />
-      </span>
-      <h1 className="text-lg font-semibold">Something went wrong</h1>
-      <p className="max-w-md text-sm break-words text-zinc-500 dark:text-zinc-400">
-        {error.message || "An unexpected error occurred. Try reloading the page."}
+    <main className="flex min-h-dvh flex-col items-center justify-center gap-3 bg-bg px-6 text-center text-fg">
+      <p className="font-display text-2xl text-gold">The hunt hiccuped</p>
+      <p className="max-w-md text-sm text-fg/85">
+        {translateCrash
+          ? "The phone tried to translate the page and knocked the hunt over. Turn off Translate on this site. Your save is still here."
+          : "Something in the page broke. Your gold, heroes, and souls are still saved on this phone."}
       </p>
+      <button
+        type="button"
+        className="mt-2 grid h-12 min-w-[12rem] place-items-center rounded-md border-2 border-gold bg-accent font-display text-base text-parchment-ink"
+        onClick={reload}
+      >
+        Back to the hunt
+      </button>
     </main>
   );
 }

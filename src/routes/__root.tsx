@@ -11,7 +11,7 @@ export const Route = createRootRoute({
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { title: APP_NAME },
-      { name: "theme-color", content: "#0c0a0b" },
+      { name: "google", content: "notranslate" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
       { name: "apple-mobile-web-app-title", content: APP_NAME },
@@ -55,12 +55,12 @@ export const Route = createRootRoute({
     ],
   }),
   component: () => (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" translate="no" className="notranslate" suppressHydrationWarning>
       <head>
         <HeadContent />
         <script
           dangerouslySetInnerHTML={{
-            __html: `if(location.hostname==='soulriftcrusher.com')location.replace('https://www.soulriftcrusher.com'+location.pathname+location.search+location.hash);if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js?v=8',{scope:'/'})`,
+            __html: `if(location.hostname==='soulriftcrusher.com')location.replace('https://www.soulriftcrusher.com'+location.pathname+location.search+location.hash);if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js?v=9',{scope:'/'});window.addEventListener('error',function(e){var m=String(e&&e.message||'');if(m.indexOf('removeChild')<0&&m.indexOf('NotFoundError')<0)return;try{if(sessionStorage.getItem('soulrift.recover')==='1')return;sessionStorage.setItem('soulrift.recover','1');}catch(x){}location.reload();});try{if(sessionStorage.getItem('soulrift.recover')==='1')sessionStorage.removeItem('soulrift.recover');}catch(x){}`,
           }}
         />
         <script
@@ -81,7 +81,7 @@ export const Route = createRootRoute({
           }}
         />
       </head>
-      <body>
+      <body className="notranslate" translate="no">
         <PreviewHostBridge />
         <AuthProvider>
           <Outlet />
