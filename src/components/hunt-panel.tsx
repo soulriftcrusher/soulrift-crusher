@@ -101,9 +101,20 @@ export function HuntPanel() {
 
   if (page === "wheel") {
     return (
-      <Back>
-        <WheelPage onClose={() => setPage("hub")} />
-      </Back>
+      <div className="relative min-h-[32rem] overflow-hidden rounded-xl">
+        <img
+          src="/bg/splash.jpg?v=fight"
+          alt=""
+          className="absolute inset-0 size-full object-cover"
+          crossOrigin="anonymous"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/70 to-bg/40" />
+        <div className="relative z-10 px-1">
+          <Back>
+            <WheelPage onClose={() => setPage("hub")} />
+          </Back>
+        </div>
+      </div>
     );
   }
 
