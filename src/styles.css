@@ -102,6 +102,34 @@ canvas {
   animation: bench-flash 0.7s ease-in-out;
 }
 
+@keyframes wheel-bulb {
+  0%,
+  100% {
+    opacity: 1;
+    filter: brightness(1.45);
+  }
+  50% {
+    opacity: 0.2;
+    filter: brightness(0.4);
+  }
+}
+
+.wheel-bulb {
+  position: absolute;
+  width: 7.4%;
+  height: 7.4%;
+  margin-left: -3.7%;
+  margin-top: -3.7%;
+  border-radius: 999px;
+  background: radial-gradient(circle at 35% 30%, #fff6ee, var(--color-gold) 42%, #c48a14 78%);
+  box-shadow: 0 0 10px color-mix(in oklab, var(--color-gold) 80%, transparent);
+  animation: wheel-bulb 0.95s ease-in-out infinite;
+}
+
+.wheel-spinning .wheel-bulb {
+  animation-duration: 0.32s;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
