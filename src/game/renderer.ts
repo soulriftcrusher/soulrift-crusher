@@ -333,8 +333,6 @@ export class Renderer {
 
   resize() {
     const now = performance.now();
-    if (now - this.resizeAt < 250 && this.w > 1) return;
-    this.resizeAt = now;
     const rect = this.canvas.getBoundingClientRect();
     const raw = window.devicePixelRatio || 1;
     // Phone is ~2.8x; old 1.15 cap made everyone look smeared.
@@ -348,6 +346,9 @@ export class Renderer {
       w = Math.max(1, Math.floor(w * s));
       h = Math.max(1, Math.floor(h * s));
     }
+    const jumped = Math.abs(h - this.h) > 32 || Math.abs(w - this.w) > 32;
+    if (!jumped && now - this.resizeAt < 250 && this.w > 1) return;
+    this.resizeAt = now;
     if (this.canvas.width !== w || this.canvas.height !== h) {
       this.canvas.width = w;
       this.canvas.height = h;

@@ -61,14 +61,14 @@ export function GameApp() {
   );
   if (authEnabled && isPending && !demoHunt) {
     return (
-      <div className="grid h-svh place-items-center bg-bg text-gold">
+      <div className="grid h-dvh place-items-center bg-bg text-gold">
         <p className="font-display text-sm">Checking your hunt…</p>
       </div>
     );
   }
   if (authEnabled && !user && !demoHunt) {
     return (
-      <div className={cn("h-svh max-h-svh", desk && "bg-[#070506]")}>
+      <div className={cn("h-dvh max-h-dvh", desk && "bg-[#070506]")}>
         <div className={shell}>
           <TitleScreen />
           <LegalOverlay />
@@ -78,7 +78,7 @@ export function GameApp() {
     );
   }
   return (
-    <div className={cn("h-svh max-h-svh", desk && "bg-[#070506]")}>
+    <div className={cn("h-dvh max-h-dvh", desk && "bg-[#070506]")}>
       <CloudSync />
       <ClanSync />
       <div className={shell}>

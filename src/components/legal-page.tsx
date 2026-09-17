@@ -33,7 +33,7 @@ export function LegalPage({
     );
   }
   return (
-    <main className="h-dvh overflow-y-auto bg-bg text-fg">
+    <main className={onBack ? "min-h-full overflow-x-hidden bg-bg text-fg" : "h-dvh overflow-y-auto bg-bg text-fg"}>
       <div className="relative mx-auto max-w-lg px-5 pb-16 pt-10">
         {onBack ? (
           <button
@@ -56,7 +56,7 @@ export function LegalPage({
           <Nav id="privacy" href="/privacy" label="Privacy" />
           <Nav id="copyright" href="/copyright" label="Copyright" />
           <Nav id="support" href="/support" label="Support" />
-          <Nav id="hunt" href="/" label="Hunt" />
+          <Nav id="hunt" href="/" label={onBack ? "Back to fight" : "Hunt"} />
         </nav>
         <p className="mt-6 text-xs text-muted">
           © 2026 Soulrift Crusher. All rights reserved.{" "}

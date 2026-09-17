@@ -9,7 +9,7 @@ function H({ children }: { children: string }) {
 
 export function Guide({ onBack }: { onBack?: () => void } = {}) {
   return (
-    <main className="h-dvh overflow-y-auto bg-bg text-fg">
+    <main className={onBack ? "min-h-full overflow-x-hidden bg-bg text-fg" : "h-dvh overflow-y-auto bg-bg text-fg"}>
       <div className="relative mx-auto max-w-lg px-5 pb-20 pt-10">
         {onBack ? (
           <button type="button" onClick={onBack} className="font-display text-xs tracking-[0.22em] text-gold uppercase">
@@ -177,7 +177,7 @@ export function Guide({ onBack }: { onBack?: () => void } = {}) {
           {onBack ? (
             <>
               <button type="button" className="grid h-11 min-w-[6.5rem] place-items-center rounded-md border border-gold/40 px-3" onClick={onBack}>
-                Hunt
+                Back to fight
               </button>
               <button type="button" className="grid h-11 min-w-[6.5rem] place-items-center rounded-md border border-gold/40 px-3" onClick={() => useGame.getState().setLegalPage("privacy")}>
                 Privacy
