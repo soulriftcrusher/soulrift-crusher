@@ -4,7 +4,8 @@ import { formatNum, formatTime } from "@/game/format";
 import { HunterName } from "@/components/hunter-card";
 import { getDeviceId } from "@/game/device";
 import { readHuntName } from "@/game/name";
-import { ARENA_REVIVE_GEMS, HEROES, heroPortrait } from "@/game/data";
+import { ARENA_REVIVE_GEMS, HEROES, arenaFoeArt, heroPortrait } from "@/game/data";
+import { HeroFace } from "@/components/hero-face";
 import { challengeCrusader, heartbeat, type RivalSnap } from "@/game/net";
 import { sim } from "@/game/sim";
 import { sfx, unlockAudio } from "@/game/audio";
@@ -129,20 +130,21 @@ export function ArenaDuel() {
       <div className="mt-3 flex items-center justify-between gap-2">
         <div className="flex -space-x-2">
           {youFaces.map((h) => (
-            <img key={h.id} src={heroPortrait(h.id)} alt="" className="size-10 rounded-full border border-gold object-cover" />
+            <img key={h.id} src={heroPortrait(h.id)} alt="" className="size-12 rounded-full border-2 border-gold object-cover" crossOrigin="anonymous" />
           ))}
         </div>
         <span className="font-display text-gold">VS</span>
-        <div className="flex size-10 items-center justify-center rounded-full border border-border bg-bg font-display text-xs">
-          {bout?.foe.slice(0, 1) ?? "?"}
-        </div>
+        <img
+          src={arenaFoeArt(bout?.foe ?? "Gilded Teeth")}
+          alt=""
+          className="size-12 rounded-full border-2 border-gold/70 bg-bg object-cover"
+          crossOrigin="anonymous"
+        />
       </div>
-      {bout ? (
-        <div className="mt-3 space-y-2">
-          <Bar label="You" value={bout.you} good />
-          <Bar label={bout.foe} value={bout.them} />
-        </div>
-      ) : null}
+      <div className="mt-3 space-y-2">
+        <Bar label="You" value={bout?.you ?? 100} good />
+        <Bar label={bout?.foe ?? "Banner"} value={bout?.them ?? 100} />
+      </div>
       <Button
         className="mt-3 h-12 w-full"
         disabled={!snap.arenaUnlocked || snap.arenaCharges < 1 || busy || living < 1}
@@ -197,9 +199,12 @@ export function ArenaDuel() {
       ) : null}
       <p className="mt-4 text-xs tracking-wide text-gold uppercase">People</p>
       <ul className="mt-2 flex flex-col gap-2">
-        {rivals.length === 0 ? <li className="text-sm text-muted">Sign in to duel other hunters. Banners still fight.</li> : null}
+        {rivals.length === 0 ? (
+          <li className="text-sm text-muted">{user ? "No other hunters on this shard yet." : "Sign in to duel other hunters. Banners still fight."}</li>
+        ) : null}
         {rivals.map((r) => (
           <li key={r.userId} className="flex items-center gap-2 rounded-md border border-border bg-bg/40 px-3 py-2">
+            <HeroFace id={r.avatar} className="size-11 border border-gold/40" />
             <div className="min-w-0 flex-1">
               <p className="font-display text-sm">
                 {r.clanTag ? `[${r.clanTag}] ` : ""}
@@ -221,14 +226,18 @@ export function ArenaDuel() {
 }
 
 function Bar({ label, value, good }: { label: string; value: number; good?: boolean }) {
+  const n = Math.max(0, Math.min(100, value));
+  const fill = good
+    ? "from-[#b6ff7a] via-[#4adf4a] to-[#1e9a28]"
+    : "from-[#ffb0b0] via-[#ff3b3b] to-[#c01010]";
   return (
     <div>
       <p className="mb-1 text-[11px]">{label}</p>
-      <div className="h-3 overflow-hidden rounded-full bg-bg">
-        <div
-          className={cn("h-full", good ? "bg-gold" : "bg-accent")}
-          style={{ width: `${Math.max(0, Math.min(100, value))}%` }}
-        />
+      <div className="relative h-6 overflow-hidden rounded-full border-2 border-[#f0d48a] bg-[#4a2214]">
+        <div className={cn("absolute inset-y-0 left-0 bg-gradient-to-b", fill)} style={{ width: `${n}%` }} />
+        <p className="relative z-10 grid h-full place-items-center font-display text-[11px] text-[#fff6e0]">
+          {Math.round(n)}%
+        </p>
       </div>
     </div>
   );

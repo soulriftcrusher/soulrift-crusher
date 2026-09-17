@@ -551,7 +551,30 @@ export function biomeFor(floor: number): "crypt" | "frost" | "ember" | "void" | 
 }
 
 export function heroPortrait(id: HeroId): string {
-  return `/portraits/${id}.jpg?v=3`;
+  return `/portraits/${id}.jpg?v=4`;
+}
+
+export function arenaFoeArt(name: string): string {
+  switch (name) {
+    case "Ashen Pact":
+      return "/sprites/monsters/wraith.png?v=5";
+    case "Rime Banner":
+      return "/sprites/monsters/rimeknight.png?v=5";
+    case "Cinder Host":
+      return "/sprites/monsters/harpy.png?v=5";
+    case "Void Choir":
+      return "/sprites/monsters/lich.png?v=5";
+    case "Gilded Teeth":
+      return "/sprites/monsters/hound.png?v=5";
+    case "Nightwell":
+      return "/portraits/selene.jpg?v=4";
+    case "Iron Hymn":
+      return "/sprites/monsters/golem.png?v=5";
+    case "Last Coin":
+      return "/portraits/ashur.jpg?v=4";
+    default:
+      return "/tiles/crest-axe.png";
+  }
 }
 
 export function heroStars(hero: HeroDef, gilds: number): number {
