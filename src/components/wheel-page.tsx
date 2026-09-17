@@ -126,29 +126,42 @@ export function WheelPage({ onClose: _onClose }: { onClose: () => void }) {
               transition: spinning ? "transform 4s cubic-bezier(0.12, 0.75, 0.08, 1)" : "none",
             }}
           >
-            {WHEEL_SLICES.map((s, i) => (
-              <g key={s.id}>
-                <path d={slicePath(i)} fill={FILLS[i % FILLS.length]} stroke="#5a2010" strokeWidth="1.4" />
-                <path d={slicePath(i)} fill="url(#wheelGloss)" />
-                <g transform={`rotate(${i * SLICE + SLICE / 2} 100 100)`}>
-                  <image href={`/wheel/${s.id}.png`} x="88" y="20" width="24" height="24" />
-                  <text
-                    x="100"
-                    y="52"
-                    textAnchor="middle"
-                    fontSize="7.2"
-                    fontFamily="Cinzel, Georgia, serif"
-                    fontWeight="700"
-                    fill="#fff8e8"
-                    stroke="#160c08"
-                    strokeWidth="2.6"
-                    paintOrder="stroke"
-                  >
-                    {SLICE_LABEL[s.id] ?? s.name}
-                  </text>
+            {WHEEL_SLICES.map((s, i) => {
+              const mid = i * SLICE + SLICE / 2;
+              return (
+                <g key={s.id}>
+                  <path d={slicePath(i)} fill={FILLS[i % FILLS.length]} stroke="#5a2010" strokeWidth="1.4" />
+                  <path d={slicePath(i)} fill="url(#wheelGloss)" />
+                  <g transform={`rotate(${mid} 100 100)`}>
+                    <image href={`/wheel/${s.id}.png`} x="88" y="18" width="24" height="24" />
+                  </g>
+                  <g transform={`rotate(${mid} 100 100) translate(100 50)`}>
+                    <g
+                      style={{
+                        transform: `rotate(${-angle}deg)`,
+                        transformOrigin: "0px 0px",
+                        transition: spinning ? "transform 4s cubic-bezier(0.12, 0.75, 0.08, 1)" : "none",
+                      }}
+                    >
+                      <text
+                        x="0"
+                        y="3"
+                        textAnchor="middle"
+                        fontSize="8"
+                        fontFamily="Outfit, sans-serif"
+                        fontWeight="800"
+                        fill="#fffdf6"
+                        stroke="#1a0c08"
+                        strokeWidth="1.15"
+                        paintOrder="stroke"
+                      >
+                        {SLICE_LABEL[s.id] ?? s.name}
+                      </text>
+                    </g>
+                  </g>
                 </g>
-              </g>
-            ))}
+              );
+            })}
           </g>
           <circle cx="100" cy="100" r="22" fill="#f4c44a" />
           <circle cx="100" cy="100" r="18" fill="url(#hubGem)" stroke="#5a2010" strokeWidth="2" />
