@@ -50,6 +50,33 @@ export type BoardClan = {
   influence: number;
   members: number;
   loc: string;
+  crest: string;
+  blurb: string;
+  open: boolean;
+  minFloor: number;
+};
+
+export type PeekHunter = {
+  userId: string;
+  name: string;
+  role: ClanRole;
+  power: number;
+  maxFloor: number;
+  avatar: string;
+};
+
+export type PeekClan = {
+  id: number;
+  name: string;
+  tag: string;
+  blurb: string;
+  crest: string;
+  loc: string;
+  open: boolean;
+  minFloor: number;
+  influence: number;
+  memberCount: number;
+  members: PeekHunter[];
 };
 
 export type WorldSnap = {
@@ -183,13 +210,25 @@ async function loadWorld(sql: Sql, userId: string): Promise<WorldSnap> {
     order by c.power desc
     limit 12
   `;
-  const board = await sql<{ id: number; name: string; tag: string; influence: number; members: number; loc: string | null }>`
-    select cl.id, cl.name, cl.tag, cl.influence, cl.loc, count(m.user_id)::int as members
+  const board = await sql<{
+    id: number;
+    name: string;
+    tag: string;
+    influence: number;
+    members: number;
+    loc: string | null;
+    crest: string | null;
+    blurb: string | null;
+    open: boolean | null;
+    min_floor: number | null;
+  }>`
+    select cl.id, cl.name, cl.tag, cl.influence, cl.loc, cl.crest, cl.blurb, cl.open, cl.min_floor,
+      count(m.user_id)::int as members
     from clans cl
     left join clan_members m on m.clan_id = cl.id
-    group by cl.id, cl.loc
+    group by cl.id
     order by cl.influence desc
-    limit 8
+    limit 24
   `;
   let clan: ClanSnap | null = null;
   let members: ClanMemberSnap[] = [];
@@ -290,9 +329,77 @@ async function loadWorld(sql: Sql, userId: string): Promise<WorldSnap> {
       influence: Number(b.influence),
       members: Number(b.members),
       loc: b.loc || "WW",
+      crest: b.crest || "axe",
+      blurb: b.blurb || "",
+      open: b.open !== false,
+      minFloor: Math.max(1, Number(b.min_floor ?? 1)),
     })),
   };
 }
+
+export const peekClan = createServerFn({ method: "POST" })
+  .validator((d: { id?: number }) => d)
+  .middleware([authMiddleware])
+  .handler(async ({ data }): Promise<PeekClan> => {
+    const id = Math.floor(Number(data.id) || 0);
+    if (id < 1) throw new Error("Pick a clan.");
+    const { getSql } = await import("@/lib/db");
+    const sql = await getSql();
+    await ensureWorldSchema(sql);
+    const rows = await sql<{
+      id: number;
+      name: string;
+      tag: string;
+      blurb: string | null;
+      crest: string | null;
+      loc: string | null;
+      open: boolean | null;
+      min_floor: number | null;
+      influence: number;
+    }>`
+      select id, name, tag, blurb, crest, loc, open, min_floor, influence from clans where id = ${id} limit 1
+    `;
+    const c = rows[0];
+    if (!c) throw new Error("That clan is gone.");
+    const mem = await sql<{
+      user_id: string;
+      name: string;
+      role: string;
+      power: number;
+      max_floor: number;
+      avatar: string | null;
+    }>`
+      select m.user_id, cr.name, m.role, cr.power, cr.max_floor, cr.avatar
+      from clan_members m
+      join crusaders cr on cr.user_id = m.user_id
+      where m.clan_id = ${id}
+      order by
+        case m.role when 'founder' then 0 when 'officer' then 1 when 'elder' then 2 else 3 end,
+        cr.power desc
+      limit 30
+    `;
+    const members = mem.map((m) => ({
+      userId: m.user_id,
+      name: m.name,
+      role: (m.role as ClanRole) || "member",
+      power: Number(m.power),
+      maxFloor: Number(m.max_floor),
+      avatar: m.avatar || "kael",
+    }));
+    return {
+      id: Number(c.id),
+      name: c.name,
+      tag: c.tag,
+      blurb: c.blurb ?? "",
+      crest: c.crest || "axe",
+      loc: c.loc || "WW",
+      open: c.open !== false,
+      minFloor: Math.max(1, Number(c.min_floor ?? 1)),
+      influence: Number(c.influence),
+      memberCount: members.length,
+      members,
+    };
+  });
 
 export const heartbeat = createServerFn({ method: "POST" })
   .validator((d: { name: string; power: number; maxFloor: number; avatar?: string; device?: string; steal?: boolean }) => d)
@@ -1136,9 +1243,14 @@ export const updateClan = createServerFn({ method: "POST" })
       .toUpperCase()
       .slice(0, 5);
     const blurb = String(data.blurb ?? "").slice(0, 180);
-    const crest = ["axe", "wolf", "rift", "skull", "flame", "moon"].includes(String(data.crest))
-      ? String(data.crest)
-      : "axe";
+    const staffSeat = (await asStaff(sql, context.userId))[0];
+    const want = String(data.crest);
+    const crest =
+      want === "crown" && staffSeat
+        ? "crown"
+        : ["axe", "wolf", "rift", "skull", "flame", "moon"].includes(want)
+          ? want
+          : "axe";
     const loc = ["USA", "UK", "EU", "KR", "JP", "AU", "CA", "BR", "WW"].includes(String(data.loc))
       ? String(data.loc)
       : "USA";

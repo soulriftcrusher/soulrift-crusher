@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ServerPanel } from "@/components/server-panel";
 import { PlazaPanel } from "@/components/plaza-panel";
 import { ArenaDuel } from "@/components/arena-duel";
-import { HunterName } from "@/components/hunter-card";
+import { HunterName, openHunter } from "@/components/hunter-card";
 import { FriendsPanel } from "@/components/friends-panel";
 import { queueBackgroundSync } from "@/game/bg-sync";
 import { getDeviceId } from "@/game/device";
@@ -20,17 +20,20 @@ import {
   leaveClan,
   requestClan,
   strikeRaid,
+  peekClan,
   kickMember,
   setMemberRole,
   listClanMail,
   sendClanMail,
   updateClan,
   type ClanRole,
+  type PeekClan,
   type WorldSnap,
+  type BoardClan,
 } from "@/game/net";
 import { ClanCrest } from "@/components/clan-crest";
 import { LocFlag } from "@/components/loc-flag";
-import { CLAN_CAP, CRESTS, LOCS, LOC_NAME, clanBonuses, createdLabel, lastOnline, roleName } from "@/game/clan-look";
+import { CLAN_CAP, CRESTS, FOUNDER_CREST, crestsFor, LOCS, LOC_NAME, clanBonuses, createdLabel, lastOnline, roleName } from "@/game/clan-look";
 import { sim } from "@/game/sim";
 import { sfx, unlockAudio } from "@/game/audio";
 import { MenuGrid, MenuTile } from "@/components/menu-tile";
@@ -107,6 +110,7 @@ export function ClanPanel() {
   const [name, setName] = useState("");
   const [tag, setTag] = useState("");
   const [code, setCode] = useState("");
+  const [peekId, setPeekId] = useState<number | null>(null);
   const snap = useGame((s) => s.snap);
 
   async function refreshWorld() {
@@ -266,7 +270,23 @@ export function ClanPanel() {
       <button type="button" className="mb-3 h-11 text-sm text-gold" onClick={() => setPage("hub")}>
         ← Clans
       </button>
-      {page === "clan" ? (
+      {peekId ? (
+        <ClanPeekSheet
+          id={peekId}
+          mineId={world?.clan?.id}
+          busy={busy}
+          onBack={() => setPeekId(null)}
+          onJoin={(id) =>
+            run(async () => {
+              const next = await requestClan({ data: { clanId: id } });
+              setWorld(next);
+              setPeekId(null);
+              sfx.chest();
+            })
+          }
+        />
+      ) : null}
+      {peekId ? null : page === "clan" ? (
         <ClanDesk
           world={world}
           snap={snap}
@@ -301,6 +321,7 @@ export function ClanPanel() {
               sfx.chest();
             })
           }
+          onPeek={setPeekId}
           onStrike={() =>
             run(async () => {
               unlockAudio();
@@ -350,27 +371,39 @@ export function ClanPanel() {
         />
       ) : null}
       {page === "arena" ? <ArenaDuel /> : null}
-      {page === "rating" ? (
+      {page === "rating" && !peekId ? (
         <div>
           <p className="mb-2 text-xs tracking-wide text-gold uppercase">Clans</p>
           <ul className="flex flex-col gap-2">
             {(world?.board ?? []).length === 0 ? <li className="text-sm text-muted">No banners yet.</li> : null}
             {(world?.board ?? []).map((c) => (
-              <li key={c.id} className="flex items-center justify-between rounded-md border border-border bg-bg/40 px-3 py-3">
-                <span className="font-display text-sm">[{c.tag}] {c.name}</span>
-                <span className="text-xs tabular-nums text-muted">{c.members} · {formatNum(c.influence)}</span>
+              <li key={c.id}>
+                <ClanBannerRow clan={c} onOpen={() => setPeekId(c.id)} />
               </li>
             ))}
           </ul>
           <p className="mt-4 mb-2 text-xs tracking-wide text-gold uppercase">Hunters</p>
           <ul className="flex flex-col gap-2">
             {(world?.rivals ?? []).map((r) => (
-              <li key={r.userId} className="flex items-center gap-3 rounded-md border border-border bg-bg/40 px-3 py-2">
-                <HeroFace id={r.avatar} className="size-11" />
-                <div className="min-w-0 flex-1">
-                  <HunterName userId={r.userId} name={r.clanTag ? `[${r.clanTag}] ${r.name}` : r.name} />
-                  <p className="text-[11px] tabular-nums text-muted">Floor {r.maxFloor} · {formatNum(r.power)}</p>
-                </div>
+              <li key={r.userId}>
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-3 rounded-lg border border-gold/25 bg-[#1a120e]/85 px-3 py-2.5 text-left"
+                  onClick={() => {
+                    unlockAudio();
+                    sfx.ui();
+                    openHunter(r.userId, r.name, { maxFloor: r.maxFloor, power: r.power });
+                  }}
+                >
+                  <HeroFace id={r.avatar} className="size-12 border border-gold/40" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-display text-sm text-gold">
+                      {r.clanTag ? `${r.name} [${r.clanTag}]` : r.name}
+                    </p>
+                    <p className="text-[11px] text-muted">Tap to view details</p>
+                  </div>
+                  <span className="shrink-0 text-[11px] tabular-nums text-muted">{formatNum(r.power)}</span>
+                </button>
               </li>
             ))}
           </ul>
@@ -505,6 +538,7 @@ function ClanDesk({
   onFound,
   onJoin,
   onRequest,
+  onPeek,
   onStrike,
   onLeave,
   onOpen,
@@ -522,6 +556,7 @@ function ClanDesk({
   onFound: () => void;
   onJoin: () => void;
   onRequest: (id: number) => void;
+  onPeek: (id: number) => void;
   onStrike: () => void;
   onLeave: () => void;
   onOpen: (p: ClanPage) => void;
@@ -573,17 +608,8 @@ function ClanDesk({
         <ul className="mt-3 flex flex-col gap-2">
           {(world?.board ?? []).length === 0 ? <li className="text-sm text-muted">No banners yet. Create one.</li> : null}
           {(world?.board ?? []).map((c) => (
-            <li key={c.id} className="flex items-center justify-between gap-2 rounded-md border border-border px-3 py-2">
-              <div className="min-w-0">
-                <p className="truncate font-display text-sm">[{c.tag}] {c.name}</p>
-                <p className="flex items-center gap-1 text-[11px] text-muted">
-                  <LocFlag loc={c.loc} />
-                  {LOC_NAME[(c.loc as keyof typeof LOC_NAME)] ?? c.loc} · {c.members} hunters · {formatNum(c.influence)} honor
-                </p>
-              </div>
-              <Button size="sm" className="h-11" disabled={busy || Boolean(world?.clan)} onClick={() => onRequest(c.id)}>
-                Request
-              </Button>
+            <li key={c.id}>
+              <ClanBannerRow clan={c} onOpen={() => onPeek(c.id)} />
             </li>
           ))}
         </ul>
@@ -842,6 +868,8 @@ function ManageClan({
   const [loc, setLoc] = useState(clan?.loc ?? "USA");
   const [open, setOpen] = useState(clan?.open !== false);
   const [minFloor, setMinFloor] = useState(clan?.minFloor ?? 1);
+  const staff = useGame((s) => s.isStaff) || useGame((s) => s.snap.founderClaimed);
+  const picks = crestsFor(staff);
   useEffect(() => {
     if (!clan) return;
     setName(clan.name);
@@ -868,17 +896,25 @@ function ManageClan({
         </label>
         <p className="mt-3 text-xs text-muted">Crest</p>
         <div className="mt-2 flex flex-wrap gap-2">
-          {CRESTS.map((id) => (
+          {picks.map((id) => (
             <button
               key={id}
               type="button"
-              className={cn("rounded-md border p-1", crest === id ? "border-gold" : "border-border")}
+              className={cn(
+                "relative rounded-md border p-1",
+                crest === id ? "border-gold" : "border-border",
+                id === FOUNDER_CREST ? "ring-1 ring-gold/70" : "",
+              )}
               onClick={() => setCrest(id)}
             >
               <ClanCrest id={id} className="h-14 w-11" />
+              {id === FOUNDER_CREST ? (
+                <span className="absolute inset-x-0 -bottom-1 text-center text-[8px] tracking-wide text-gold uppercase">You</span>
+              ) : null}
             </button>
           ))}
         </div>
+        {staff ? <p className="mt-3 text-[11px] text-gold">The crown crest is yours alone. No other clan can pick it.</p> : null}
         <p className="mt-3 text-xs text-muted">Location</p>
         <div className="mt-1 flex flex-wrap gap-1">
           {LOCS.map((id) => (
@@ -1072,8 +1108,11 @@ function DuelList({
             <li key={r.userId} className="flex items-center gap-2 rounded-md border border-border bg-bg/40 p-3">
               <HeroFace id={r.avatar} className="size-11" />
               <div className="min-w-0 flex-1">
-                <p className="truncate font-display text-sm">{r.clanTag ? `[${r.clanTag}] ` : ""}{r.name}</p>
-                <p className="text-xs tabular-nums text-muted">Power {formatNum(r.power)}</p>
+                <p className="truncate font-display text-sm">
+                  <HunterName userId={r.userId} name={r.name} />
+                  {r.clanTag ? ` [${r.clanTag}]` : ""}
+                </p>
+                <p className="text-xs tabular-nums text-muted">Power {formatNum(r.power)} · Tap name to view</p>
               </div>
               <Button size="sm" className="h-11" disabled={busy || readyIn > 0} onClick={() => onDuel(r.userId)}>
                 {readyIn > 0 ? formatTime(readyIn) : "Duel"}
@@ -1082,6 +1121,129 @@ function DuelList({
           ))}
         </ul>
       )}
+    </div>
+  );
+}
+
+function ClanBannerRow({ clan, onOpen }: { clan: BoardClan; onOpen: () => void }) {
+  return (
+    <button
+      type="button"
+      className="flex w-full items-center gap-3 rounded-lg border border-gold/30 bg-[#1a120e]/90 px-3 py-2.5 text-left"
+      onClick={() => {
+        unlockAudio();
+        sfx.ui();
+        onOpen();
+      }}
+    >
+      <ClanCrest id={clan.crest} className="h-14 w-11" />
+      <div className="min-w-0 flex-1">
+        <p className="truncate font-display text-sm text-gold">
+          {clan.name} [{clan.tag}]
+        </p>
+        <p className="text-[11px] text-muted">Tap to view details</p>
+      </div>
+      <span className="flex shrink-0 items-center gap-1 text-[11px] tabular-nums text-muted">
+        <LocFlag loc={clan.loc} />
+        {clan.members}
+      </span>
+    </button>
+  );
+}
+
+function ClanPeekSheet({
+  id,
+  mineId,
+  busy,
+  onBack,
+  onJoin,
+}: {
+  id: number;
+  mineId?: number;
+  busy: boolean;
+  onBack: () => void;
+  onJoin: (id: number) => void;
+}) {
+  const [peek, setPeek] = useState<PeekClan | null>(null);
+  const [err, setErr] = useState("");
+  useEffect(() => {
+    let live = true;
+    setPeek(null);
+    setErr("");
+    peekClan({ data: { id } })
+      .then((c) => {
+        if (live) setPeek(c);
+      })
+      .catch((e) => {
+        if (live) setErr(errMessage(e));
+      });
+    return () => {
+      live = false;
+    };
+  }, [id]);
+  const mine = mineId === id;
+  return (
+    <div>
+      <button type="button" className="mb-3 h-11 text-sm text-gold" onClick={onBack}>
+        ← Banners
+      </button>
+      {err ? <p className="text-sm text-accent">{err}</p> : null}
+      {!peek && !err ? <p className="text-sm text-muted">Opening the banner…</p> : null}
+      {peek ? (
+        <div>
+          <div className="rounded-lg border border-gold/40 bg-wood p-4 text-fg">
+            <div className="flex gap-3">
+              <ClanCrest id={peek.crest} className="h-24 w-[4.5rem]" />
+              <div className="min-w-0 flex-1">
+                <p className="font-display text-xl text-gold">
+                  {peek.name} [{peek.tag}]
+                </p>
+                <p className="mt-1 flex items-center gap-1.5 text-sm text-muted">
+                  <LocFlag loc={peek.loc} />
+                  {LOC_NAME[(peek.loc as keyof typeof LOC_NAME)] ?? peek.loc}
+                </p>
+                <p className="text-sm tabular-nums">
+                  {peek.memberCount} / {CLAN_CAP} hunters · {formatNum(peek.influence)} honor
+                </p>
+                <p className="text-xs text-muted">{peek.open ? "Open clan" : "Request to join"} · floor {peek.minFloor}+</p>
+              </div>
+            </div>
+            {peek.blurb ? <p className="mt-3 font-display text-sm text-gold">{peek.blurb}</p> : null}
+          </div>
+          {!mine ? (
+            <Button className="mt-3 h-12 w-full" disabled={busy} onClick={() => onJoin(peek.id)}>
+              {peek.open ? "Join this clan" : "Request to join"}
+            </Button>
+          ) : (
+            <p className="mt-3 text-center text-sm text-gold">This is your banner.</p>
+          )}
+          <p className="mt-4 mb-2 text-xs tracking-wide text-gold uppercase">Hunters</p>
+          <ul className="flex flex-col gap-2">
+            {peek.members.map((m) => (
+              <li key={m.userId}>
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-3 rounded-lg border border-gold/25 bg-[#1a120e]/85 px-3 py-2 text-left"
+                  onClick={() => {
+                    unlockAudio();
+                    sfx.ui();
+                    openHunter(m.userId, m.name, { maxFloor: m.maxFloor, power: m.power });
+                  }}
+                >
+                  <HeroFace id={m.avatar} className="size-11 border border-gold/40" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-display text-sm text-gold">{m.name}</p>
+                    <p className="text-[11px] text-muted">
+                      {roleName(m.role)} · tap to view
+                    </p>
+                  </div>
+                  <span className="text-[11px] tabular-nums text-muted">{formatNum(m.power)}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
     </div>
   );
 }
