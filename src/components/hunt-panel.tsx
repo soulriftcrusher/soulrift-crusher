@@ -1,19 +1,4 @@
 import { useEffect, useState, type ReactNode } from "react";
-import {
-  CalendarDays,
-  Flag,
-  Gem,
-  Inbox,
-  ScrollText,
-  ShoppingBag,
-  Sparkles,
-  Swords,
-  TimerReset,
-  CircleDot,
-  Shield,
-  Trophy,
-  BookOpen,
-} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ShopPanel } from "@/components/shop-panel";
 import { ArenaDuel } from "@/components/arena-duel";
@@ -60,22 +45,22 @@ export function HuntPanel() {
   }, [page]);
 
   if (page === "hub") {
-    const items: { id: HuntPage; label: string; blurb: string; icon: typeof Trophy; ping?: boolean }[] = [
-      { id: "inbox", label: "Inbox", blurb: "Mail and free gifts.", icon: Inbox },
-      { id: "shop", label: "Shop", blurb: "Gems, Soul Well, relics, weapons.", icon: ShoppingBag },
-      { id: "wheel", label: "Fortune wheel", blurb: "Daily spin. Gold, souls, chests, gems.", icon: CircleDot, ping: snap.wheelReady },
-      { id: "raid", label: "Raids", blurb: "Shield up. Hit unshielded camps.", icon: Shield, ping: !snap.shieldOn },
-      { id: "daily", label: "Daily login", blurb: "Free gems every day.", icon: Sparkles, ping: snap.dailyReady },
-      { id: "calendar", label: "30-day stamp", blurb: "Bigger gems all month.", icon: CalendarDays, ping: snap.monthReady },
-      { id: "pass", label: "Battle pass", blurb: "Kill monsters, climb ranks.", icon: Trophy, ping: snap.bpFreeReady + snap.bpPremReady > 0 },
-      { id: "market", label: "Black market", blurb: "Today's cheap deals.", icon: ShoppingBag },
-      { id: "jobs", label: "Contracts", blurb: "Jobs for gold and chests.", icon: ScrollText, ping: snap.contracts?.some((c) => c.ready && !c.claimed) },
-      { id: "chests", label: "Chests", blurb: "Open loot you earned.", icon: Gem, ping: snap.chests > 0 },
-      { id: "expedition", label: "Expedition", blurb: "Send one hero away 2 hours. Gold, a soul, maybe a chest.", icon: Flag, ping: snap.expeditionReady },
-      { id: "arena", label: "Arena", blurb: "Duel. Fallen heroes need revive.", icon: Swords },
-      { id: "event", label: "Event shop", blurb: "Spend today's event points.", icon: Sparkles },
-      { id: "codex", label: "Beast codex", blurb: "Each kind slain adds damage.", icon: BookOpen },
-      { id: "ritual", label: "Dark ritual", blurb: "Reset the hunt for souls.", icon: TimerReset },
+    const items: { id: HuntPage; label: string; blurb: string; ping?: boolean }[] = [
+      { id: "inbox", label: "Inbox", blurb: "Mail and free gifts." },
+      { id: "shop", label: "Shop", blurb: "Gems, Soul Well, relics, weapons." },
+      { id: "wheel", label: "Fortune wheel", blurb: "Daily spin. Gold, souls, chests, gems.", ping: snap.wheelReady },
+      { id: "raid", label: "Raids", blurb: "Shield up. Hit unshielded camps.", ping: !snap.shieldOn },
+      { id: "daily", label: "Daily login", blurb: "Free gems every day.", ping: snap.dailyReady },
+      { id: "calendar", label: "30-day stamp", blurb: "Bigger gems all month.", ping: snap.monthReady },
+      { id: "pass", label: "Battle pass", blurb: "Kill monsters, climb ranks.", ping: snap.bpFreeReady + snap.bpPremReady > 0 },
+      { id: "market", label: "Black market", blurb: "Today's cheap deals." },
+      { id: "jobs", label: "Contracts", blurb: "Jobs for gold and chests.", ping: snap.contracts?.some((c) => c.ready && !c.claimed) },
+      { id: "chests", label: "Chests", blurb: "Open loot you earned.", ping: snap.chests > 0 },
+      { id: "expedition", label: "Expedition", blurb: "Send one hero away 2 hours. Gold, a soul, maybe a chest.", ping: snap.expeditionReady },
+      { id: "arena", label: "Arena", blurb: "Duel. Fallen heroes need revive." },
+      { id: "event", label: "Event shop", blurb: "Spend today's event points." },
+      { id: "codex", label: "Beast codex", blurb: "Each kind slain adds damage." },
+      { id: "ritual", label: "Dark ritual", blurb: "Reset the hunt for souls." },
     ];
     return (
       <div className="pt-3">
@@ -84,7 +69,7 @@ export function HuntPanel() {
           {items.map((it) => (
             <MenuTile
               key={it.id}
-              icon={it.icon}
+              art={`/tiles/${it.id}.png`}
               label={it.label}
               blurb={it.blurb}
               ping={it.ping}

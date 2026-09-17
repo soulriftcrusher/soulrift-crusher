@@ -1,18 +1,5 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import {
-  Beaker,
-  Flag,
-  Globe,
-  Mail,
-  MessageCircle,
-  Settings,
-  Shield,
-  Swords,
-  Trophy,
-  User,
-  Users,
-} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ServerPanel } from "@/components/server-panel";
 import { PlazaPanel } from "@/components/plaza-panel";
@@ -167,18 +154,18 @@ export function ClanPanel() {
   if (isPending) return <div className="mt-3 h-24 animate-pulse rounded-lg border border-border bg-bg/40" />;
 
   if (page === "hub") {
-    const items: { id: ClanPage; label: string; blurb: string; icon: typeof Trophy }[] = [
-      { id: "servers", label: "Servers", blurb: "Pick a shard. 1,000 hunters each.", icon: Globe },
-      { id: "friends", label: "Friends", blurb: "Add hunters. Send a daily gift.", icon: Users },
-      { id: "chat", label: "World chat", blurb: "Talk to everyone on this server.", icon: MessageCircle },
-      { id: "rating", label: "Rating", blurb: "Who is strongest right now.", icon: Trophy },
-      { id: "clan", label: "My Clan", blurb: "Join, raid, and share a banner.", icon: Shield },
-      { id: "science", label: "Science", blurb: "Spend influence on the clan.", icon: Beaker },
-      { id: "arena", label: "Arena", blurb: "One-on-one. Heroes can fall.", icon: Swords },
-      { id: "mail", label: "Clan mail", blurb: "Notes from your warband.", icon: Mail },
-      { id: "camp", label: "Army Camp", blurb: "See who is in your clan.", icon: Flag },
-      { id: "manage", label: "Edit Clan", blurb: "Crest, message, kick, promote.", icon: Settings },
-      { id: "profile", label: "My Profile", blurb: "Your stats and titles.", icon: User },
+    const items: { id: ClanPage; label: string; blurb: string }[] = [
+      { id: "servers", label: "Servers", blurb: "Pick a shard. 1,000 hunters each." },
+      { id: "friends", label: "Friends", blurb: "Add hunters. Send a daily gift." },
+      { id: "chat", label: "World chat", blurb: "Talk to everyone on this server." },
+      { id: "rating", label: "Rating", blurb: "Who is strongest right now." },
+      { id: "clan", label: "My Clan", blurb: "Join, raid, and share a banner." },
+      { id: "science", label: "Science", blurb: "Spend influence on the clan." },
+      { id: "arena", label: "Arena", blurb: "One-on-one. Heroes can fall." },
+      { id: "mail", label: "Clan mail", blurb: "Notes from your warband." },
+      { id: "camp", label: "Army Camp", blurb: "See who is in your clan." },
+      { id: "manage", label: "Edit Clan", blurb: "Crest, message, kick, promote." },
+      { id: "profile", label: "My Profile", blurb: "Your stats and titles." },
     ];
     return (
       <div className="pt-3">
@@ -192,7 +179,7 @@ export function ClanPanel() {
           {items.map((it) => (
             <MenuTile
               key={it.id}
-              icon={it.icon}
+              art={`/tiles/${it.id}.png`}
               label={it.label}
               blurb={it.blurb}
               onClick={() => {

@@ -4,12 +4,14 @@ import { cn } from "@/lib/utils";
 
 export function MenuTile({
   icon: Icon,
+  art,
   label,
   blurb,
   ping,
   onClick,
 }: {
-  icon: LucideIcon;
+  icon?: LucideIcon;
+  art?: string;
   label: string;
   blurb: string;
   ping?: boolean;
@@ -25,9 +27,13 @@ export function MenuTile({
       )}
     >
       {ping ? <span className="absolute top-2 right-2 size-2.5 rounded-full bg-accent" /> : null}
-      <span className="grid size-12 place-items-center rounded-xl bg-surface text-gold">
-        <Icon className="size-7" strokeWidth={1.75} />
-      </span>
+      {art ? (
+        <img src={art} alt="" className="size-14 object-contain drop-shadow" crossOrigin="anonymous" />
+      ) : Icon ? (
+        <span className="grid size-12 place-items-center rounded-xl bg-surface text-gold">
+          <Icon className="size-7" strokeWidth={1.75} />
+        </span>
+      ) : null}
       <span className="font-display mt-2 text-[15px] leading-tight text-gold">{label}</span>
       <span className="mt-0.5 text-[11px] leading-snug text-fg/75">{blurb}</span>
     </button>
