@@ -10,8 +10,18 @@ import { useGame } from "@/game/store";
 const N = WHEEL_SLICES.length;
 const SLICE = 360 / N;
 const FILLS = ["#f4c44a", "#e4453a", "#3ec8d4", "#ef7a32", "#e8b84a", "#2fba6e", "#3d7fd6", "#f0b429"];
+const SLICE_LABEL: Record<string, string> = {
+  gold: "GOLD",
+  g1: "1 GEM",
+  soul: "SOUL",
+  chest: "CHEST",
+  dust: "DUST",
+  g6: "6 GEMS",
+  souls: "2 SOULS",
+  jack: "SPARK",
+};
 
-export function WheelPage({ onClose }: { onClose: () => void }) {
+export function WheelPage({ onClose: _onClose }: { onClose: () => void }) {
   const snap = useGame((s) => s.snap);
   const refresh = useGame((s) => s.refresh);
   const [spinning, setSpinning] = useState(false);
@@ -84,13 +94,17 @@ export function WheelPage({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="pt-1">
-      <div className="flex items-center justify-between">
-        <p className="font-display text-lg text-gold">Fortune wheel</p>
-        <button type="button" className="h-11 px-3 text-sm text-gold" onClick={onClose}>
-          Close
-        </button>
+      <div className="rounded-xl border-2 border-gold/70 bg-[#1a100c]/92 px-3 py-2.5 shadow-[0_4px_0_#3a1c10]">
+        <p className="font-display text-center text-lg tracking-wide text-gold">Fortune wheel</p>
+        {snap.wheelReady ? (
+          <p className="mt-1 text-center font-display text-base text-[#fff6e0]">1 free spin today</p>
+        ) : (
+          <p className="mt-1 text-center font-display text-base text-[#fff6e0]">
+            Next free spin in {formatTime(snap.wheelFreeIn / 1000)}
+          </p>
+        )}
+        <p className="mt-0.5 text-center text-sm text-[#f0e6d8]">Extra spins cost {snap.wheelCost} gems.</p>
       </div>
-      <p className="mt-1 text-sm text-muted">One free spin a day. Extra spins cost gems. Watch it go.</p>
 
       <div className={`relative mx-auto mt-1 aspect-square w-full max-w-[21rem]${spinning ? " wheel-spinning" : ""}`}>
         <svg viewBox="0 0 200 200" className="absolute inset-[14%] size-auto">
@@ -117,7 +131,21 @@ export function WheelPage({ onClose }: { onClose: () => void }) {
                 <path d={slicePath(i)} fill={FILLS[i % FILLS.length]} stroke="#5a2010" strokeWidth="1.4" />
                 <path d={slicePath(i)} fill="url(#wheelGloss)" />
                 <g transform={`rotate(${i * SLICE + SLICE / 2} 100 100)`}>
-                  <image href={`/wheel/${s.id}.png`} x="88" y="28" width="24" height="24" />
+                  <image href={`/wheel/${s.id}.png`} x="88" y="20" width="24" height="24" />
+                  <text
+                    x="100"
+                    y="52"
+                    textAnchor="middle"
+                    fontSize="7.2"
+                    fontFamily="Cinzel, Georgia, serif"
+                    fontWeight="700"
+                    fill="#fff8e8"
+                    stroke="#160c08"
+                    strokeWidth="2.6"
+                    paintOrder="stroke"
+                  >
+                    {SLICE_LABEL[s.id] ?? s.name}
+                  </text>
                 </g>
               </g>
             ))}
@@ -148,10 +176,12 @@ export function WheelPage({ onClose }: { onClose: () => void }) {
       </div>
 
       {hit ? (
-        <p className="mt-2 text-center font-display text-lg text-gold">Landed · {hit.name}</p>
+        <p className="mt-2 rounded-lg border border-gold/50 bg-[#1a100c]/90 py-2 text-center font-display text-lg text-gold">
+          Landed · {hit.name}
+        </p>
       ) : (
-        <p className="mt-2 text-center text-xs text-muted">
-          {spinning ? "The wheel is turning…" : "Tap a spin. The pointer at the top is the prize."}
+        <p className="mt-2 rounded-lg bg-[#1a100c]/90 py-2 text-center text-sm text-[#fff6e0]">
+          {spinning ? "The wheel is turning…" : "Tap Free spin. The pointer at the top is the prize."}
         </p>
       )}
       <div className="mt-3 grid grid-cols-2 gap-2">

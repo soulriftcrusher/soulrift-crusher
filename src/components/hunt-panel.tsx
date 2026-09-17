@@ -102,7 +102,7 @@ export function HuntPanel() {
           className="absolute inset-0 size-full object-cover"
           crossOrigin="anonymous"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-bg/90 via-bg/35 to-bg/20" />
+        <div className="absolute inset-0 bg-gradient-to-t from-bg/95 via-bg/60 to-bg/45" />
         <div className="relative z-10 px-1">
           <Back>
             <WheelPage onClose={() => setPage("hub")} />
