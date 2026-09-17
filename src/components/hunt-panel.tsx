@@ -290,20 +290,17 @@ export function HuntPanel() {
   }
 
   if (page === "chests") {
-    const shown = Math.min(12, Math.max(0, snap.chests));
     return (
       <Back>
-        <p className="font-display text-lg text-gold">{snap.chests} chests</p>
-        <div className="mt-3 flex flex-wrap justify-center gap-2">
-          {shown === 0 ? (
-            <img src={prizeArt("chest")} alt="" className="size-20 object-contain opacity-40" crossOrigin="anonymous" />
-          ) : (
-            Array.from({ length: shown }, (_, i) => (
-              <img key={i} src={prizeArt("chest")} alt="" className="size-16 object-contain drop-shadow" crossOrigin="anonymous" />
-            ))
-          )}
+        <p className="text-center font-display text-lg text-gold">{snap.chests} chest{snap.chests === 1 ? "" : "s"}</p>
+        <div className="mt-3 flex justify-center">
+          <img
+            src={prizeArt("chest")}
+            alt=""
+            className={cn("size-28 object-contain drop-shadow", snap.chests <= 0 ? "opacity-40" : "")}
+            crossOrigin="anonymous"
+          />
         </div>
-        {snap.chests > 12 ? <p className="mt-1 text-center text-xs text-muted">+{snap.chests - 12} more in the pile</p> : null}
         <div className="mt-3 flex gap-2">
           <Button
             className="h-12 flex-1"

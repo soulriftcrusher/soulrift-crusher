@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Gem, Sparkles, Sword } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GEM_PACKS, SOCKETS, WEAPONS } from "@/game/meta";
 import { FIRST_PACK_GEMS, FIRST_PACK_USD, HYMN_SKIP_GEMS } from "@/game/cash";
@@ -119,7 +118,7 @@ export function ShopPanel() {
 
       <div className="mt-4 rounded-lg border border-border bg-bg/40 p-4">
         <div className="flex items-center gap-2">
-          <Sparkles className="size-4 text-soul" />
+          <img src="/tiles/ritual.png" alt="" className="size-6 object-contain" crossOrigin="anonymous" />
           <h3 className="font-display text-base font-semibold">Soul Well</h3>
         </div>
         <p className="mt-2 text-sm text-muted">
@@ -173,7 +172,7 @@ export function ShopPanel() {
 
       <div className="mt-4 rounded-lg border border-border bg-bg/40 p-4">
         <div className="flex items-center gap-2">
-          <Gem className="size-4 text-gold" />
+          <img src="/tiles/hud-gem.png" alt="" className="size-6 object-contain" crossOrigin="anonymous" />
           <h3 className="font-display text-base font-semibold">Gem shop</h3>
         </div>
         <p className="mt-2 text-sm leading-relaxed text-muted">
@@ -290,7 +289,7 @@ export function ShopPanel() {
           const levelMaxed = w.level >= WEAPON_RANK_CAP;
           return (
             <li key={w.id} className="flex items-center gap-3 rounded-lg border border-border bg-bg/40 p-3">
-              <Sword className="size-4 shrink-0 text-muted" />
+              <img src="/tiles/hud-swords.png" alt="" className="size-8 shrink-0 object-contain" crossOrigin="anonymous" />
               <div className="min-w-0 flex-1">
                 <div className="flex items-baseline justify-between">
                   <h3 className="font-display text-sm font-semibold">{def.name}</h3>

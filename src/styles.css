@@ -120,6 +120,41 @@ canvas {
   animation-duration: 0.28s;
 }
 
+@keyframes chest-burst {
+  0% {
+    transform: scale(0.55) rotate(-10deg);
+  }
+  45% {
+    transform: scale(1.18) rotate(8deg);
+  }
+  100% {
+    transform: scale(1) rotate(0);
+  }
+}
+
+@keyframes loot-fly {
+  0% {
+    opacity: 0;
+    transform: translateY(28px) scale(0.35);
+  }
+  55% {
+    opacity: 1;
+    transform: translateY(-10px) scale(1.12);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.chest-burst {
+  animation: chest-burst 0.55s cubic-bezier(0.2, 1.4, 0.3, 1) both;
+}
+
+.loot-fly {
+  animation: loot-fly 0.5s cubic-bezier(0.2, 1.2, 0.3, 1) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

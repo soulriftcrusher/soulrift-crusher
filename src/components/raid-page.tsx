@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NPC_MARKS, SHIELD_GEMS, HYMN_SKIP_GEMS } from "@/game/cash";
 import { formatNum, formatTime } from "@/game/format";
@@ -89,7 +88,7 @@ export function RaidPage() {
     <div>
       <div className="rounded-lg border border-gold/40 bg-wood p-4">
         <div className="flex items-center gap-2">
-          <Shield className="size-4 text-gold" />
+          <img src="/tiles/hud-shield.png" alt="" className="size-6 object-contain" crossOrigin="anonymous" />
           <p className="font-display text-gold">Camp shield</p>
         </div>
         <p className="mt-1 text-sm text-muted">

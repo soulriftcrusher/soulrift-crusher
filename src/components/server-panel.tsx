@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Swords } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatNum } from "@/game/format";
 import { claimSeason, challengeKing, fetchSeason, joinShard, type SeasonSnap, type ShardRow } from "@/game/shard-net";
@@ -241,7 +240,7 @@ function SeasonHead({
   return (
     <div className="rounded-lg border border-gold/40 bg-wood p-4 text-fg">
       <div className="flex items-center gap-2">
-        <Swords className="size-4 text-gold" />
+        <img src="/tiles/hud-swords.png" alt="" className="size-6 object-contain" crossOrigin="anonymous" />
         <h3 className="font-display text-lg font-semibold">Season {s} · Server war</h3>
       </div>
       <p className="mt-2 text-sm text-fg/80">

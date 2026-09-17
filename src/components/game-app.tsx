@@ -1,22 +1,9 @@
 import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import {
-  Bell,
-  Coins,
-  Crown,
-  Gem,
-  Ghost,
-  Hammer,
-  Map as MapIcon,
   Settings,
   Share2,
-  Shield,
-  ShoppingBag,
-  Skull,
-  Swords,
   TimerReset,
-  Trophy,
-  Users,
   Volume2,
   VolumeX,
   X,
@@ -40,6 +27,7 @@ import { exitLocalDemo } from "@/game/demo";
 import { isDemoHunt } from "@/game/demo-flag";
 import { HEROES, SKILLS, heroPortrait, type HeroId, type SkillId } from "@/game/data";
 import { formatNum, formatTime } from "@/game/format";
+import { prizeArt } from "@/game/prize-art";
 import { setHuntName, staffStatus, claimStaff } from "@/game/net";
 import { redeemCode } from "@/game/live-net";
 import { readHuntName, writeHuntName } from "@/game/name";
@@ -424,7 +412,7 @@ function AuthChip() {
   if (!user) {
     return (
       <Link to="/login" aria-label="Sign in" className="grid size-9 shrink-0 place-items-center rounded-md text-muted hover:text-fg">
-        <Users className="size-4" />
+        <img src="/tiles/profile.png" alt="" className="size-6 object-contain" crossOrigin="anonymous" />
       </Link>
     );
   }
@@ -511,7 +499,7 @@ function Battle() {
           Level {snap.floor}
         </p>
         <p className="flex items-center gap-1 text-[11px] text-muted">
-          <Ghost className="size-3 text-soul" />
+          <img src="/tiles/fight.png" alt="" className="size-4 object-contain" crossOrigin="anonymous" />
           {(snap.floor % 10) || 10} / 10
         </p>
         {(() => {
@@ -1324,7 +1312,7 @@ function SettingsModal() {
                 .finally(() => setAlertBusy(false));
             }}
           >
-            <Bell className="size-4" />
+            <img src="/tiles/inbox.png" alt="" className="size-5 object-contain" crossOrigin="anonymous" />
             Send test alert
           </Button>
         ) : null}
@@ -1573,13 +1561,29 @@ function ArenaModal({ result }: { result: ArenaResult }) {
 }
 
 function ChestModal({ loot }: { loot: { gold: number; souls: number; influence: number } }) {
+  const bits = [
+    loot.gold > 0 ? { art: prizeArt("gold"), label: formatNum(loot.gold), name: "Gold" } : null,
+    loot.souls > 0 ? { art: prizeArt("souls"), label: formatNum(loot.souls), name: "Souls" } : null,
+    loot.influence > 0 ? { art: "/tiles/clan.png", label: formatNum(loot.influence), name: "Influence" } : null,
+  ].filter(Boolean) as { art: string; label: string; name: string }[];
   return (
-    <Modal onClose={() => useGame.getState().setChestLoot(null)} title="Chest">
-      <p className="text-sm">
-        {formatNum(loot.gold)} gold · {formatNum(loot.souls)} souls
-        {loot.influence ? ` · ${formatNum(loot.influence)} influence` : ""}
-      </p>
-    </Modal>
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4" onClick={() => useGame.getState().setChestLoot(null)}>
+      <div className="flex w-full max-w-sm flex-col items-center" onClick={(e) => e.stopPropagation()}>
+        <img src={prizeArt("chest")} alt="" className="chest-burst size-32 object-contain" crossOrigin="anonymous" />
+        <ul className="mt-4 flex flex-wrap justify-center gap-4">
+          {bits.map((b, i) => (
+            <li key={b.name} className="loot-fly flex w-20 flex-col items-center" style={{ animationDelay: `${0.12 + i * 0.12}s` }}>
+              <img src={b.art} alt="" className="size-16 object-contain drop-shadow" crossOrigin="anonymous" />
+              <p className="mt-1 font-display text-sm text-gold">{b.label}</p>
+              <p className="text-[10px] tracking-wide text-muted uppercase">{b.name}</p>
+            </li>
+          ))}
+        </ul>
+        <Button className="mt-5 h-12 w-full" onClick={() => useGame.getState().setChestLoot(null)}>
+          Take loot
+        </Button>
+      </div>
+    </div>
   );
 }
 

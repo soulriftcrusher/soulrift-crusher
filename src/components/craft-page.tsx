@@ -1,5 +1,5 @@
 import { useMemo, useState, type ReactNode } from "react";
-import { Coins, Gem, Ghost, X } from "lucide-react";
+import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ShopPanel } from "@/components/shop-panel";
 import { formatNum } from "@/game/format";
@@ -240,13 +240,13 @@ function FullShell({
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">
       <div className="flex shrink-0 items-center justify-between gap-2 bg-wood/90 px-3 py-2 text-xs tabular-nums text-gold">
         <span className="flex items-center gap-1">
-          <Ghost className="size-3" /> {formatNum(snap.souls)}
+          <img src="/tiles/hud-soul.png" alt="" className="size-4 object-contain" crossOrigin="anonymous" /> {formatNum(snap.souls)}
         </span>
         <span className="flex items-center gap-1">
-          <Gem className="size-3" /> {formatNum(snap.gems)}
+          <img src="/tiles/hud-gem.png" alt="" className="size-4 object-contain" crossOrigin="anonymous" /> {formatNum(snap.gems)}
         </span>
         <span className="flex items-center gap-1">
-          <Coins className="size-3" /> {formatNum(snap.gold)}
+          <img src="/tiles/hud-gold.png" alt="" className="size-4 object-contain" crossOrigin="anonymous" /> {formatNum(snap.gold)}
         </span>
       </div>
       <div className="flex shrink-0 items-center px-3 py-2">

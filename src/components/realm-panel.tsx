@@ -1,4 +1,3 @@
-import { Map as MapIcon } from "lucide-react";
 import { ArenaDuel } from "@/components/arena-duel";
 import { Button } from "@/components/ui/button";
 import { REALMS } from "@/game/meta";
@@ -19,7 +18,7 @@ export function RealmPanel() {
         <img src="/bg/realms.jpg" alt="" className="h-36 w-full object-cover" crossOrigin="anonymous" />
         <div className="bg-bg/80 p-4">
           <div className="flex items-center gap-2">
-            <MapIcon className="size-4 text-muted" />
+            <img src="/tiles/realms.png" alt="" className="size-6 object-contain" crossOrigin="anonymous" />
             <h3 className="font-display text-base font-semibold">Realms</h3>
           </div>
           <p className="mt-2 text-sm text-muted">
