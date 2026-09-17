@@ -45,11 +45,19 @@ function Back({ children }: { children: ReactNode }) {
   );
 }
 
+const WHEEL_BACKS = ["/bg/wheel-1.jpg?v=1", "/bg/wheel-2.jpg?v=1"];
+
 export function HuntPanel() {
   const page = useGame((s) => s.huntPage);
   const setPage = useGame((s) => s.setHuntPage);
+  const [wheelBack, setWheelBack] = useState(WHEEL_BACKS[0]!);
   const snap = useGame((s) => s.snap);
   const refresh = useGame((s) => s.refresh);
+
+  useEffect(() => {
+    if (page !== "wheel") return;
+    setWheelBack(WHEEL_BACKS[Math.floor(Math.random() * WHEEL_BACKS.length)]!);
+  }, [page]);
 
   if (page === "hub") {
     const items: { id: HuntPage; label: string; blurb: string; icon: typeof Trophy; ping?: boolean }[] = [
@@ -103,12 +111,12 @@ export function HuntPanel() {
     return (
       <div className="relative min-h-[32rem] overflow-hidden rounded-xl">
         <img
-          src="/bg/splash.jpg?v=fight"
+          src={wheelBack}
           alt=""
           className="absolute inset-0 size-full object-cover"
           crossOrigin="anonymous"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/70 to-bg/40" />
+        <div className="absolute inset-0 bg-gradient-to-t from-bg/90 via-bg/35 to-bg/20" />
         <div className="relative z-10 px-1">
           <Back>
             <WheelPage onClose={() => setPage("hub")} />
