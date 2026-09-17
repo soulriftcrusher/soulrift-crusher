@@ -709,31 +709,76 @@ function HeroPanel() {
   const [runesOpen, setRunesOpen] = useState(false);
   const [peek, setPeek] = useState<RunePeek | null>(null);
   const target = (selected as HeroId) || (snap.heroes.find((h) => h.level > 0)?.id as HeroId | undefined) || "kael";
+  const picked = snap.heroes.find((h) => h.id === selected);
   return (
     <div className="pt-3">
       <div className="mb-2 flex gap-1">
-        {([1, 10, 25, 100, -1] as const).map((n) => (
+        {([1, 10, 100, -1] as const).map((n) => (
           <button
             key={n}
             type="button"
-            className={cn("h-9 flex-1 rounded-md border text-xs", bulk === n ? "border-gold text-gold" : "border-border text-muted")}
+            className={cn(
+              "h-10 flex-1 rounded-xl font-display text-sm",
+              bulk === n ? "bg-gold/25 text-gold" : "bg-wood/80 text-muted",
+            )}
             onClick={() => useGame.getState().setBulk(n)}
           >
             {n === -1 ? "MAX" : `x${n}`}
           </button>
         ))}
       </div>
-      <Button className="mb-2 h-11 w-full" onClick={() => { if (sim.hireOrUpgradeAll(bulk)) { sfx.ui(); refresh(); } }}>
-        Hire / upgrade all
-      </Button>
-      <Button variant="secondary" className="mb-3 h-11 w-full" onClick={() => { sfx.ui(); setRunesOpen(true); }}>
-        Runes
-      </Button>
-      <ul className="flex flex-col gap-2">
-        {snap.heroes.map((hero) => (
-          <HeroRow key={hero.id} hero={hero} open={selected === hero.id} onPeek={setPeek} />
-        ))}
+      <ul className="grid grid-cols-4 gap-2">
+        {snap.heroes.map((hero) => {
+          const on = selected === hero.id;
+          const locked = hero.level <= 0 && !hero.unlocked && !hero.canGemHire;
+          return (
+            <li key={hero.id}>
+              <button
+                type="button"
+                className={cn(
+                  "relative aspect-square w-full overflow-hidden rounded-xl border-2",
+                  on ? "border-gold" : "border-gold/25",
+                  locked ? "opacity-55" : "",
+                )}
+                onClick={() => {
+                  sfx.ui();
+                  useGame.getState().setSelectedHero(on ? null : hero.id);
+                }}
+              >
+                <img src={heroPortrait(hero.id as HeroId)} alt="" className="size-full object-cover" crossOrigin="anonymous" />
+                {hero.level > 0 ? (
+                  <span className="absolute top-1 right-1 grid min-w-5 place-items-center rounded-md bg-bg/80 px-1 font-display text-[10px] text-gold">
+                    {hero.level}
+                  </span>
+                ) : null}
+                <span className="absolute inset-x-0 bottom-0 flex justify-center gap-px bg-gradient-to-t from-bg/80 to-transparent pb-1 pt-3">
+                  {Array.from({ length: 5 }, (_, i) => (
+                    <img
+                      key={i}
+                      src={i < hero.stars ? "/tiles/star-on.png" : "/tiles/star-off.png"}
+                      alt=""
+                      className="size-3.5 object-contain"
+                      crossOrigin="anonymous"
+                    />
+                  ))}
+                </span>
+              </button>
+            </li>
+          );
+        })}
       </ul>
+      {picked ? (
+        <HeroRow hero={picked} open onPeek={setPeek} />
+      ) : (
+        <div className="mt-3 flex gap-2">
+          <Button className="h-11 flex-1" onClick={() => { if (sim.hireOrUpgradeAll(bulk)) { sfx.ui(); refresh(); } }}>
+            Hire / upgrade all
+          </Button>
+          <Button variant="secondary" className="h-11 flex-1" onClick={() => { sfx.ui(); setRunesOpen(true); }}>
+            Runes
+          </Button>
+        </div>
+      )}
       {runesOpen && !peek ? <RuneBagModal target={target} onPeek={setPeek} onClose={() => setRunesOpen(false)} /> : null}
       {peek ? (
         <RuneSheet
@@ -765,7 +810,7 @@ function HeroRow({ hero, open, onPeek }: { hero: HeroSnap; open: boolean; onPeek
   const worn = new Set(snap.heroes.flatMap((h) => h.attached.map((a) => a?.id).filter(Boolean) as string[]));
   const bag = stackRunes(snap.runeBag.filter((r) => !worn.has(r.id)));
   return (
-    <li className="rounded-md border border-gold/30 bg-wood p-3">
+    <div className="mt-3 rounded-xl border border-gold/30 bg-wood/90 p-3">
       <button
         type="button"
         className="flex w-full items-center gap-3 text-left"
@@ -968,7 +1013,7 @@ function HeroRow({ hero, open, onPeek }: { hero: HeroSnap; open: boolean; onPeek
           ) : null}
         </div>
       ) : null}
-    </li>
+    </div>
   );
 }
 
