@@ -551,7 +551,7 @@ export function biomeFor(floor: number): "crypt" | "frost" | "ember" | "void" | 
 }
 
 export function heroPortrait(id: HeroId): string {
-  return `/portraits/${id}.jpg`;
+  return `/portraits/${id}.jpg?v=3`;
 }
 
 export function heroStars(hero: HeroDef, gilds: number): number {

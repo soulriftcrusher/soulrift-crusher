@@ -1,7 +1,7 @@
 import { drawMonster } from "./draw-creatures";
 import { formatNum } from "./format";
 import type { HeroId, MonsterKind } from "./data";
-import { HEROES } from "./data";
+import { HEROES, heroPortrait } from "./data";
 import type { GameSim } from "./sim";
 import type { SimEvent } from "./types";
 import { sfx } from "./audio";
@@ -82,7 +82,7 @@ export function preloadHuntArt() {
   if (typeof window === "undefined") return;
   for (const h of HEROES) {
     if (!artCache.has(h.id)) {
-      void loadImage(`/portraits/${h.id}.jpg`)
+      void loadImage(heroPortrait(h.id))
         .then((img) => {
           if (!artCache.has(h.id) || !artCache.get(h.id)?.sheet) {
             artCache.set(h.id, { img, sheet: false });
@@ -250,7 +250,7 @@ export class Renderer {
             artCache.set(h.id, art);
           })
           .catch(() =>
-            loadImage(`/portraits/${h.id}.jpg`)
+            loadImage(heroPortrait(h.id))
               .then((img) => {
                 const art = { img, sheet: false };
                 if (!this.sheets.has(h.id)) this.sheets.set(h.id, art);

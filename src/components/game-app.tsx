@@ -514,29 +514,38 @@ function Battle() {
           <Ghost className="size-3 text-soul" />
           {(snap.floor % 10) || 10} / 10
         </p>
-        <div className="h-2.5 w-44 overflow-hidden rounded-full border border-gold/40 bg-bg/80">
-          <div
-            className={cn(
-              "h-full",
-              snap.monsterHp / Math.max(1, snap.monsterMax) > 0.5
-                ? "bg-hp"
-                : snap.monsterHp / Math.max(1, snap.monsterMax) > 0.2
-                  ? "bg-gold"
-                  : "bg-danger",
-            )}
-            style={{ width: `${Math.max(2, (snap.monsterHp / Math.max(1, snap.monsterMax)) * 100)}%` }}
-          />
-        </div>
-        <p className="font-display text-sm tracking-wide text-[#f0e6d8] uppercase">
+        {(() => {
+          const ratio = snap.monsterHp / Math.max(1, snap.monsterMax);
+          const fill =
+            ratio > 0.5
+              ? "from-[#9dff8a] via-[#3dcc4a] to-[#157a28]"
+              : ratio > 0.2
+                ? "from-[#ffe08a] via-[#d4b483] to-[#9a6a18]"
+                : "from-[#ff9a9a] via-[#e04545] to-[#8a1010]";
+          return (
+            <div className="mt-0.5 flex w-[14.5rem] items-center gap-1.5">
+              <img src="/tiles/hud-hp.png" alt="" className="size-7 shrink-0 object-contain" crossOrigin="anonymous" />
+              <div className="relative h-6 flex-1 overflow-hidden rounded-full border-[3px] border-[#f0d48a] bg-[#2a120c] shadow-[0_3px_0_#5a2a12]">
+                <div
+                  className={cn("h-full rounded-full bg-gradient-to-b", fill)}
+                  style={{ width: `${Math.max(6, ratio * 100)}%` }}
+                />
+                <div className="pointer-events-none absolute inset-x-2 top-0.5 h-2 rounded-full bg-white/35" />
+              </div>
+            </div>
+          );
+        })()}
+        <p className="font-display text-sm tracking-wide text-[#f0e6d8] uppercase drop-shadow">
           {snap.monsterName}
           {snap.isBoss ? " · Boss" : ""}
         </p>
-        <p className="text-[11px] text-gold">
+        <p className="font-display text-sm text-gold drop-shadow">
           {formatNum(snap.monsterHp)} / {formatNum(snap.monsterMax)}
         </p>
         {snap.isBoss && snap.bossMaxTime > 0 ? (
-          <div className="h-1.5 w-40 overflow-hidden rounded-full border border-gold/30 bg-bg/70">
-            <div className="h-full bg-accent" style={{ width: `${Math.max(2, (snap.bossTime / snap.bossMaxTime) * 100)}%` }} />
+          <div className="relative h-3 w-40 overflow-hidden rounded-full border-2 border-[#f0d48a] bg-[#2a120c]">
+            <div className="h-full rounded-full bg-gradient-to-b from-[#7ec8ff] via-[#3a8adf] to-[#1a4a9a]" style={{ width: `${Math.max(6, (snap.bossTime / snap.bossMaxTime) * 100)}%` }} />
+            <div className="pointer-events-none absolute inset-x-1 top-px h-1 rounded-full bg-white/35" />
           </div>
         ) : null}
       </div>
