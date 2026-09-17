@@ -557,19 +557,19 @@ export function heroPortrait(id: HeroId): string {
 export function arenaFoeArt(name: string): string {
   switch (name) {
     case "Ashen Pact":
-      return "/sprites/monsters/wraith.png?v=6";
+      return "/sprites/monsters/wraith.png?v=7";
     case "Rime Banner":
-      return "/sprites/monsters/rimeknight.png?v=6";
+      return "/sprites/monsters/rimeknight.png?v=7";
     case "Cinder Host":
-      return "/sprites/monsters/harpy.png?v=6";
+      return "/sprites/monsters/harpy.png?v=7";
     case "Void Choir":
-      return "/sprites/monsters/lich.png?v=6";
+      return "/sprites/monsters/lich.png?v=7";
     case "Gilded Teeth":
-      return "/sprites/monsters/hound.png?v=6";
+      return "/sprites/monsters/hound.png?v=7";
     case "Nightwell":
       return "/portraits/selene.jpg?v=4";
     case "Iron Hymn":
-      return "/sprites/monsters/golem.png?v=6";
+      return "/sprites/monsters/golem.png?v=7";
     case "Last Coin":
       return "/portraits/ashur.jpg?v=4";
     default:
