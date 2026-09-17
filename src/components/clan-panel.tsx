@@ -29,7 +29,8 @@ import {
   type WorldSnap,
 } from "@/game/net";
 import { ClanCrest } from "@/components/clan-crest";
-import { CLAN_CAP, CRESTS, LOCS, clanBonuses, createdLabel, lastOnline, roleName } from "@/game/clan-look";
+import { LocFlag } from "@/components/loc-flag";
+import { CLAN_CAP, CRESTS, LOCS, LOC_NAME, clanBonuses, createdLabel, lastOnline, roleName } from "@/game/clan-look";
 import { sim } from "@/game/sim";
 import { sfx, unlockAudio } from "@/game/audio";
 import { MenuGrid, MenuTile } from "@/components/menu-tile";
@@ -391,14 +392,14 @@ export function ClanPanel() {
       ) : null}
       {page === "mail" ? <ClanMail /> : null}
       {page === "profile" ? (
-        <ProfileBox snap={snap} worldName={world?.name} />
+        <ProfileBox snap={snap} worldName={world?.name} loc={world?.clan?.loc} />
       ) : null}
       {note ? <p className="mt-3 text-sm text-gold">{note}</p> : null}
     </div>
   );
 }
 
-function ProfileBox({ snap, worldName }: { snap: Snapshot; worldName?: string }) {
+function ProfileBox({ snap, worldName, loc }: { snap: Snapshot; worldName?: string; loc?: string }) {
   const refresh = useGame((s) => s.refresh);
   const hired = snap.heroes.filter((h) => h.level > 0);
   return (
@@ -408,6 +409,14 @@ function ProfileBox({ snap, worldName }: { snap: Snapshot; worldName?: string })
         <div className="min-w-0">
           <h3 className="font-display text-lg text-gold">{worldName ?? "Crusader"}</h3>
           <p className="text-sm text-gold">{snap.title}</p>
+          {loc ? (
+            <p className="mt-1 flex items-center gap-1.5 text-sm text-muted">
+              <LocFlag loc={loc} />
+              {LOC_NAME[(loc as keyof typeof LOC_NAME)] ?? loc}
+            </p>
+          ) : (
+            <p className="text-sm text-muted">No clan location yet</p>
+          )}
           <p className="text-sm tabular-nums text-muted">
             Floor {snap.maxFloor} · {formatNum(snap.dps)} power
           </p>
@@ -567,7 +576,10 @@ function ClanDesk({
             <li key={c.id} className="flex items-center justify-between gap-2 rounded-md border border-border px-3 py-2">
               <div className="min-w-0">
                 <p className="truncate font-display text-sm">[{c.tag}] {c.name}</p>
-                <p className="text-[11px] text-muted">{c.members} hunters · {formatNum(c.influence)} honor</p>
+                <p className="flex items-center gap-1 text-[11px] text-muted">
+                  <LocFlag loc={c.loc} />
+                  {LOC_NAME[(c.loc as keyof typeof LOC_NAME)] ?? c.loc} · {c.members} hunters · {formatNum(c.influence)} honor
+                </p>
               </div>
               <Button size="sm" className="h-11" disabled={busy || Boolean(world?.clan)} onClick={() => onRequest(c.id)}>
                 Request
@@ -694,8 +706,9 @@ function ClanHome({
             <p className="text-sm tabular-nums">
               Members: {clan.memberCount} / {CLAN_CAP}
             </p>
-            <p className="text-sm text-muted">
-              {clan.loc} · Created {createdLabel(clan.createdAt)}
+            <p className="flex items-center gap-1.5 text-sm text-muted">
+              <LocFlag loc={clan.loc} />
+              {LOC_NAME[(clan.loc as keyof typeof LOC_NAME)] ?? clan.loc} · Created {createdLabel(clan.createdAt)}
             </p>
           </div>
         </div>
@@ -782,8 +795,9 @@ function ArmyCamp({ world }: { world: WorldSnap | null }) {
   return (
     <div className="rounded-lg border border-border bg-bg/40 p-4">
       <h3 className="font-display text-base text-gold">[{world.clan.tag}] Army Camp</h3>
-      <p className="mt-1 text-sm tabular-nums text-muted">
-        {world.members.length} hunters · {formatNum(power)} power · raid wave {world.clan.raidWave}
+      <p className="mt-1 flex items-center gap-1 text-sm tabular-nums text-muted">
+        <LocFlag loc={world.clan.loc} />
+        {LOC_NAME[(world.clan.loc as keyof typeof LOC_NAME)] ?? world.clan.loc} · {world.members.length} hunters · {formatNum(power)} power · raid wave {world.clan.raidWave}
       </p>
       <ul className="mt-3 flex flex-col gap-2">
         {world.members.map((m) => (
@@ -871,9 +885,10 @@ function ManageClan({
             <button
               key={id}
               type="button"
-              className={cn("h-10 rounded-md border px-2 text-sm", loc === id ? "border-gold text-gold" : "border-border text-muted")}
+              className={cn("flex h-10 items-center gap-1 rounded-md border px-2 text-sm", loc === id ? "border-gold text-gold" : "border-border text-muted")}
               onClick={() => setLoc(id)}
             >
+              <LocFlag loc={id} />
               {id}
             </button>
           ))}

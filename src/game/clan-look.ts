@@ -6,6 +6,19 @@ export const CRESTS = ["axe", "wolf", "rift", "skull", "flame", "moon"] as const
 export type CrestId = (typeof CRESTS)[number];
 
 export const LOCS = ["USA", "UK", "EU", "KR", "JP", "AU", "CA", "BR", "WW"] as const;
+export type LocId = (typeof LOCS)[number];
+
+export const LOC_NAME: Record<LocId, string> = {
+  USA: "USA",
+  UK: "UK",
+  EU: "EU",
+  KR: "Korea",
+  JP: "Japan",
+  AU: "Australia",
+  CA: "Canada",
+  BR: "Brazil",
+  WW: "World",
+};
 
 export function roleName(role: ClanRole | string): string {
   if (role === "founder") return "Leader";

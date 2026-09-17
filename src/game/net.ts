@@ -49,6 +49,7 @@ export type BoardClan = {
   tag: string;
   influence: number;
   members: number;
+  loc: string;
 };
 
 export type WorldSnap = {
@@ -182,11 +183,11 @@ async function loadWorld(sql: Sql, userId: string): Promise<WorldSnap> {
     order by c.power desc
     limit 12
   `;
-  const board = await sql<{ id: number; name: string; tag: string; influence: number; members: number }>`
-    select cl.id, cl.name, cl.tag, cl.influence, count(m.user_id)::int as members
+  const board = await sql<{ id: number; name: string; tag: string; influence: number; members: number; loc: string | null }>`
+    select cl.id, cl.name, cl.tag, cl.influence, cl.loc, count(m.user_id)::int as members
     from clans cl
     left join clan_members m on m.clan_id = cl.id
-    group by cl.id
+    group by cl.id, cl.loc
     order by cl.influence desc
     limit 8
   `;
@@ -288,6 +289,7 @@ async function loadWorld(sql: Sql, userId: string): Promise<WorldSnap> {
       tag: b.tag,
       influence: Number(b.influence),
       members: Number(b.members),
+      loc: b.loc || "WW",
     })),
   };
 }

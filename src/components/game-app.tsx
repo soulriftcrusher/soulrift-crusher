@@ -360,13 +360,20 @@ function Hud() {
   const muted = useGame((s) => s.muted);
   return (
     <header className="grid shrink-0 grid-cols-3 gap-1 border-b border-border bg-bg px-2 py-1.5 pt-[max(0.4rem,env(safe-area-inset-top))]">
-      <HudStat icon={<Swords className="size-3.5 text-accent" />} value={formatNum(snap.clickDmg)} />
-      <HudStat icon={<Ghost className="size-3.5 text-soul" />} value={formatNum(snap.souls)} />
-      <HudStat icon={<Coins className="size-3.5 text-gold" />} value={formatNum(snap.gold)} />
+      <HudStat art="/tiles/hud-swords.png" value={formatNum(snap.clickDmg)} />
+      <HudStat art="/tiles/hud-soul.png" value={formatNum(snap.souls)} />
+      <HudStat art="/tiles/hud-gold.png" value={formatNum(snap.gold)} />
       <div className="col-span-3 mt-0.5 flex items-center gap-2 text-[11px] tabular-nums text-muted">
-        <Gem className="size-3 text-gold" />
+        <img src="/tiles/hud-gem.png" alt="" className="size-4 object-contain" crossOrigin="anonymous" />
         {formatNum(snap.gems)} gems
-        {snap.shieldOn ? <span className="text-gold">· shield {formatTime(snap.shieldLeft / 1000)}</span> : <span>· no shield</span>}
+        {snap.shieldOn ? (
+          <span className="inline-flex items-center gap-1 text-gold">
+            <img src="/tiles/hud-shield.png" alt="" className="size-4 object-contain" crossOrigin="anonymous" />
+            {formatTime(snap.shieldLeft / 1000)}
+          </span>
+        ) : (
+          <span>· no shield</span>
+        )}
         {onlineCount > 0 ? <span className="text-gold">· {onlineCount} online</span> : null}
         {moveOpen() ? (
           <button
@@ -401,10 +408,10 @@ function Hud() {
   );
 }
 
-function HudStat({ icon, value }: { icon: ReactNode; value: string }) {
+function HudStat({ art, value }: { art: string; value: string }) {
   return (
     <div className="flex items-center gap-1 font-display text-sm tabular-nums text-gold">
-      {icon}
+      <img src={art} alt="" className="size-5 object-contain" crossOrigin="anonymous" />
       {value}
     </div>
   );
