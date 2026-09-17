@@ -311,23 +311,23 @@ function PlayScreen() {
           {tab === "shop" ? (
             <CraftPage onClose={() => setTab("fight")} />
           ) : tab === "heroes" ? (
-            <MenuPage title="Heroes" bg="/bg/heroes.jpg">
+            <MenuPage title="Heroes" bg="/bg/heroes.jpg?v=2">
               <HeroPanel />
             </MenuPage>
           ) : tab === "realm" ? (
-            <MenuPage title="Realms" bg="/bg/realms-page.jpg">
+            <MenuPage title="Realms" bg="/bg/realms-page.jpg?v=2">
               <RealmPanel />
             </MenuPage>
           ) : tab === "hunt" ? (
-            <MenuPage title={huntPage === "shop" ? "Shop" : "Hunt"} bg={huntPage === "shop" ? "/bg/shop-page.jpg" : "/bg/hunt.jpg"}>
+            <MenuPage title={huntPage === "shop" ? "Shop" : "Hunt"} bg={huntPage === "shop" ? "/bg/shop-page.jpg?v=2" : "/bg/hunt.jpg?v=2"}>
               <HuntPanel />
             </MenuPage>
           ) : tab === "clan" ? (
-            <MenuPage title="Clans" bg="/bg/clans.jpg">
+            <MenuPage title="Clans" bg="/bg/clans.jpg?v=2">
               <ClanPanel />
             </MenuPage>
           ) : tab === "founders" && showFounder ? (
-            <MenuPage title="Founders" bg="/bg/founder.jpg">
+            <MenuPage title="Founders" bg="/bg/founder.jpg?v=2">
               <StaffPanel />
             </MenuPage>
           ) : (
@@ -677,7 +677,7 @@ function MenuPage({ title, bg, children }: { title: string; parchment?: boolean;
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
       {bg ? (
-        <img src={bg} alt="" className="absolute inset-0 size-full object-cover" crossOrigin="anonymous" />
+        <img src={bg} alt="" className="absolute inset-0 size-full object-cover" crossOrigin="anonymous" decoding="async" />
       ) : null}
       {bg ? <div className="absolute inset-0 bg-gradient-to-t from-bg/92 via-bg/55 to-bg/30" /> : null}
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">

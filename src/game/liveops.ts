@@ -1,4 +1,5 @@
 import { HEROES, type HeroId } from "./data";
+import type { PrizeKind } from "./prize-art";
 
 export const VIP_THRESH = [0, 80, 250, 700, 1800, 4000, 9000, 20000, 45000];
 
@@ -59,6 +60,15 @@ export function marketForDay(day: string): MarketDeal[] {
     else break;
   }
   return out;
+}
+
+export function marketPrize(id: string): PrizeKind {
+  const d = MARKET_POOL.find((x) => x.id === id);
+  if (d?.giveChests) return "chest";
+  if (d?.giveEmber) return "ember";
+  if (d?.giveSouls) return "souls";
+  if (d?.giveGems) return "gems";
+  return "gold";
 }
 
 export const TITLES: { id: string; name: string; badge?: string }[] = [

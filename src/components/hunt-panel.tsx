@@ -5,9 +5,10 @@ import { ArenaDuel } from "@/components/arena-duel";
 import { HuntCalendar, HuntPass, HuntPlay, HuntCard, HuntCodex } from "@/components/hunt-live";
 import { WheelPage } from "@/components/wheel-page";
 import { RaidPage } from "@/components/raid-page";
-import { WEEKLY_LOGIN } from "@/game/liveops";
+import { WEEKLY_LOGIN, marketPrize } from "@/game/liveops";
 import { HEROES } from "@/game/data";
 import { EVENT_SHOP } from "@/game/gear";
+import { prizeArt } from "@/game/prize-art";
 import { formatNum, formatTime } from "@/game/format";
 import { claimInbox, listInbox } from "@/game/live-net";
 import { sim } from "@/game/sim";
@@ -30,7 +31,7 @@ function Back({ children }: { children: ReactNode }) {
   );
 }
 
-const WHEEL_BACKS = ["/bg/wheel-1.jpg?v=1", "/bg/wheel-2.jpg?v=1"];
+const WHEEL_BACKS = ["/bg/wheel-1.jpg?v=2", "/bg/wheel-2.jpg?v=2"];
 
 export function HuntPanel() {
   const page = useGame((s) => s.huntPage);
@@ -129,10 +130,9 @@ export function HuntPanel() {
             {WEEKLY_LOGIN.map((g, i) => {
               const taken = i < idx || (!snap.dailyReady && i === idx);
               const today = snap.dailyReady && i === idx;
-              const extra = i === 6 ? " + 2 chests" : "";
               return (
                 <li
-                  key={g}
+                  key={i}
                   className={cn(
                     "flex items-center justify-between rounded-md border px-3 py-2 text-sm",
                     today ? "border-gold bg-gold/10 text-gold" : "border-border",
@@ -140,8 +140,15 @@ export function HuntPanel() {
                   )}
                 >
                   <span>Day {i + 1}</span>
-                  <span className="tabular-nums">
-                    {g} gems{extra}
+                  <span className="flex items-center gap-1 tabular-nums">
+                    <img src={prizeArt("gems")} alt="" className="size-7 object-contain" crossOrigin="anonymous" />
+                    {g} gems
+                    {i === 6 ? (
+                      <>
+                        <img src={prizeArt("chest")} alt="" className="size-7 object-contain" crossOrigin="anonymous" />
+                        +2
+                      </>
+                    ) : null}
                     {taken ? " · taken" : today ? " · claim" : ""}
                   </span>
                 </li>
@@ -194,11 +201,16 @@ export function HuntPanel() {
         <div className="rounded-lg border border-border bg-bg/40 p-4">
           <p className="text-xs tracking-wide text-gold uppercase">Black market · today</p>
           <ul className="mt-2 flex flex-col gap-2">
-            {snap.market.map((d) => (
+            {snap.market.map((d) => {
+              const art = prizeArt(marketPrize(d.id));
+              return (
               <li key={d.id} className="flex items-center justify-between gap-2">
-                <div>
+                <div className="flex min-w-0 items-center gap-2">
+                  <img src={art} alt="" className="size-12 shrink-0 object-contain" crossOrigin="anonymous" />
+                  <div>
                   <p className="text-sm">{d.name}</p>
                   <p className="text-[11px] text-muted">{d.blurb}</p>
+                  </div>
                 </div>
                 <Button
                   size="sm"
@@ -215,7 +227,8 @@ export function HuntPanel() {
                   {d.bought ? "Sold" : d.gems ? `${d.gems} gems` : formatNum(d.gold)}
                 </Button>
               </li>
-            ))}
+              );
+            })}
           </ul>
         </div>
       </Back>
@@ -277,9 +290,20 @@ export function HuntPanel() {
   }
 
   if (page === "chests") {
+    const shown = Math.min(12, Math.max(0, snap.chests));
     return (
       <Back>
         <p className="font-display text-lg text-gold">{snap.chests} chests</p>
+        <div className="mt-3 flex flex-wrap justify-center gap-2">
+          {shown === 0 ? (
+            <img src={prizeArt("chest")} alt="" className="size-20 object-contain opacity-40" crossOrigin="anonymous" />
+          ) : (
+            Array.from({ length: shown }, (_, i) => (
+              <img key={i} src={prizeArt("chest")} alt="" className="size-16 object-contain drop-shadow" crossOrigin="anonymous" />
+            ))
+          )}
+        </div>
+        {snap.chests > 12 ? <p className="mt-1 text-center text-xs text-muted">+{snap.chests - 12} more in the pile</p> : null}
         <div className="mt-3 flex gap-2">
           <Button
             className="h-12 flex-1"
@@ -358,7 +382,10 @@ export function HuntPanel() {
           <ul className="mt-3 flex flex-col gap-2">
             {EVENT_SHOP.map((it) => (
               <li key={it.id} className="flex items-center justify-between gap-2">
-                <span className="text-sm">{it.name}</span>
+                <span className="flex min-w-0 items-center gap-2">
+                  <img src={prizeArt(it.kind)} alt="" className="size-12 shrink-0 object-contain" crossOrigin="anonymous" />
+                  <span className="text-sm">{it.name}</span>
+                </span>
                 <span className="flex shrink-0 flex-col items-end gap-0.5">
                   <Button
                     size="sm"

@@ -5,6 +5,7 @@ import { monthReward, WATCH_GEMS, BP_PREMIUM } from "@/game/liveops";
 import { sim } from "@/game/sim";
 import { sfx, unlockAudio } from "@/game/audio";
 import { useGame } from "@/game/store";
+import { prizeArt } from "@/game/prize-art";
 import { cn } from "@/lib/utils";
 
 export function HuntCalendar() {
@@ -47,8 +48,15 @@ export function HuntCalendar() {
               )}
             >
               <span className={now ? "text-gold" : "text-fg"}>Day {d}</span>
-              <span className="tabular-nums text-muted">
-                {r.gems} gems{r.chests ? ` + ${r.chests} chest` : ""}
+              <span className="flex items-center gap-1 tabular-nums text-muted">
+                <img src={prizeArt("gems")} alt="" className="size-6 object-contain" crossOrigin="anonymous" />
+                {r.gems}
+                {r.chests ? (
+                  <>
+                    <img src={prizeArt("chest")} alt="" className="size-6 object-contain" crossOrigin="anonymous" />
+                    {r.chests}
+                  </>
+                ) : null}
                 {hit ? " · taken" : now ? " · today" : ""}
               </span>
             </li>

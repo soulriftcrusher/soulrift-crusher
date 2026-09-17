@@ -98,6 +98,24 @@ export function preloadHuntArt() {
         .catch(() => undefined);
     }
   }
+  for (const src of [
+    "/bg/hunt.jpg?v=2",
+    "/bg/heroes.jpg?v=2",
+    "/bg/craft.jpg?v=2",
+    "/bg/clans.jpg?v=2",
+    "/bg/founder.jpg?v=2",
+    "/bg/realms-page.jpg?v=2",
+    "/bg/shop-page.jpg?v=2",
+    "/bg/wheel-1.jpg?v=2",
+    "/bg/wheel-2.jpg?v=2",
+    "/tiles/loot-chest.png",
+    "/tiles/loot-ember.png",
+    "/tiles/loot-rune.png",
+    "/tiles/loot-rift.png",
+    "/tiles/loot-gems.png",
+  ]) {
+    void loadImage(src).catch(() => undefined);
+  }
 }
 
 function isWalkSheet(img: HTMLImageElement): boolean {
