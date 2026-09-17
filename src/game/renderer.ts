@@ -296,7 +296,7 @@ export class Renderer {
       "hound",
     ]) {
       jobs.push(
-        loadImage(`/sprites/monsters/${kind}.png?v=4`)
+        loadImage(`/sprites/monsters/${kind}.png?v=5`)
           .then((img) => {
             this.monsters.set(kind, img);
           })
@@ -649,9 +649,7 @@ export class Renderer {
       const y = this.monsterY - size * 0.9 + dead * 16;
       this.ctx.save();
       this.ctx.globalAlpha = Math.max(0.35, 1 - dead);
-      this.ctx.translate(x + size / 2, y);
-      this.ctx.scale(-1, 1);
-      this.ctx.drawImage(art, -size / 2, 0, size, size);
+      this.ctx.drawImage(art, x, y, size, size);
       this.ctx.restore();
       return;
     }
