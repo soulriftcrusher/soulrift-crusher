@@ -3,7 +3,16 @@ import type { ClanRole } from "./net";
 export const CLAN_CAP = 30;
 
 export const CRESTS = ["axe", "wolf", "rift", "skull", "flame", "moon"] as const;
-export type CrestId = (typeof CRESTS)[number];
+export const FOUNDER_CREST = "crown" as const;
+export type CrestId = (typeof CRESTS)[number] | typeof FOUNDER_CREST;
+
+export function isCrestId(id: string | undefined): id is CrestId {
+  return id === FOUNDER_CREST || (CRESTS as readonly string[]).includes(id ?? "");
+}
+
+export function crestsFor(staff: boolean): CrestId[] {
+  return staff ? [...CRESTS, FOUNDER_CREST] : [...CRESTS];
+}
 
 export const LOCS = ["USA", "UK", "EU", "KR", "JP", "AU", "CA", "BR", "WW"] as const;
 export type LocId = (typeof LOCS)[number];

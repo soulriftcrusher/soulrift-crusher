@@ -1,4 +1,4 @@
-const CACHE = "soulrift-shell-v8";
+const CACHE = "soulrift-shell-v9";
 const PRECACHE = ["/", "/manifest.webmanifest", "/icon-192.png", "/icon-512.png"];
 const BG_DB = "soulrift-bg";
 const BG_STORE = "kv";
