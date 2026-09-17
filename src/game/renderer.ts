@@ -93,7 +93,7 @@ export function preloadHuntArt() {
     if (h.sprite) {
       void loadImage(h.sprite)
         .then((img) => {
-          artCache.set(h.id, { img, sheet: isWalkSheet(img) });
+          artCache.set(h.id, { img, sheet: false });
         })
         .catch(() => undefined);
     }
@@ -245,7 +245,7 @@ export class Renderer {
       jobs.push(
         loadImage(h.sprite)
           .then((img) => {
-            const art = { img, sheet: isWalkSheet(img) };
+            const art = { img, sheet: false };
             this.sheets.set(h.id, art);
             artCache.set(h.id, art);
           })
@@ -296,7 +296,7 @@ export class Renderer {
       "hound",
     ]) {
       jobs.push(
-        loadImage(`/sprites/monsters/${kind}.png`)
+        loadImage(`/sprites/monsters/${kind}.png?v=4`)
           .then((img) => {
             this.monsters.set(kind, img);
           })
