@@ -9,17 +9,7 @@ import { useGame } from "@/game/store";
 
 const N = WHEEL_SLICES.length;
 const SLICE = 360 / N;
-const FILLS = [
-  "var(--color-gold)",
-  "var(--color-accent)",
-  "var(--color-hp)",
-  "var(--color-soul)",
-  "var(--color-wood)",
-  "var(--color-parchment)",
-  "var(--color-ember)",
-  "var(--color-frame)",
-];
-const INK = ["#2a1a10", "#fff6ee", "#102010", "#102028", "#fff6ee", "#2a1a10", "#fff6ee", "#1a1208"];
+const FILLS = ["#f4c44a", "#e4453a", "#3ec8d4", "#ef7a32", "#e8b84a", "#2fba6e", "#3d7fd6", "#f0b429"];
 
 export function WheelPage({ onClose }: { onClose: () => void }) {
   const snap = useGame((s) => s.snap);
@@ -101,12 +91,20 @@ export function WheelPage({ onClose }: { onClose: () => void }) {
         </button>
       </div>
       <p className="mt-1 text-sm text-muted">One free spin a day. Extra spins cost gems. Watch it go.</p>
-      <div className="relative mx-auto mt-3 size-72">
-        <div className="absolute left-1/2 top-0 z-20 -translate-x-1/2">
-          <div className="h-0 w-0 border-x-[10px] border-t-[22px] border-x-transparent border-t-gold drop-shadow" />
-        </div>
-        <svg viewBox="0 0 200 200" className="size-72 drop-shadow-[0_0_18px_rgba(201,162,39,0.35)]">
-          <circle cx="100" cy="100" r="98" fill="var(--color-frame)" />
+
+      <div className="relative mx-auto mt-1 aspect-square w-full max-w-[21rem]">
+        <svg viewBox="0 0 200 200" className="absolute inset-[14%] size-auto">
+          <defs>
+            <radialGradient id="wheelGloss" cx="35%" cy="30%" r="70%">
+              <stop offset="0%" stopColor="#fff6ee" stopOpacity="0.4" />
+              <stop offset="55%" stopColor="#fff6ee" stopOpacity="0" />
+            </radialGradient>
+            <radialGradient id="hubGem" cx="40%" cy="35%" r="65%">
+              <stop offset="0%" stopColor="#fff1c8" />
+              <stop offset="40%" stopColor="#e4453a" />
+              <stop offset="100%" stopColor="#7a1810" />
+            </radialGradient>
+          </defs>
           <g
             style={{
               transform: `rotate(${angle}deg)`,
@@ -116,44 +114,51 @@ export function WheelPage({ onClose }: { onClose: () => void }) {
           >
             {WHEEL_SLICES.map((s, i) => (
               <g key={s.id}>
-                <path d={slicePath(i)} fill={FILLS[i % FILLS.length]} stroke="rgba(20,12,8,0.55)" strokeWidth="0.8" />
-                <text
-                  x="100"
-                  y="42"
-                  textAnchor="middle"
-                  fill={INK[i % INK.length]}
-                  fontSize="7.5"
-                  fontFamily="Cinzel, serif"
-                  fontWeight="700"
-                  transform={`rotate(${i * SLICE + SLICE / 2} 100 100)`}
-                >
-                  {shortName(s.name)}
-                </text>
+                <path d={slicePath(i)} fill={FILLS[i % FILLS.length]} stroke="#5a2010" strokeWidth="1.4" />
+                <path d={slicePath(i)} fill="url(#wheelGloss)" />
+                <g transform={`rotate(${i * SLICE + SLICE / 2} 100 100)`}>
+                  <image href={`/wheel/${s.id}.png`} x="88" y="28" width="24" height="24" />
+                </g>
               </g>
             ))}
-            {Array.from({ length: 16 }, (_, i) => {
-              const a = ((i + 0.5) / 16) * Math.PI * 2 - Math.PI / 2;
-              return <circle key={i} cx={100 + Math.cos(a) * 94} cy={100 + Math.sin(a) * 94} r="2.2" fill="#f3e2a8" />;
-            })}
           </g>
-          <circle cx="100" cy="100" r="22" fill="var(--color-surface)" stroke="var(--color-gold)" strokeWidth="3" />
-          <text x="100" y="104" textAnchor="middle" fill="var(--color-gold)" fontSize="8" fontFamily="Cinzel, serif">
-            SPIN
-          </text>
+          <circle cx="100" cy="100" r="22" fill="#f4c44a" />
+          <circle cx="100" cy="100" r="18" fill="url(#hubGem)" stroke="#5a2010" strokeWidth="2" />
         </svg>
+        <img
+          src="/wheel/rim.png"
+          alt=""
+          className="pointer-events-none absolute inset-0 z-10 size-full object-contain"
+          crossOrigin="anonymous"
+        />
+        <div className="pointer-events-none absolute top-[7%] left-1/2 z-20 -translate-x-1/2 drop-shadow">
+          <svg width="36" height="40" viewBox="0 0 36 40" aria-hidden>
+            <polygon points="18,40 2,4 34,4" fill="#7a1810" />
+            <polygon points="18,36 6,6 30,6" fill="#f4c44a" />
+            <polygon points="18,28 12,8 24,8" fill="#e4453a" />
+            <circle cx="18" cy="14" r="3.5" fill="#fff6ee" />
+          </svg>
+        </div>
       </div>
+
       {hit ? (
         <p className="mt-2 text-center font-display text-lg text-gold">Landed · {hit.name}</p>
       ) : (
-        <p className="mt-2 text-center text-xs text-muted">{spinning ? "The wheel is turning…" : "Tap a spin. The pointer at the top is the prize."}</p>
+        <p className="mt-2 text-center text-xs text-muted">
+          {spinning ? "The wheel is turning…" : "Tap a spin. The pointer at the top is the prize."}
+        </p>
       )}
       <div className="mt-3 grid grid-cols-2 gap-2">
-        <Button className="h-12" disabled={spinning || !snap.wheelReady} onClick={() => spin(false)}>
+        <Button
+          className="h-12 rounded-xl border-2 border-gold bg-accent font-display text-base shadow-[0_4px_0_#7a1810]"
+          disabled={spinning || !snap.wheelReady}
+          onClick={() => spin(false)}
+        >
           {snap.wheelReady ? "Free spin" : `Free in ${formatTime(snap.wheelFreeIn / 1000)}`}
         </Button>
         <Button
           variant="secondary"
-          className="h-12"
+          className="h-12 rounded-xl border-2 border-gold bg-gold text-parchment-ink font-display text-base shadow-[0_4px_0_#5a3018]"
           disabled={spinning || snap.gems < snap.wheelCost}
           onClick={() => spin(true)}
         >
@@ -171,12 +176,8 @@ export function WheelPage({ onClose }: { onClose: () => void }) {
   );
 }
 
-function shortName(name: string): string {
-  return name.replace(" pinch", "").replace("A ", "");
-}
-
 function slicePath(i: number): string {
-  const r = 92;
+  const r = 98;
   const a0 = (i / N) * Math.PI * 2 - Math.PI / 2;
   const a1 = ((i + 1) / N) * Math.PI * 2 - Math.PI / 2;
   const x0 = 100 + Math.cos(a0) * r;
