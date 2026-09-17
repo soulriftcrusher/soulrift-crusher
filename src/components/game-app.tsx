@@ -311,23 +311,23 @@ function PlayScreen() {
           {tab === "shop" ? (
             <CraftPage onClose={() => setTab("fight")} />
           ) : tab === "heroes" ? (
-            <MenuPage title="Heroes" parchment>
+            <MenuPage title="Heroes" bg="/bg/heroes.jpg">
               <HeroPanel />
             </MenuPage>
           ) : tab === "realm" ? (
-            <MenuPage title="Realms">
+            <MenuPage title="Realms" bg="/bg/realms-page.jpg">
               <RealmPanel />
             </MenuPage>
           ) : tab === "hunt" ? (
-            <MenuPage title={huntPage === "shop" ? "Shop" : "Hunt"}>
+            <MenuPage title={huntPage === "shop" ? "Shop" : "Hunt"} bg={huntPage === "shop" ? "/bg/shop-page.jpg" : "/bg/hunt.jpg"}>
               <HuntPanel />
             </MenuPage>
           ) : tab === "clan" ? (
-            <MenuPage title="Clans">
+            <MenuPage title="Clans" bg="/bg/clans.jpg">
               <ClanPanel />
             </MenuPage>
           ) : tab === "founders" && showFounder ? (
-            <MenuPage title="Founders">
+            <MenuPage title="Founders" bg="/bg/founder.jpg">
               <StaffPanel />
             </MenuPage>
           ) : (
@@ -536,16 +536,16 @@ function Battle() {
       {!desk ? (
         <>
           <div className="absolute top-16 left-2 z-10 flex flex-col gap-2">
-            <SideBtn icon={<Trophy className="size-5" />} label="Hunt" onClick={() => useGame.getState().setTab("hunt")} />
-            <SideBtn icon={<Shield className="size-5" />} label="Clans" onClick={() => useGame.getState().setTab("clan")} />
-            <SideBtn icon={<MapIcon className="size-5" />} label="Realms" onClick={() => useGame.getState().setTab("realm")} />
+            <SideBtn art="/tiles/pass.png" label="Hunt" onClick={() => useGame.getState().setTab("hunt")} />
+            <SideBtn art="/tiles/clan.png" label="Clans" onClick={() => useGame.getState().setTab("clan")} />
+            <SideBtn art="/tiles/realms.png" label="Realms" onClick={() => useGame.getState().setTab("realm")} />
             {showFounder ? (
-              <SideBtn icon={<Crown className="size-5" />} label="Founder" onClick={() => useGame.getState().setTab("founders")} />
+              <SideBtn art="/tiles/founder.png" label="Founder" onClick={() => useGame.getState().setTab("founders")} />
             ) : null}
           </div>
           <div className="absolute top-16 right-2 z-10 flex flex-col gap-2">
-            <SideBtn icon={<Users className="size-5" />} label="Heroes" onClick={() => useGame.getState().setTab("heroes")} />
-            <SideBtn icon={<Gem className="size-5" />} label="Shop" onClick={() => useGame.getState().openHunt("shop")} />
+            <SideBtn art="/tiles/heroes.png" label="Heroes" onClick={() => useGame.getState().setTab("heroes")} />
+            <SideBtn art="/tiles/shop.png" label="Shop" onClick={() => useGame.getState().openHunt("shop")} />
           </div>
         </>
       ) : null}
@@ -558,8 +558,8 @@ function Battle() {
                 key={sk.id}
                 type="button"
                 className={cn(
-                  "pointer-events-auto flex h-16 flex-col items-center justify-center rounded-xl border bg-bg/75 px-1 font-display text-[11px] leading-tight",
-                  sk.ready ? "border-gold text-gold" : "border-border text-muted",
+                  "pointer-events-auto flex h-[4.5rem] flex-col items-center justify-center gap-0.5 rounded-xl border bg-bg/70 px-1 font-display text-[10px] leading-tight",
+                  sk.ready ? "border-gold text-gold" : "border-border text-muted opacity-80",
                 )}
                 onClick={() => {
                   unlockAudio();
@@ -569,6 +569,7 @@ function Battle() {
                   }
                 }}
               >
+                <img src={`/tiles/${sk.id}.png`} alt="" className="size-8 object-contain" crossOrigin="anonymous" />
                 <span>{def?.name ?? sk.id}</span>
                 {!sk.ready ? <span className="text-[10px] text-muted">{Math.ceil(sk.cd)}s</span> : null}
               </button>
@@ -583,7 +584,7 @@ function Battle() {
   );
 }
 
-function SideBtn({ icon, label, onClick }: { icon: ReactNode; label: string; onClick: () => void }) {
+function SideBtn({ art, label, onClick }: { art: string; label: string; onClick: () => void }) {
   return (
     <button
       type="button"
@@ -591,9 +592,9 @@ function SideBtn({ icon, label, onClick }: { icon: ReactNode; label: string; onC
         sfx.ui();
         onClick();
       }}
-      className="flex h-14 w-14 flex-col items-center justify-center gap-0.5 rounded-xl border border-gold/50 bg-bg/75 text-gold"
+      className="flex h-16 w-16 flex-col items-center justify-center gap-0.5 rounded-xl border border-gold/50 bg-bg/55 text-gold"
     >
-      {icon}
+      <img src={art} alt="" className="size-10 object-contain drop-shadow" crossOrigin="anonymous" />
       <span className="-mt-0.5 text-[9px] leading-none">{label}</span>
     </button>
   );
@@ -605,14 +606,18 @@ function TabBar() {
   const isStaff = useGame((s) => s.isStaff);
   const founderClaimed = useGame((s) => s.snap.founderClaimed);
   const showFounder = isStaff || founderClaimed;
-  const items: { id: Tab; label: string; icon: ReactNode }[] = [
-    { id: "fight", label: "Fight", icon: <Skull className="size-5" /> },
-    { id: "heroes", label: "Heroes", icon: <Users className="size-5" /> },
-    { id: "shop", label: "Craft", icon: <Hammer className="size-5" /> },
-    { id: "hunt", label: "Hunt", icon: <Swords className="size-5" /> },
-    { id: "clan", label: "Clans", icon: <Users className="size-5" /> },
+  const items: { id: Tab; label: string; art: string }[] = [
+    { id: "fight", label: "Fight", art: "/tiles/fight.png" },
+    { id: "heroes", label: "Heroes", art: "/tiles/heroes.png" },
+    { id: "shop", label: "Craft", art: "/tiles/craft.png" },
+    { id: "hunt", label: "Hunt", art: "/tiles/pass.png" },
+    { id: "clan", label: "Clans", art: "/tiles/clan.png" },
   ];
-  items.push(showFounder ? { id: "founders", label: "Founder", icon: <Crown className="size-5" /> } : { id: "realm", label: "Realms", icon: <MapIcon className="size-5" /> });
+  items.push(
+    showFounder
+      ? { id: "founders", label: "Founder", art: "/tiles/founder.png" }
+      : { id: "realm", label: "Realms", art: "/tiles/realms.png" },
+  );
   return (
     <nav className="grid shrink-0 grid-cols-6 gap-0.5 border-t border-border bg-wood px-1 pb-[max(0.4rem,env(safe-area-inset-bottom))] pt-1">
       {items.map((it) => (
@@ -623,9 +628,9 @@ function TabBar() {
             sfx.ui();
             setTab(it.id);
           }}
-          className={cn("grid h-12 place-items-center rounded-md text-[10px]", tab === it.id ? "bg-gold/20 text-gold" : "text-muted")}
+          className={cn("grid h-14 place-items-center rounded-md text-[10px]", tab === it.id ? "bg-gold/20 text-gold" : "text-muted")}
         >
-          <span className="grid place-items-center">{it.icon}</span>
+          <img src={it.art} alt="" className="size-7 object-contain" crossOrigin="anonymous" />
           {it.label}
         </button>
       ))}
@@ -638,15 +643,15 @@ function DeskRail() {
   const tab = useGame((s) => s.tab);
   const isStaff = useGame((s) => s.isStaff);
   const founderClaimed = useGame((s) => s.snap.founderClaimed);
-  const items: { id: Tab; label: string; icon: ReactNode }[] = [
-    { id: "fight", label: "Fight", icon: <Skull className="size-5" /> },
-    { id: "heroes", label: "Heroes", icon: <Users className="size-5" /> },
-    { id: "shop", label: "Craft", icon: <Hammer className="size-5" /> },
-    { id: "hunt", label: "Hunt", icon: <ShoppingBag className="size-5" /> },
-    { id: "clan", label: "Clans", icon: <Users className="size-5" /> },
-    { id: "realm", label: "Realms", icon: <MapIcon className="size-5" /> },
+  const items: { id: Tab; label: string; art: string }[] = [
+    { id: "fight", label: "Fight", art: "/tiles/fight.png" },
+    { id: "heroes", label: "Heroes", art: "/tiles/heroes.png" },
+    { id: "shop", label: "Craft", art: "/tiles/craft.png" },
+    { id: "hunt", label: "Hunt", art: "/tiles/pass.png" },
+    { id: "clan", label: "Clans", art: "/tiles/clan.png" },
+    { id: "realm", label: "Realms", art: "/tiles/realms.png" },
   ];
-  if (isStaff || founderClaimed) items.push({ id: "founders", label: "Founder", icon: <Crown className="size-5" /> });
+  if (isStaff || founderClaimed) items.push({ id: "founders", label: "Founder", art: "/tiles/founder.png" });
   return (
     <div className="flex flex-1 flex-col items-center gap-1 py-2">
       {items.map((it) => (
@@ -658,27 +663,33 @@ function DeskRail() {
             sfx.ui();
             setTab(it.id);
           }}
-          className={cn("grid size-12 place-items-center rounded-md", tab === it.id ? "bg-surface text-gold" : "text-muted")}
+          className={cn("grid size-12 place-items-center rounded-md", tab === it.id ? "bg-surface" : "opacity-70")}
         >
-          {it.icon}
+          <img src={it.art} alt="" className="size-8 object-contain" crossOrigin="anonymous" />
         </button>
       ))}
     </div>
   );
 }
 
-function MenuPage({ title, parchment, children }: { title: string; parchment?: boolean; children: ReactNode }) {
+function MenuPage({ title, bg, children }: { title: string; parchment?: boolean; bg?: string; children: ReactNode }) {
   const setTab = useGame((s) => s.setTab);
   return (
-    <div className={cn("flex min-h-0 flex-1 flex-col", parchment && "bg-[#1a1410]")}>
-      <div className="flex shrink-0 items-center bg-wood px-3 py-1">
-        <span className="w-11" />
-        <h2 className="font-display flex-1 text-center text-xl text-[#f0e6d8]">{title}</h2>
-        <button type="button" aria-label="Close" className="grid size-11 place-items-center text-[#f0e6d8]" onClick={() => setTab("fight")}>
-          <X className="size-6" />
-        </button>
+    <div className="relative flex min-h-0 flex-1 flex-col">
+      {bg ? (
+        <img src={bg} alt="" className="absolute inset-0 size-full object-cover" crossOrigin="anonymous" />
+      ) : null}
+      {bg ? <div className="absolute inset-0 bg-gradient-to-t from-bg/92 via-bg/55 to-bg/30" /> : null}
+      <div className="relative z-10 flex min-h-0 flex-1 flex-col">
+        <div className="flex shrink-0 items-center bg-wood/90 px-3 py-1">
+          <span className="w-11" />
+          <h2 className="font-display flex-1 text-center text-xl text-[#f0e6d8]">{title}</h2>
+          <button type="button" aria-label="Close" className="grid size-11 place-items-center text-[#f0e6d8]" onClick={() => setTab("fight")}>
+            <X className="size-6" />
+          </button>
+        </div>
+        <div className="scroll-pane min-h-0 flex-1 px-2 pb-[max(1rem,env(safe-area-inset-bottom))]">{children}</div>
       </div>
-      <div className="scroll-pane min-h-0 flex-1 px-2 pb-[max(1rem,env(safe-area-inset-bottom))]">{children}</div>
     </div>
   );
 }

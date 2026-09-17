@@ -234,8 +234,11 @@ function FullShell({
   children: ReactNode;
 }) {
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-surface">
-      <div className="flex shrink-0 items-center justify-between gap-2 bg-wood px-3 py-2 text-xs tabular-nums text-gold">
+    <div className="relative flex min-h-0 flex-1 flex-col">
+      <img src="/bg/craft.jpg" alt="" className="absolute inset-0 size-full object-cover" crossOrigin="anonymous" />
+      <div className="absolute inset-0 bg-gradient-to-t from-bg/92 via-bg/60 to-bg/35" />
+      <div className="relative z-10 flex min-h-0 flex-1 flex-col">
+      <div className="flex shrink-0 items-center justify-between gap-2 bg-wood/90 px-3 py-2 text-xs tabular-nums text-gold">
         <span className="flex items-center gap-1">
           <Ghost className="size-3" /> {formatNum(snap.souls)}
         </span>
@@ -260,6 +263,7 @@ function FullShell({
         </button>
       </div>
       <div className="scroll-pane min-h-0 flex-1 px-2 pb-[max(1rem,env(safe-area-inset-bottom))]">{children}</div>
+      </div>
     </div>
   );
 }
