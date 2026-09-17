@@ -9,7 +9,6 @@ import { useGame } from "@/game/store";
 
 const N = WHEEL_SLICES.length;
 const SLICE = 360 / N;
-const BULBS = 20;
 const FILLS = ["#f4c44a", "#e4453a", "#3ec8d4", "#ef7a32", "#e8b84a", "#2fba6e", "#3d7fd6", "#f0b429"];
 
 export function WheelPage({ onClose }: { onClose: () => void }) {
@@ -127,27 +126,17 @@ export function WheelPage({ onClose }: { onClose: () => void }) {
           <circle cx="100" cy="100" r="18" fill="url(#hubGem)" stroke="#5a2010" strokeWidth="2" />
         </svg>
         <img
-          src="/wheel/rim.png"
+          src="/wheel/rim.png?v=2"
           alt=""
           className="pointer-events-none absolute inset-0 z-10 size-full object-contain"
           crossOrigin="anonymous"
         />
-        <div className="pointer-events-none absolute inset-0 z-[11]" aria-hidden>
-          {Array.from({ length: BULBS }, (_, i) => {
-            const rad = ((i / BULBS) * 360 - 90) * (Math.PI / 180);
-            return (
-              <span
-                key={i}
-                className="wheel-bulb"
-                style={{
-                  left: `${50 + Math.cos(rad) * 46.6}%`,
-                  top: `${50 + Math.sin(rad) * 46.6}%`,
-                  animationDelay: `${(i * 0.08).toFixed(2)}s`,
-                }}
-              />
-            );
-          })}
-        </div>
+        <img
+          src="/wheel/rim-lights.png?v=1"
+          alt=""
+          className="wheel-lights pointer-events-none absolute inset-0 z-[11] size-full object-contain"
+          crossOrigin="anonymous"
+        />
         <div className="pointer-events-none absolute top-[7%] left-1/2 z-20 -translate-x-1/2 drop-shadow">
           <svg width="36" height="40" viewBox="0 0 36 40" aria-hidden>
             <polygon points="18,40 2,4 34,4" fill="#7a1810" />
