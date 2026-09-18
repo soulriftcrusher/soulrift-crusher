@@ -39,6 +39,7 @@ import type { ArenaResult, HeroSnap } from "@/game/types";
 import { authEnabled, signOut } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { readBoardPref, writeBoardPref, useDesk, type BoardPref } from "@/lib/desk";
+import { startHuntFit } from "@/lib/fit-hunt";
 import { cn } from "@/lib/utils";
 
 function huntUrl(): string {
@@ -55,20 +56,21 @@ export function GameApp() {
   useEffect(() => {
     if (isDemoHunt()) exitLocalDemo();
   }, []);
+  useEffect(() => startHuntFit(), []);
   const shell = cn(
     "flex h-full min-h-0 w-full flex-col overflow-hidden bg-bg text-fg select-none",
     desk && "mx-auto max-w-[1280px] border-x border-gold/20",
   );
   if (authEnabled && isPending && !demoHunt) {
     return (
-      <div className="grid h-dvh place-items-center bg-bg text-gold">
+      <div className="grid hunt-shell place-items-center bg-bg text-gold">
         <p className="font-display text-sm">Checking your hunt…</p>
       </div>
     );
   }
   if (authEnabled && !user && !demoHunt) {
     return (
-      <div className={cn("h-dvh max-h-dvh", desk && "bg-[#070506]")}>
+      <div className={cn("hunt-shell", desk && "bg-[#070506]")}>
         <div className={shell}>
           <TitleScreen />
           <LegalOverlay />
@@ -78,7 +80,7 @@ export function GameApp() {
     );
   }
   return (
-    <div className={cn("h-dvh max-h-dvh", desk && "bg-[#070506]")}>
+    <div className={cn("hunt-shell", desk && "bg-[#070506]")}>
       <CloudSync />
       <ClanSync />
       <div className={shell}>
@@ -592,7 +594,7 @@ function SideBtn({ art, label, onClick }: { art: string; label: string; onClick:
         sfx.ui();
         onClick();
       }}
-      className="flex h-16 w-16 flex-col items-center justify-center gap-0.5 rounded-xl border border-gold/50 bg-bg/55 text-gold"
+      className="hunt-side flex h-16 w-16 flex-col items-center justify-center gap-0.5 rounded-xl border border-gold/50 bg-bg/55 text-gold"
     >
       <img src={art} alt="" className="size-10 object-contain drop-shadow" crossOrigin="anonymous" />
       <span className="-mt-0.5 text-[9px] leading-none">{label}</span>
@@ -619,7 +621,7 @@ function TabBar() {
       : { id: "realm", label: "Realms", art: "/tiles/realms.png" },
   );
   return (
-    <nav className="grid shrink-0 grid-cols-6 gap-0.5 border-t border-border bg-wood px-1 pb-[max(0.4rem,env(safe-area-inset-bottom))] pt-1">
+    <nav className="hunt-tabs grid shrink-0 grid-cols-6 gap-0.5 border-t border-border bg-wood px-1 pb-[max(0.25rem,env(safe-area-inset-bottom))] pt-1">
       {items.map((it) => (
         <button
           key={it.id}

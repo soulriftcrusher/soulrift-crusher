@@ -27,11 +27,13 @@ export function writeBoardPref(pref: BoardPref) {
 export function detectDesk(): boolean {
   if (typeof window === "undefined") return false;
   try {
+    if (window.matchMedia("(pointer: coarse)").matches) return false;
+    if (window.matchMedia("(hover: none)").matches) return false;
     if (window.matchMedia(QUERY).matches) return true;
   } catch {
     /* ignore */
   }
-  return window.innerWidth >= 960;
+  return window.innerWidth >= 960 && !("ontouchstart" in window);
 }
 
 /** Mouse + wide screen = PC board. Phones stay on the phone layout unless forced. */
