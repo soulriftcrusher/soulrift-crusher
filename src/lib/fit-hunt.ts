@@ -1,4 +1,4 @@
-/** Pin the hunt to the visible phone screen — Chrome URL bar, Android nav, notches. */
+/** Pin the hunt to the visible screen — phone Chrome bar, Android nav, PC window, laptop dock. */
 export function applyHuntFit() {
   const root = document.documentElement;
   const vv = window.visualViewport;
@@ -8,6 +8,8 @@ export function applyHuntFit() {
   root.style.setProperty("--app-w", `${w}px`);
   root.classList.toggle("hunt-short", h < 720);
   root.classList.toggle("hunt-tiny", h < 600);
+  root.classList.toggle("hunt-laptop", w >= 820 && h < 860);
+  root.classList.toggle("hunt-wide", w >= 1400);
 }
 
 export function startHuntFit(): () => void {

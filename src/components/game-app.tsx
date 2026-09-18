@@ -57,9 +57,12 @@ export function GameApp() {
     if (isDemoHunt()) exitLocalDemo();
   }, []);
   useEffect(() => startHuntFit(), []);
+  useEffect(() => {
+    document.documentElement.classList.toggle("hunt-desk", desk);
+    return () => document.documentElement.classList.remove("hunt-desk");
+  }, [desk]);
   const shell = cn(
     "flex h-full min-h-0 w-full flex-col overflow-hidden bg-bg text-fg select-none",
-    desk && "mx-auto max-w-[1280px] border-x border-gold/20",
   );
   if (authEnabled && isPending && !demoHunt) {
     return (
@@ -140,7 +143,7 @@ function TitleScreen() {
         crossOrigin="anonymous"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/35 to-transparent" />
-      <div className="relative z-10 flex h-full flex-col items-center overflow-y-auto px-5 pt-12 pb-[max(2rem,env(safe-area-inset-bottom))]">
+      <div className="relative z-10 hunt-title flex h-full flex-col items-center overflow-y-auto px-5 pt-12 pb-[max(2rem,env(safe-area-inset-bottom))]">
         <p className="font-display text-xs tracking-[0.32em] text-gold uppercase">Idle dungeon RPG</p>
         <h1 className="font-display mt-2 text-center text-5xl leading-none font-semibold text-gold drop-shadow">
           Soulrift
@@ -285,7 +288,7 @@ function PlayScreen() {
       <Hud />
       <div className="flex min-h-0 flex-1">
         {desk ? (
-          <aside className="flex w-16 shrink-0 flex-col border-r border-gold/20 bg-wood">
+          <aside className="hunt-rail flex w-16 shrink-0 flex-col overflow-y-auto border-r border-gold/20 bg-wood">
             <DeskRail />
           </aside>
         ) : null}
@@ -676,6 +679,7 @@ function DeskRail() {
 
 function MenuPage({ title, bg, children }: { title: string; parchment?: boolean; bg?: string; children: ReactNode }) {
   const setTab = useGame((s) => s.setTab);
+  const desk = useDesk();
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
       {bg ? (
@@ -690,7 +694,7 @@ function MenuPage({ title, bg, children }: { title: string; parchment?: boolean;
             <img src="/tiles/hud-close.png" alt="" className="size-7 object-contain" crossOrigin="anonymous" />
           </button>
         </div>
-        <div className="scroll-pane min-h-0 flex-1 px-2 pb-[max(1rem,env(safe-area-inset-bottom))]">{children}</div>
+        <div className={cn("scroll-pane min-h-0 flex-1 px-2 pb-[max(1rem,env(safe-area-inset-bottom))]", desk && "mx-auto w-full max-w-[52rem]")}>{children}</div>
       </div>
     </div>
   );
@@ -1608,7 +1612,7 @@ function Modal({ onClose, title, children }: { onClose: () => void; title: strin
   return (
     <div className="fixed inset-0 z-50 grid place-items-end bg-black/60 p-3 sm:place-items-center" onClick={onClose}>
       <div
-        className="max-h-[85dvh] w-full max-w-md overflow-y-auto rounded-xl border border-gold/40 bg-bg p-4"
+        className="max-h-[min(85dvh,calc(var(--app-h,100dvh)-2rem))] w-full max-w-md overflow-y-auto rounded-xl border border-gold/40 bg-bg p-4"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-3 flex items-center justify-between">
