@@ -22,6 +22,8 @@ import {
   strikeRaid,
   peekClan,
   kickMember,
+  acceptJoin,
+  denyJoin,
   setMemberRole,
   listClanMail,
   sendClanMail,
@@ -281,7 +283,8 @@ export function ClanPanel() {
               const next = await requestClan({ data: { clanId: id } });
               setWorld(next);
               setPeekId(null);
-              sfx.chest();
+              if (next.clan) sfx.chest();
+              else setNote("Request sent. A leader has to let you in.");
             })
           }
         />
@@ -346,6 +349,19 @@ export function ClanPanel() {
               setWorld(next);
             })
           }
+          onAccept={(id) =>
+            run(async () => {
+              const next = await acceptJoin({ data: { userId: id } });
+              setWorld(next);
+              sfx.chest();
+            })
+          }
+          onDeny={(id) =>
+            run(async () => {
+              const next = await denyJoin({ data: { userId: id } });
+              setWorld(next);
+            })
+          }
           myId={user?.id}
         />
       ) : null}
@@ -358,6 +374,19 @@ export function ClanPanel() {
           onKick={(id) =>
             run(async () => {
               const next = await kickMember({ data: { userId: id } });
+              setWorld(next);
+            })
+          }
+          onAccept={(id) =>
+            run(async () => {
+              const next = await acceptJoin({ data: { userId: id } });
+              setWorld(next);
+              sfx.chest();
+            })
+          }
+          onDeny={(id) =>
+            run(async () => {
+              const next = await denyJoin({ data: { userId: id } });
               setWorld(next);
             })
           }
@@ -549,6 +578,8 @@ function ClanDesk({
   onLeave,
   onOpen,
   onKick,
+  onAccept,
+  onDeny,
   myId,
 }: {
   world: WorldSnap | null;
@@ -568,6 +599,8 @@ function ClanDesk({
   onLeave: () => void;
   onOpen: (p: ClanPage) => void;
   onKick: (id: string) => void;
+  onAccept: (id: string) => void;
+  onDeny: (id: string) => void;
   myId?: string;
 }) {
   const [mode, setMode] = useState<"home" | "create" | "join" | "find">("home");
@@ -634,6 +667,8 @@ function ClanDesk({
         onLeave={onLeave}
         onOpen={onOpen}
         onKick={onKick}
+        onAccept={onAccept}
+        onDeny={onDeny}
       />
     );
   }
@@ -703,6 +738,8 @@ function ClanHome({
   onLeave,
   onOpen,
   onKick,
+  onAccept,
+  onDeny,
 }: {
   world: WorldSnap;
   busy: boolean;
@@ -711,6 +748,8 @@ function ClanHome({
   onLeave: () => void;
   onOpen: (p: ClanPage) => void;
   onKick: (id: string) => void;
+  onAccept: (id: string) => void;
+  onDeny: (id: string) => void;
 }) {
   const [tab, setTab] = useState<"influence" | "science">("influence");
   const clan = world.clan!;
@@ -766,6 +805,28 @@ function ClanHome({
       ) : (
         <p className="mt-3 text-center text-sm text-muted">No message yet.</p>
       )}
+      {lead && (world.requests ?? []).length > 0 ? (
+        <div className="mt-3 rounded-lg border-2 border-gold/50 bg-wood p-3">
+          <p className="font-display text-sm text-gold">Join requests · {(world.requests ?? []).length}</p>
+          <ul className="mt-2 flex flex-col gap-2">
+            {(world.requests ?? []).map((r) => (
+              <li key={r.userId} className="flex items-center gap-2 rounded-md border border-border bg-bg/40 px-2 py-2">
+                <HeroFace id={r.avatar} className="size-10 border border-gold" />
+                <div className="min-w-0 flex-1">
+                  <HunterName userId={r.userId} name={r.name} />
+                  <p className="text-[11px] text-muted">fl {r.maxFloor} · {formatNum(r.power)}</p>
+                </div>
+                <Button size="sm" className="h-10" disabled={busy} onClick={() => onAccept(r.userId)}>
+                  Accept
+                </Button>
+                <Button size="sm" variant="secondary" className="h-10" disabled={busy} onClick={() => onDeny(r.userId)}>
+                  Deny
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
       <div className="mt-3 flex gap-2">
         <Button
           size="sm"
@@ -869,6 +930,8 @@ function ManageClan({
   busy,
   myId,
   onKick,
+  onAccept,
+  onDeny,
   onRole,
   onSave,
 }: {
@@ -876,6 +939,8 @@ function ManageClan({
   busy: boolean;
   myId?: string;
   onKick: (id: string) => void;
+  onAccept: (id: string) => void;
+  onDeny: (id: string) => void;
   onRole: (id: string, role: "officer" | "elder" | "member") => void;
   onSave: (d: { name: string; tag: string; blurb: string; crest: string; loc: string; open: boolean; minFloor: number }) => void;
 }) {
@@ -961,7 +1026,7 @@ function ManageClan({
           className="mt-1 h-12 w-full rounded-md border border-border font-display text-gold"
           onClick={() => setOpen(!open)}
         >
-          {open ? "Open" : "Request"}
+          {open ? "Open — anyone can join" : "Invite only — they must request"}
         </button>
         <p className="mt-3 text-xs text-muted">Max floor required</p>
         <div className="mt-1 flex items-center gap-2">
@@ -982,6 +1047,28 @@ function ManageClan({
           OK
         </Button>
       </div>
+      <p className="mt-4 text-xs tracking-wide text-gold uppercase">Join requests</p>
+      {(world.requests ?? []).length === 0 ? (
+        <p className="mt-2 text-sm text-muted">Nobody is waiting.</p>
+      ) : (
+        <ul className="mt-2 flex flex-col gap-2">
+          {(world.requests ?? []).map((r) => (
+            <li key={r.userId} className="flex items-center gap-2 rounded-md border border-gold/40 p-3">
+              <HeroFace id={r.avatar} className="size-10" />
+              <div className="min-w-0 flex-1">
+                <HunterName userId={r.userId} name={r.name} />
+                <p className="text-xs text-muted">floor {r.maxFloor}</p>
+              </div>
+              <Button size="sm" className="h-10" disabled={busy} onClick={() => onAccept(r.userId)}>
+                Accept
+              </Button>
+              <Button size="sm" variant="secondary" className="h-10" disabled={busy} onClick={() => onDeny(r.userId)}>
+                Deny
+              </Button>
+            </li>
+          ))}
+        </ul>
+      )}
       <p className="mt-4 text-xs tracking-wide text-gold uppercase">Members</p>
       <ul className="mt-2 flex flex-col gap-2">
         {world.members.map((m) => (

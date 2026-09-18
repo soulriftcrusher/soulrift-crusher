@@ -79,6 +79,14 @@ export type PeekClan = {
   members: PeekHunter[];
 };
 
+export type ClanRequestSnap = {
+  userId: string;
+  name: string;
+  power: number;
+  maxFloor: number;
+  avatar: string;
+};
+
 export type WorldSnap = {
   name: string;
   power: number;
@@ -91,6 +99,7 @@ export type WorldSnap = {
   members: ClanMemberSnap[];
   rivals: RivalSnap[];
   board: BoardClan[];
+  requests: ClanRequestSnap[];
   kicked?: boolean;
 };
 
@@ -142,6 +151,14 @@ async function ensureWorldSchema(sql: Sql) {
   await sql`alter table clans add column if not exists open boolean not null default true`.catch(() => undefined);
   await sql`alter table clans add column if not exists min_floor integer not null default 1`.catch(() => undefined);
   await sql`alter table clans add column if not exists science double precision not null default 0`.catch(() => undefined);
+  await sql`
+    create table if not exists clan_requests (
+      clan_id integer not null references clans(id) on delete cascade,
+      user_id text not null,
+      created_at timestamptz not null default now(),
+      primary key (clan_id, user_id)
+    )
+  `.catch(() => undefined);
   worldSchema = true;
 }
 
@@ -232,6 +249,7 @@ async function loadWorld(sql: Sql, userId: string): Promise<WorldSnap> {
   `;
   let clan: ClanSnap | null = null;
   let members: ClanMemberSnap[] = [];
+  let requests: ClanRequestSnap[] = [];
   if (me?.clan_id) {
     const rows = await sql<{
       id: number;
@@ -302,6 +320,31 @@ async function loadWorld(sql: Sql, userId: string): Promise<WorldSnap> {
         minFloor: Math.max(1, Number(c.min_floor ?? 1)),
         createdAt: c.created_at,
       };
+      const lead = members.some(
+        (m) => m.userId === userId && (m.role === "founder" || m.role === "officer"),
+      );
+      if (lead) {
+        const reqs = await sql<{
+          user_id: string;
+          name: string;
+          power: number;
+          max_floor: number;
+          avatar: string | null;
+        }>`
+          select r.user_id, c.name, c.power, c.max_floor, c.avatar
+          from clan_requests r
+          join crusaders c on c.user_id = r.user_id
+          where r.clan_id = ${c.id}
+          order by r.created_at asc
+        `.catch(() => [] as { user_id: string; name: string; power: number; max_floor: number; avatar: string | null }[]);
+        requests = reqs.map((r) => ({
+          userId: r.user_id,
+          name: r.name,
+          power: Number(r.power),
+          maxFloor: Number(r.max_floor),
+          avatar: r.avatar || "kael",
+        }));
+      }
     }
   }
   return {
@@ -314,6 +357,7 @@ async function loadWorld(sql: Sql, userId: string): Promise<WorldSnap> {
     duelReadyIn: cooldownLeft(me?.last_duel_at, DUEL_CD),
     clan,
     members,
+    requests,
     rivals: rivals.map((r) => ({
       userId: r.user_id,
       name: r.name,
@@ -424,6 +468,7 @@ export const heartbeat = createServerFn({ method: "POST" })
         members: [],
         rivals: [],
         board: [],
+        requests: [],
       };
     }
     const { ensureShard } = await import("./shard-net");
@@ -532,6 +577,7 @@ export const joinClan = createServerFn({ method: "POST" })
     const clanId = Number(hit[0].id);
     const n = await sql<{ n: number }>`select count(*)::int as n from clan_members where clan_id = ${clanId}`;
     if (Number(n[0]?.n ?? 0) >= 30) throw new Error("That clan is full.");
+    await sql`delete from clan_requests where user_id = ${context.userId}`;
     await sql`insert into clan_members (clan_id, user_id, role) values (${clanId}, ${context.userId}, ${"member"}) on conflict do nothing`;
     await sql`update crusaders set clan_id = ${clanId} where user_id = ${context.userId}`;
     return loadWorld(sql, context.userId);
@@ -558,8 +604,61 @@ export const requestClan = createServerFn({ method: "POST" })
     }
     const n = await sql<{ n: number }>`select count(*)::int as n from clan_members where clan_id = ${clanId}`;
     if (Number(n[0]?.n ?? 0) >= 30) throw new Error("That clan is full.");
+    if (hit[0].open === false) {
+      await sql`
+        insert into clan_requests (clan_id, user_id) values (${clanId}, ${context.userId})
+        on conflict do nothing
+      `;
+      return loadWorld(sql, context.userId);
+    }
+    await sql`delete from clan_requests where user_id = ${context.userId}`;
     await sql`insert into clan_members (clan_id, user_id, role) values (${clanId}, ${context.userId}, ${"member"}) on conflict do nothing`;
     await sql`update crusaders set clan_id = ${clanId} where user_id = ${context.userId}`;
+    return loadWorld(sql, context.userId);
+  });
+
+export const acceptJoin = createServerFn({ method: "POST" })
+  .validator((d: { userId: string }) => d)
+  .middleware([authMiddleware])
+  .handler(async ({ context, data }): Promise<WorldSnap> => {
+    const target = String(data.userId ?? "");
+    if (!target) throw new Error("Pick a hunter.");
+    const { getSql } = await import("@/lib/db");
+    const sql = await getSql();
+    const me = await sql<{ clan_id: number; role: string }>`
+      select clan_id, role from clan_members where user_id = ${context.userId}
+    `;
+    if (!me[0] || (me[0].role !== "founder" && me[0].role !== "officer")) throw new Error("Leaders only.");
+    const waiting = await sql<{ user_id: string }>`
+      select user_id from clan_requests where clan_id = ${me[0].clan_id} and user_id = ${target}
+    `;
+    if (!waiting[0]) throw new Error("They didn't request this clan.");
+    const other = await sql<{ clan_id: number | null }>`select clan_id from crusaders where user_id = ${target}`;
+    if (other[0]?.clan_id) {
+      await sql`delete from clan_requests where clan_id = ${me[0].clan_id} and user_id = ${target}`;
+      throw new Error("They already joined another banner.");
+    }
+    const n = await sql<{ n: number }>`select count(*)::int as n from clan_members where clan_id = ${me[0].clan_id}`;
+    if (Number(n[0]?.n ?? 0) >= 30) throw new Error("The clan is full.");
+    await sql`insert into clan_members (clan_id, user_id, role) values (${me[0].clan_id}, ${target}, ${"member"}) on conflict do nothing`;
+    await sql`update crusaders set clan_id = ${me[0].clan_id} where user_id = ${target}`;
+    await sql`delete from clan_requests where user_id = ${target}`;
+    return loadWorld(sql, context.userId);
+  });
+
+export const denyJoin = createServerFn({ method: "POST" })
+  .validator((d: { userId: string }) => d)
+  .middleware([authMiddleware])
+  .handler(async ({ context, data }): Promise<WorldSnap> => {
+    const target = String(data.userId ?? "");
+    if (!target) throw new Error("Pick a hunter.");
+    const { getSql } = await import("@/lib/db");
+    const sql = await getSql();
+    const me = await sql<{ clan_id: number; role: string }>`
+      select clan_id, role from clan_members where user_id = ${context.userId}
+    `;
+    if (!me[0] || (me[0].role !== "founder" && me[0].role !== "officer")) throw new Error("Leaders only.");
+    await sql`delete from clan_requests where clan_id = ${me[0].clan_id} and user_id = ${target}`;
     return loadWorld(sql, context.userId);
   });
 
