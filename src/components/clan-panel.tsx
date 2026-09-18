@@ -340,6 +340,12 @@ export function ClanPanel() {
             })
           }
           onOpen={(p) => setPage(p)}
+          onKick={(id) =>
+            run(async () => {
+              const next = await kickMember({ data: { userId: id } });
+              setWorld(next);
+            })
+          }
           myId={user?.id}
         />
       ) : null}
@@ -542,6 +548,7 @@ function ClanDesk({
   onStrike,
   onLeave,
   onOpen,
+  onKick,
   myId,
 }: {
   world: WorldSnap | null;
@@ -560,6 +567,7 @@ function ClanDesk({
   onStrike: () => void;
   onLeave: () => void;
   onOpen: (p: ClanPage) => void;
+  onKick: (id: string) => void;
   myId?: string;
 }) {
   const [mode, setMode] = useState<"home" | "create" | "join" | "find">("home");
@@ -625,6 +633,7 @@ function ClanDesk({
         onStrike={onStrike}
         onLeave={onLeave}
         onOpen={onOpen}
+        onKick={onKick}
       />
     );
   }
@@ -693,6 +702,7 @@ function ClanHome({
   onStrike,
   onLeave,
   onOpen,
+  onKick,
 }: {
   world: WorldSnap;
   busy: boolean;
@@ -700,6 +710,7 @@ function ClanHome({
   onStrike: () => void;
   onLeave: () => void;
   onOpen: (p: ClanPage) => void;
+  onKick: (id: string) => void;
 }) {
   const [tab, setTab] = useState<"influence" | "science">("influence");
   const clan = world.clan!;
@@ -791,6 +802,17 @@ function ClanHome({
             <span className="shrink-0 text-[11px] tabular-nums text-muted">
               {tab === "science" ? `fl ${m.maxFloor}` : formatNum(m.power)}
             </span>
+            {lead && m.userId !== myId && m.role !== "founder" && !(m.role === "officer" && mine?.role !== "founder") ? (
+              <Button
+                size="sm"
+                variant="secondary"
+                className="h-10 shrink-0 border border-accent px-3 text-accent"
+                disabled={busy}
+                onClick={() => onKick(m.userId)}
+              >
+                Kick
+              </Button>
+            ) : null}
           </li>
         ))}
       </ul>
@@ -986,8 +1008,8 @@ function ManageClan({
                     </Button>
                   </>
                 ) : null}
-                <Button size="sm" className="h-10" disabled={busy} onClick={() => onKick(m.userId)}>
-                  Kick
+                <Button size="sm" className="h-11 flex-1 border-2 border-accent bg-accent/20 font-display text-accent" disabled={busy} onClick={() => onKick(m.userId)}>
+                  Kick from clan
                 </Button>
               </div>
             ) : null}
