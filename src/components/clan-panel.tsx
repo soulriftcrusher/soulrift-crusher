@@ -1250,7 +1250,7 @@ function ClanBannerRow({ clan, onOpen }: { clan: BoardClan; onOpen: () => void }
         <p className="truncate font-display text-sm text-gold">
           {clan.name} [{clan.tag}]
         </p>
-        <p className="text-[11px] text-muted">Tap to view details</p>
+        <p className="text-[11px] text-muted">{clan.open ? "Open clan" : "Invite only"} · Tap to view</p>
       </div>
       <span className="flex shrink-0 items-center gap-1 text-[11px] tabular-nums text-muted">
         <LocFlag loc={clan.loc} />
