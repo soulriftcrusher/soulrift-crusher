@@ -21,12 +21,14 @@ export function WheelPage({ onClose: _onClose }: { onClose: () => void }) {
   const rot = useRef(0);
   const live = useRef(true);
   const tickRef = useRef(0);
+  const spinTimer = useRef(0);
 
   useEffect(() => {
     live.current = true;
     return () => {
       live.current = false;
       window.clearInterval(tickRef.current);
+      window.clearTimeout(spinTimer.current);
     };
   }, []);
 
@@ -41,7 +43,8 @@ export function WheelPage({ onClose: _onClose }: { onClose: () => void }) {
     setAngle(rot.current);
     window.clearInterval(tickRef.current);
     tickRef.current = window.setInterval(() => sfx.tick(), 90);
-    window.setTimeout(() => {
+    window.clearTimeout(spinTimer.current);
+    spinTimer.current = window.setTimeout(() => {
       window.clearInterval(tickRef.current);
       if (!live.current) return;
       setSpinning(false);

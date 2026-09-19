@@ -55,8 +55,16 @@ export function CloudSync() {
         const [cloud, heroes] = await Promise.all([pullCloudSave(), pullHeroRoster().catch(() => ({ roster: [] }))]);
         if (!alive) return;
         if (cloud.payload) {
-          const parsed = JSON.parse(cloud.payload) as { lastSaveAt?: number };
-          sim.hydrate(applyIncoming(parsed));
+          try {
+            const parsed = JSON.parse(cloud.payload) as { lastSaveAt?: number; maxFloor?: number; hires?: number };
+            const real =
+              parsed &&
+              typeof parsed === "object" &&
+              (Number(parsed.lastSaveAt) > 0 || Number(parsed.maxFloor) > 1 || Number(parsed.hires) > 0);
+            if (real) sim.hydrate(applyIncoming(parsed));
+          } catch {
+            /* keep the phone save */
+          }
         }
         if (heroes.roster?.length) applyRoster(sim.state, heroes.roster);
         if (cloud.grantGems > 0) sim.grantGems(cloud.grantGems);

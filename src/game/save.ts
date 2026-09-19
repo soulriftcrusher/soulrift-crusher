@@ -223,6 +223,22 @@ async function idbPut(state: GameState): Promise<void> {
   });
 }
 
+async function idbWipe(): Promise<void> {
+  const db = await openDb();
+  if (!db) return;
+  await new Promise<void>((resolve) => {
+    try {
+      const tx = db.transaction(IDB_STORE, "readwrite");
+      tx.objectStore(IDB_STORE).delete("main");
+      tx.objectStore(IDB_STORE).delete("roster");
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => resolve();
+    } catch {
+      resolve();
+    }
+  });
+}
+
 async function idbGet(): Promise<GameState | null> {
   const db = await openDb();
   if (!db) return null;
@@ -426,10 +442,13 @@ export function clearSave(): void {
   try {
     localStorage.removeItem(SAVE_KEY);
     localStorage.removeItem(SAVE_KEY + ":bak");
+    localStorage.removeItem(HERO_KEY);
     sessionStorage.removeItem(SAVE_KEY);
+    sessionStorage.removeItem(HERO_KEY);
   } catch {
     /* ignore */
   }
+  void idbWipe();
 }
 
 export async function recoverSave(): Promise<GameState | null> {
@@ -446,8 +465,13 @@ export async function recoverSave(): Promise<GameState | null> {
 }
 
 export function applyIncoming(raw: unknown): GameState {
-  if (!raw || typeof raw !== "object") return defaultState();
-  return migrate(raw as GameState);
+  if (!raw || typeof raw !== "object") return defaultState(0);
+  const o = raw as GameState;
+  const at = Number(o.lastSaveAt);
+  const floor = Number(o.maxFloor);
+  const hires = Number(o.hires);
+  if (!(Number.isFinite(at) && at > 0) && !(floor > 1) && !(hires > 0)) return defaultState(0);
+  return migrate(o);
 }
 
 function mergeDown(a: Record<string, number> | undefined, b: Record<string, number> | undefined): Record<HeroId, number> {

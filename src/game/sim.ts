@@ -1635,7 +1635,7 @@ export class GameSim {
   }
 
   reset() {
-    this.state = lockRoster(defaultState());
+    this.state = defaultState();
     this.combo = 0;
     this.lastArena = null;
     this.monster = this.makeMonster(1, false);
