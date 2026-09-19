@@ -66,6 +66,7 @@ export function defaultState(now = Date.now()): GameState {
     }),
     quests: {},
     lastSaveAt: now,
+    lastHuntAt: now,
     startedAt: now,
     ember: 0,
     bone: 0,
@@ -165,6 +166,9 @@ function migrate(raw: GameState): GameState {
     });
   }
   merged.version = SAVE_VERSION;
+  if (!Number.isFinite(raw.lastHuntAt) || (raw.lastHuntAt ?? 0) <= 0) {
+    merged.lastHuntAt = merged.lastSaveAt || Date.now();
+  }
   if (!Number.isFinite(merged.wheelChance)) merged.wheelChance = 0.02;
   if (!Number.isFinite(merged.wheelPot)) merged.wheelPot = 50;
   if (!Number.isFinite(merged.wheelFreeAt)) merged.wheelFreeAt = 0;
@@ -583,6 +587,7 @@ export function mergeProgress(local: GameState, incoming: GameState): GameState 
     founderClaimed: Boolean(local.founderClaimed || incoming.founderClaimed),
     founderKit: Math.max(local.founderKit ?? 0, incoming.founderKit ?? 0),
     lastSaveAt: Math.max(local.lastSaveAt ?? 0, incoming.lastSaveAt ?? 0),
+    lastHuntAt: Math.max(local.lastHuntAt ?? 0, incoming.lastHuntAt ?? 0),
     badges: maxRec((local.badges ?? {}) as Record<string, number>, (incoming.badges ?? {}) as Record<string, number>),
     loginStreak: Math.max(local.loginStreak ?? 0, incoming.loginStreak ?? 0),
     loginDay: newerSave.loginDay || older.loginDay || "",

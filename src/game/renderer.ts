@@ -3,6 +3,7 @@ import { formatNum } from "./format";
 import type { HeroId, MonsterKind } from "./data";
 import { HEROES, heroPortrait } from "./data";
 import type { GameSim } from "./sim";
+import { huntClockRunning } from "./hunt-clock";
 import type { SimEvent } from "./types";
 import { sfx } from "./audio";
 
@@ -368,10 +369,15 @@ export class Renderer {
     }
     this.acc += dt;
     const step = 1 / 60;
-    while (this.acc >= step) {
-      this.sim.step(step);
-      this.acc -= step;
-      this.time += step;
+    if (!huntClockRunning()) {
+      while (this.acc >= step) {
+        this.sim.step(step);
+        this.acc -= step;
+        this.time += step;
+      }
+    } else {
+      this.acc = 0;
+      this.time += dt;
     }
     this.present(dt);
     this.hudAcc += dt;

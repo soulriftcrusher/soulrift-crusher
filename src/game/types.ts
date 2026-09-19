@@ -48,6 +48,7 @@ export type GameState = {
   contracts: ContractState[];
   quests: Record<string, boolean>;
   lastSaveAt: number;
+  lastHuntAt: number;
   startedAt: number;
   ember: number;
   bone: number;

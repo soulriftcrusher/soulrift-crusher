@@ -29,6 +29,7 @@ import { APP_VERSION, PATCHES } from "@/game/patch-notes";
 import { markPatchSeen } from "@/game/prefs";
 import { alertsPermission, alertsWanted, sendTestAlert } from "@/game/push-client";
 import { Renderer, preloadHuntArt } from "@/game/renderer";
+import { startHuntClock, stopHuntClock } from "@/game/hunt-clock";
 import { clearSave, hasSave } from "@/game/save";
 import { moveOpen } from "@/game/migrate";
 import { seasonClock, formatSeasonLeft } from "@/game/shards";
@@ -247,6 +248,16 @@ function PlayScreen() {
   const demoHunt = useGame((s) => s.demoHunt);
   const founderClaimed = useGame((s) => s.snap.founderClaimed);
   const showFounder = isStaff || founderClaimed;
+
+  useEffect(() => {
+    startHuntClock({
+      onHud: () => useGame.getState().refresh(),
+      onIdle: (gold) => {
+        if (gold > 0) useGame.setState({ offlineGold: gold });
+      },
+    });
+    return () => stopHuntClock();
+  }, []);
 
   useEffect(() => {
     if (demoHunt) return;
@@ -1211,6 +1222,7 @@ function SettingsModal() {
           <span>Auto skills</span>
           <input type="checkbox" checked={Boolean(autoSkill)} onChange={(e) => { sim.setAutoSkill(e.target.checked); useGame.getState().refresh(); }} className="size-5 accent-accent" />
         </label>
+        <p className="text-[11px] text-muted">Heroes keep hunting on every tab. Auto skills only fires the 4 Fight buttons. Leave the app and gold waits — cap 8 hours.</p>
         <label className="flex h-12 items-center justify-between text-sm">
           <span>Hero names</span>
           <input type="checkbox" checked={showNames} onChange={(e) => useGame.getState().setShowNames(e.target.checked)} className="size-5 accent-accent" />

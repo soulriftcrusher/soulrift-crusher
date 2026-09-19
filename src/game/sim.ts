@@ -118,7 +118,7 @@ export class GameSim {
   private clanSouls = 0;
 
   constructor() {
-    const { state, offlineSeconds } = loadState();
+    const { state } = loadState();
     this.state = state;
     this.attackCd = {} as Record<HeroId, number>;
     for (const h of HEROES) this.attackCd[h.id] = 0.2 + Math.random() * 0.6;
@@ -127,13 +127,9 @@ export class GameSim {
     this.ensureEvent();
     this.ensureContracts();
     this.ensureFounderKit();
-    if (offlineSeconds > 8) {
-      const capped = Math.min(offlineSeconds, 8 * 3600);
-      const extra = this.dps() * 0.18 * capped * this.goldMult() * this.offlineMult();
-      this.offlineGold = extra;
-      this.state.gold += extra;
-      this.state.lootGold += extra;
-    }
+    const huntAt = state.lastHuntAt || state.lastSaveAt || Date.now();
+    const huntGap = Math.max(0, (Date.now() - huntAt) / 1000);
+    if (huntGap > 8) this.offlineGold = this.catchUp(huntGap);
   }
 
   takeOfflineGold(): number {
@@ -2020,8 +2016,50 @@ export class GameSim {
     }
     if (this.saveAcc >= 4) {
       this.saveAcc = 0;
+      this.state.lastHuntAt = Date.now();
       this.save();
     }
+  }
+
+  catchUp(seconds: number): number {
+    const t = Math.min(Math.max(0, seconds), 8 * 3600);
+    if (t < 2) {
+      this.state.lastHuntAt = Date.now();
+      return 0;
+    }
+    const gold0 = this.state.gold;
+    const dps = this.dps();
+    if (dps <= 0) {
+      this.state.lastHuntAt = Date.now();
+      return 0;
+    }
+    if (this.monster.isBoss) {
+      const extra = dps * 0.12 * t * this.goldMult() * this.offlineMult();
+      this.state.gold += extra;
+      this.state.lootGold += extra;
+      this.state.lastHuntAt = Date.now();
+      this.save();
+      this.drain();
+      return extra;
+    }
+    let left = t;
+    let guard = 0;
+    while (left > 0.05 && guard++ < 800) {
+      if (this.monster.isBoss) break;
+      const hp = Math.max(1, this.monster.hp);
+      const tta = hp / dps;
+      if (tta > left) {
+        this.applyDamage(dps * left, "hero", undefined, false, true);
+        left = 0;
+        break;
+      }
+      this.applyDamage(hp, "hero", undefined, false, true);
+      left -= Math.max(0.05, tta);
+    }
+    this.drain();
+    this.state.lastHuntAt = Date.now();
+    this.save();
+    return Math.max(0, this.state.gold - gold0);
   }
 }
 
