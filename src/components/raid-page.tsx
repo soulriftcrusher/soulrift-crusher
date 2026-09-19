@@ -86,19 +86,21 @@ export function RaidPage() {
 
   return (
     <div>
-      <div className="rounded-lg border border-gold/40 bg-wood p-4">
-        <div className="flex items-center gap-2">
-          <img src="/tiles/hud-shield.png" alt="" className="size-6 object-contain" crossOrigin="anonymous" />
-          <p className="font-display text-gold">Camp shield</p>
+      <div className="overflow-hidden rounded-xl border-2 border-gold/50 bg-[#1a100c]/92 p-3 shadow-[0_6px_0_#3a1c10]">
+        <div className="flex items-center gap-3">
+          <img src="/shop/raid-shield.jpg" alt="" className="size-16 shrink-0 rounded-lg object-cover" crossOrigin="anonymous" />
+          <div className="min-w-0 flex-1">
+            <p className="font-display text-lg text-gold">Camp shield</p>
+            <p className="text-sm text-[#f0e6d8]">
+              {snap.shieldOn
+                ? `Up · ${formatTime(snap.shieldLeft / 1000)} left.`
+                : "Down. Buy 8h, hymn 2h, or play 8h."}
+            </p>
+            <p className="mt-0.5 text-[11px] text-muted">
+              Play-time to a free 8h shield: {formatTime(snap.playLeft / 1000)}
+            </p>
+          </div>
         </div>
-        <p className="mt-1 text-sm text-muted">
-          {snap.shieldOn
-            ? `Up · ${formatTime(snap.shieldLeft / 1000)} left. Offline hunters with no shield can be raided.`
-            : "Down. Buy 8h, watch a hymn for 2h, or play 8h in the app."}
-        </p>
-        <p className="mt-1 text-[11px] text-muted">
-          Play-time to a free 8h shield: {formatTime(snap.playLeft / 1000)}
-        </p>
         <div className="mt-3 grid grid-cols-2 gap-2">
           <Button
             className="h-12"
@@ -132,8 +134,9 @@ export function RaidPage() {
       ) : null}
       <ul className="mt-2 flex flex-col gap-2">
         {marks.map((m) => (
-          <li key={m.userId} className="flex items-center justify-between gap-2 rounded-lg border border-border bg-bg/40 px-3 py-3">
-            <div className="min-w-0">
+          <li key={m.userId} className="flex items-center gap-3 rounded-lg border border-gold/30 bg-bg/80 px-3 py-3">
+            <img src="/shop/raid-camp.jpg" alt="" className="size-14 shrink-0 rounded-md object-cover" crossOrigin="anonymous" />
+            <div className="min-w-0 flex-1">
               {m.npc ? (
                 <p className="font-display text-sm text-gold">{m.name}</p>
               ) : (

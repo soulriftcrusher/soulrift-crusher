@@ -373,10 +373,10 @@ export function ShopPanel() {
         })}
       </ul>
 
-      <p className="mt-5 mb-2 text-xs tracking-wide text-muted uppercase">Forge with souls</p>
+      <p className="mt-5 mb-2 text-xs tracking-wide text-gold uppercase">Forge with souls</p>
       <Button
         variant="secondary"
-        className="mb-2 h-11 w-full"
+        className="mb-2 flex h-11 w-full items-center justify-center gap-2"
         onClick={() => {
           unlockAudio();
           if (sim.buyRelicAll()) {
@@ -385,6 +385,7 @@ export function ShopPanel() {
           }
         }}
       >
+        <img src="/shop/blood-sigil.jpg" alt="" className="size-7 rounded object-cover" crossOrigin="anonymous" />
         Max all relics
       </Button>
       <ul className="flex flex-col gap-2">
@@ -409,10 +410,10 @@ export function ShopPanel() {
           />
         ))}
       </ul>
-      <p className="mt-6 mb-2 text-xs tracking-wide text-muted uppercase">Rift sciences · influence</p>
+      <p className="mt-6 mb-2 text-xs tracking-wide text-gold uppercase">Rift sciences · influence</p>
       <Button
         variant="secondary"
-        className="mb-2 h-11 w-full"
+        className="mb-2 flex h-11 w-full items-center justify-center gap-2"
         onClick={() => {
           unlockAudio();
           if (sim.buyScienceAll()) {
@@ -421,6 +422,7 @@ export function ShopPanel() {
           }
         }}
       >
+        <img src="/shop/war.jpg" alt="" className="size-7 rounded object-cover" crossOrigin="anonymous" />
         Max all sciences
       </Button>
       <ul className="flex flex-col gap-2">
@@ -452,11 +454,12 @@ export function ShopPanel() {
 function RelicRow({ relic, onBuy, onMax }: { relic: RelicSnap; onBuy: () => void; onMax: () => void }) {
   const def = RELICS.find((r) => r.id === relic.id)!;
   return (
-    <li className="flex items-center gap-3 rounded-lg border border-border bg-bg/40 p-3">
+    <li className="flex items-center gap-3 rounded-lg border border-gold/30 bg-bg/80 p-3">
+      <img src={`/shop/${relic.id}.jpg`} alt="" className="size-14 shrink-0 rounded-md object-cover" crossOrigin="anonymous" />
       <div className="min-w-0 flex-1">
-        <div className="flex items-baseline justify-between">
-          <h3 className="font-display text-sm font-semibold">{def.name}</h3>
-          <span className="text-[11px] text-muted">Rank {relic.level}</span>
+        <div className="flex items-baseline justify-between gap-2">
+          <h3 className="font-display text-sm font-semibold text-fg">{def.name}</h3>
+          <span className="shrink-0 text-[11px] text-muted">Rank {relic.level}</span>
         </div>
         <p className="text-xs text-muted">{def.blurb}</p>
       </div>
@@ -475,11 +478,12 @@ function RelicRow({ relic, onBuy, onMax }: { relic: RelicSnap; onBuy: () => void
 function ScienceRow({ science, onBuy, onMax }: { science: ScienceSnap; onBuy: () => void; onMax: () => void }) {
   const def = SCIENCES.find((s) => s.id === science.id)!;
   return (
-    <li className="flex items-center gap-3 rounded-lg border border-border bg-bg/40 p-3">
+    <li className="flex items-center gap-3 rounded-lg border border-gold/30 bg-bg/80 p-3">
+      <img src={`/shop/${science.id}.jpg`} alt="" className="size-14 shrink-0 rounded-md object-cover" crossOrigin="anonymous" />
       <div className="min-w-0 flex-1">
-        <div className="flex items-baseline justify-between">
-          <h3 className="font-display text-sm font-semibold">{def.name}</h3>
-          <span className="text-[11px] text-muted">Rank {science.level}</span>
+        <div className="flex items-baseline justify-between gap-2">
+          <h3 className="font-display text-sm font-semibold text-fg">{def.name}</h3>
+          <span className="shrink-0 text-[11px] text-muted">Rank {science.level}</span>
         </div>
         <p className="text-xs text-muted">{def.blurb}</p>
       </div>
