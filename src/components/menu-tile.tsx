@@ -26,7 +26,7 @@ export function MenuTile({
       className={cn(
         "relative flex flex-col rounded-xl border hover:border-gold",
         compact
-          ? "min-h-[5.6rem] items-center justify-center gap-1.5 border-2 border-gold/45 bg-[#1a100c]/88 p-2 text-center shadow-[0_4px_0_#3a1c10]"
+          ? "min-h-[5.6rem] items-center justify-center gap-1.5 border-2 border-gold/50 bg-wood/70 p-2 text-center shadow-[0_4px_0_#3a1c10]"
           : "min-h-[7.25rem] items-start border-gold/35 bg-wood p-3 text-left",
         ping ? "border-accent shadow-[0_0_12px_rgba(196,92,74,0.45)]" : "",
       )}
@@ -59,7 +59,7 @@ export function MenuGrid({ children, compact }: { children: ReactNode; compact?:
       className={cn(
         "grid",
         compact
-          ? "grid-cols-3 gap-1.5 rounded-xl border-2 border-gold/40 bg-[#120c0a]/75 p-2 shadow-[0_6px_0_#3a1c10]"
+          ? "grid-cols-3 gap-2 p-1"
           : "grid-cols-2 gap-2 pb-2",
       )}
     >

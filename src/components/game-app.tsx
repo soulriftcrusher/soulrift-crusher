@@ -698,7 +698,7 @@ function MenuPage({ title, bg, children }: { title: string; parchment?: boolean;
       {bg ? (
         <img src={bg} alt="" className="absolute inset-0 size-full object-cover" crossOrigin="anonymous" decoding="async" />
       ) : null}
-      {bg ? <div className="absolute inset-0 bg-gradient-to-t from-bg/92 via-bg/55 to-bg/30" /> : null}
+      {bg ? <div className="absolute inset-0 bg-gradient-to-t from-bg/35 via-transparent to-bg/20" /> : null}
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">
         <div className="flex shrink-0 items-center bg-wood/90 px-3 py-1">
           <span className="w-11" />
