@@ -8,6 +8,7 @@ import { sim } from "@/game/sim";
 import { useGame } from "@/game/store";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { HunterName } from "@/components/hunter-card";
+import { HEROES, heroPortrait, type HeroId } from "@/game/data";
 
 export function RaidPage() {
   const snap = useGame((s) => s.snap);
@@ -135,7 +136,7 @@ export function RaidPage() {
       <ul className="mt-2 flex flex-col gap-2">
         {marks.map((m) => (
           <li key={m.userId} className="flex items-center gap-3 rounded-lg border border-gold/30 bg-bg/80 px-3 py-3">
-            <img src="/shop/raid-camp.jpg" alt="" className="size-14 shrink-0 rounded-md object-cover" crossOrigin="anonymous" />
+            <img src={raidFace(m)} alt="" className="size-14 shrink-0 rounded-md object-cover" crossOrigin="anonymous" />
             <div className="min-w-0 flex-1">
               {m.npc ? (
                 <p className="font-display text-sm text-gold">{m.name}</p>
@@ -164,8 +165,15 @@ export function RaidPage() {
   );
 }
 
+function raidFace(m: PlunderMark): string {
+  const id = (m.avatar || "").trim();
+  if (HEROES.some((h) => h.id === id)) return heroPortrait(id as HeroId);
+  const n = Math.abs(m.name.split("").reduce((s, c) => s + c.charCodeAt(0), 0));
+  return heroPortrait(HEROES[n % HEROES.length]!.id);
+}
+
 function npcMarks(): PlunderMark[] {
-  return NPC_MARKS.map((n) => ({
+  return NPC_MARKS.map((n, i) => ({
     userId: n.id,
     name: n.name,
     power: n.power,
@@ -174,5 +182,6 @@ function npcMarks(): PlunderMark[] {
     souls: n.power > 20000 ? 2 : 1,
     shield: false,
     npc: true,
+    avatar: HEROES[i % HEROES.length]!.id,
   }));
 }

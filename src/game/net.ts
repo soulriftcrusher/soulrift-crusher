@@ -1415,6 +1415,7 @@ export type PlunderMark = {
   souls: number;
   shield: boolean;
   npc?: boolean;
+  avatar?: string;
 };
 
 export const syncStash = createServerFn({ method: "POST" })
@@ -1456,8 +1457,9 @@ export const listPlunder = createServerFn({ method: "GET" })
       stash_gold: number;
       stash_souls: number;
       shield_until: string | null;
+      avatar: string | null;
     }>`
-      select user_id, name, power, max_floor, stash_gold, stash_souls, shield_until
+      select user_id, name, power, max_floor, stash_gold, stash_souls, shield_until, avatar
       from crusaders
       where user_id <> ${context.userId}
         and last_seen < now() - interval '2 minutes'
@@ -1474,6 +1476,7 @@ export const listPlunder = createServerFn({ method: "GET" })
       gold: Number(r.stash_gold) || 0,
       souls: Number(r.stash_souls) || 0,
       shield: false,
+      avatar: r.avatar || "kael",
     }));
   });
 
