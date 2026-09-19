@@ -105,9 +105,16 @@ html.hunt-tiny .hunt-side {
 html.hunt-desk.hunt-short .hunt-rail {
   width: 3.25rem;
 }
-html.hunt-desk.hunt-short .hunt-rail button {
-  width: 2.5rem;
-  height: 2.5rem;
+html.hunt-short .hunt-hub button {
+  min-height: 4.55rem;
+  padding: 0.35rem;
+}
+html.hunt-short .hunt-hub img {
+  width: 1.85rem;
+  height: 1.85rem;
+}
+html.hunt-tiny .hunt-hub button {
+  min-height: 3.9rem;
 }
 html.hunt-laptop .hunt-title {
   padding-top: 1.5rem;

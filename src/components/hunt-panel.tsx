@@ -64,9 +64,9 @@ export function HuntPanel() {
       { id: "ritual", label: "Dark ritual", blurb: "Reset the hunt for souls." },
     ];
     return (
-      <div className="pt-3">
-        <p className="mb-3 text-center text-sm text-muted">Tap a tile. Red dot means something to claim.</p>
-        <MenuGrid>
+      <div className="hunt-hub flex min-h-0 flex-1 flex-col pt-1">
+        <p className="mb-1 shrink-0 text-center text-[11px] text-muted">Red dot = something to claim.</p>
+        <MenuGrid compact>
           {items.map((it) => (
             <MenuTile
               key={it.id}
@@ -74,6 +74,7 @@ export function HuntPanel() {
               label={it.label}
               blurb={it.blurb}
               ping={it.ping}
+              compact
               onClick={() => {
                 sfx.ui();
                 setPage(it.id);
