@@ -65,7 +65,6 @@ export function HuntPanel() {
     ];
     return (
       <div className="hunt-hub flex min-h-0 flex-1 flex-col pt-1">
-        <p className="mb-1 shrink-0 text-center text-[11px] text-muted">Red dot = something to claim.</p>
         <MenuGrid compact>
           {items.map((it) => (
             <MenuTile

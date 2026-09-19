@@ -175,20 +175,20 @@ export function ClanPanel() {
       { id: "profile", label: "My Profile", blurb: "Your stats and titles." },
     ];
     return (
-      <div className="pt-3">
+      <div className="hunt-hub flex min-h-0 flex-1 flex-col pt-1">
         {world?.online ? (
-          <p className="mb-3 text-center font-display text-sm text-gold tabular-nums">
+          <p className="mb-1 shrink-0 text-center font-display text-xs text-gold tabular-nums">
             {world.online} crusader{world.online === 1 ? "" : "s"} online
           </p>
         ) : null}
-        <p className="mb-3 text-center text-sm text-muted">Tap a tile. Big buttons, short jobs.</p>
-        <MenuGrid>
+        <MenuGrid compact>
           {items.map((it) => (
             <MenuTile
               key={it.id}
               art={`/tiles/${it.id}.png`}
               label={it.label}
               blurb={it.blurb}
+              compact
               onClick={() => {
                 sfx.ui();
                 setPage(it.id);
