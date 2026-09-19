@@ -12,15 +12,33 @@ export function HuntCalendar() {
   const snap = useGame((s) => s.snap);
   const refresh = useGame((s) => s.refresh);
   const today = monthReward(snap.monthDay);
+  const prize = today.gems || today.chests;
+  let next = 0;
+  for (let d = snap.monthDay; d <= 31; d++) {
+    const r = monthReward(d);
+    if (r.gems || r.chests) {
+      next = d;
+      break;
+    }
+  }
   return (
     <div>
-      <div className="rounded-lg border border-gold/40 bg-wood p-4">
-        <p className="text-xs tracking-wide text-gold uppercase">Today · day {snap.monthDay}</p>
-        <p className="font-display mt-1 text-lg text-gold">
-          {today.gems} gems{today.chests ? ` · ${today.chests} chest${today.chests > 1 ? "s" : ""}` : ""}
-        </p>
+      <div className="overflow-hidden rounded-xl border-2 border-gold/50 bg-[#1a100c]/92 p-3 shadow-[0_6px_0_#3a1c10]">
+        <div className="flex items-center gap-3">
+          <img src="/shop/login-flame.jpg" alt="" className="size-14 rounded-lg object-cover" crossOrigin="anonymous" />
+          <div className="min-w-0 flex-1">
+            <p className="font-display text-lg text-gold">Month stamps · day {snap.monthDay}</p>
+            <p className="text-xs text-[#f0e6d8]">
+              {prize
+                ? `${today.gems ? `${today.gems} gem${today.gems === 1 ? "" : "s"}` : ""}${today.chests ? `${today.gems ? " · " : ""}${today.chests} chest${today.chests > 1 ? "s" : ""}` : ""}`
+                : next
+                  ? `Rest day. Next prize is day ${next}.`
+                  : "Rest day."}
+            </p>
+          </div>
+        </div>
         <Button
-          className="mt-3 h-12 w-full"
+          className="mt-3 h-12 w-full font-display"
           disabled={!snap.monthReady}
           onClick={() => {
             unlockAudio();
@@ -30,39 +48,47 @@ export function HuntCalendar() {
             }
           }}
         >
-          {snap.monthReady ? "Claim today's stamp" : "Already claimed today"}
+          {snap.monthReady ? "Stamp today" : "Already stamped"}
         </Button>
       </div>
-      <ul className="mt-3 flex flex-col gap-1">
+      <div className="mt-3 grid grid-cols-7 gap-1.5">
         {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => {
           const r = monthReward(d);
           const hit = snap.monthHits.includes(d);
           const now = d === snap.monthDay;
+          const loot = r.gems > 0 || r.chests > 0;
           return (
-            <li
+            <div
               key={d}
               className={cn(
-                "flex items-center justify-between rounded-md border px-3 py-2 text-sm",
-                now ? "border-gold bg-wood" : "border-border bg-bg/40",
-                hit ? "opacity-50" : "",
+                "relative min-h-[3.6rem] overflow-hidden rounded-lg border p-1 text-center",
+                now ? "login-today border-gold bg-gold/15" : "border-gold/20 bg-bg/70",
+                hit ? "opacity-70" : "",
               )}
             >
-              <span className={now ? "text-gold" : "text-fg"}>Day {d}</span>
-              <span className="flex items-center gap-1 tabular-nums text-muted">
-                <img src={prizeArt("gems")} alt="" className="size-6 object-contain" crossOrigin="anonymous" />
-                {r.gems}
-                {r.chests ? (
-                  <>
-                    <img src={prizeArt("chest")} alt="" className="size-6 object-contain" crossOrigin="anonymous" />
-                    {r.chests}
-                  </>
-                ) : null}
-                {hit ? " · taken" : now ? " · today" : ""}
-              </span>
-            </li>
+              <p className="text-[10px] tabular-nums text-gold">{d}</p>
+              {loot ? (
+                <img
+                  src={r.chests ? prizeArt("chest") : prizeArt("gems")}
+                  alt=""
+                  className="mx-auto size-7 object-contain"
+                  crossOrigin="anonymous"
+                />
+              ) : (
+                <p className="mt-1 text-[9px] text-muted">—</p>
+              )}
+              {hit ? (
+                <img
+                  src="/shop/login-seal.jpg"
+                  alt=""
+                  className="pointer-events-none absolute inset-0 size-full object-cover opacity-75"
+                  crossOrigin="anonymous"
+                />
+              ) : null}
+            </div>
           );
         })}
-      </ul>
+      </div>
     </div>
   );
 }

@@ -11,7 +11,7 @@ import { getDeviceId } from "@/game/device";
 import { readHuntName } from "@/game/name";
 import { formatNum, formatTime } from "@/game/format";
 import { HeroFace } from "@/components/hero-face";
-import { HEROES, type HeroId } from "@/game/data";
+import { HEROES, SCIENCES, type HeroId } from "@/game/data";
 import {
   challengeCrusader,
   createClan,
@@ -446,15 +446,22 @@ export function ClanPanel() {
       ) : null}
       {page === "science" ? (
         <div>
-          <p className="text-sm text-muted">Influence from raids and the arena. Buy ranks in Shop.</p>
+          <p className="text-sm text-[#f0e6d8]">Influence from raids and the arena. Buy ranks in Shop.</p>
           <p className="mt-2 font-display text-gold tabular-nums">{formatNum(snap.influence)} influence</p>
           <ul className="mt-3 flex flex-col gap-2">
-            {snap.sciences.map((s) => (
-              <li key={s.id} className="flex items-center justify-between rounded-md border border-border bg-bg/40 px-3 py-2">
-                <span className="font-display text-sm">{s.id.replace("-", " ")}</span>
-                <span className="text-xs tabular-nums text-muted">Rank {s.level}</span>
-              </li>
-            ))}
+            {snap.sciences.map((s) => {
+              const def = SCIENCES.find((d) => d.id === s.id);
+              return (
+                <li key={s.id} className="flex items-center gap-3 rounded-lg border border-gold/30 bg-bg/80 px-3 py-2.5">
+                  <img src={`/shop/${s.id}.jpg`} alt="" className="size-14 shrink-0 rounded-md object-cover" crossOrigin="anonymous" />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-display text-sm text-fg">{def?.name ?? s.id}</p>
+                    <p className="text-[11px] text-muted">{def?.blurb ?? ""}</p>
+                  </div>
+                  <span className="shrink-0 text-xs tabular-nums text-gold">Rank {s.level}</span>
+                </li>
+              );
+            })}
           </ul>
         </div>
       ) : null}
