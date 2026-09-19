@@ -95,7 +95,7 @@ export function HuntPanel() {
 
   if (page === "wheel") {
     return (
-      <div className="relative min-h-[32rem] overflow-hidden rounded-xl">
+      <div className="relative flex h-full min-h-0 flex-col overflow-hidden rounded-xl">
         <img
           src={wheelBack}
           alt=""
@@ -103,10 +103,13 @@ export function HuntPanel() {
           crossOrigin="anonymous"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-bg/95 via-bg/60 to-bg/45" />
-        <div className="relative z-10 px-1">
-          <Back>
+        <div className="relative z-10 flex min-h-0 flex-1 flex-col px-1 pt-1">
+          <button type="button" className="mb-1 h-9 shrink-0 self-start px-1 text-sm text-gold" onClick={() => setPage("hub")}>
+            ← Hunt
+          </button>
+          <div className="min-h-0 flex-1">
             <WheelPage onClose={() => setPage("hub")} />
-          </Back>
+          </div>
         </div>
       </div>
     );

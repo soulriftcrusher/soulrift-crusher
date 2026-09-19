@@ -83,20 +83,23 @@ export function WheelPage({ onClose: _onClose }: { onClose: () => void }) {
   }
 
   return (
-    <div className="pt-1">
-      <div className="rounded-xl border-2 border-gold/70 bg-[#1a100c]/92 px-3 py-2.5 shadow-[0_4px_0_#3a1c10]">
-        <p className="font-display text-center text-lg tracking-wide text-gold">Fortune wheel</p>
+    <div className="flex h-full min-h-0 flex-col gap-1">
+      <div className="shrink-0 rounded-xl border-2 border-gold/70 bg-[#1a100c]/92 px-3 py-1.5">
         {snap.wheelReady ? (
-          <p className="mt-1 text-center font-display text-base text-[#fff6e0]">1 free spin today</p>
+          <p className="text-center font-display text-base text-gold">1 free spin today</p>
         ) : (
-          <p className="mt-1 text-center font-display text-base text-[#fff6e0]">
+          <p className="text-center font-display text-sm text-gold">
             Next free spin in {formatTime(snap.wheelFreeIn / 1000)}
           </p>
         )}
-        <p className="mt-0.5 text-center text-sm text-[#f0e6d8]">Extra spins cost {snap.wheelCost} gems.</p>
+        <p className="text-center text-xs text-[#f0e6d8]">Extra spins cost {snap.wheelCost} gems.</p>
       </div>
 
-      <div className={`relative mx-auto mt-1 aspect-square w-full max-w-[21rem]${spinning ? " wheel-spinning" : ""}`}>
+      <div className="relative mx-auto flex min-h-0 w-full flex-1 items-center justify-center">
+        <div
+          className={`relative aspect-square w-full max-h-full${spinning ? " wheel-spinning" : ""}`}
+          style={{ maxWidth: "min(100%, calc(var(--app-h, 100dvh) - 22rem))" }}
+        >
         <svg viewBox="0 0 200 200" className="absolute inset-[14%] size-auto">
           <defs>
             <radialGradient id="wheelGloss" cx="35%" cy="30%" r="70%">
@@ -152,20 +155,22 @@ export function WheelPage({ onClose: _onClose }: { onClose: () => void }) {
             <circle cx="18" cy="14" r="3.5" fill="#fff6ee" />
           </svg>
         </div>
+        </div>
       </div>
 
+      <div className="shrink-0">
       {hit ? (
-        <p className="mt-2 rounded-lg border border-gold/50 bg-[#1a100c]/90 py-2 text-center font-display text-lg text-gold">
+        <p className="rounded-lg border border-gold/50 bg-[#1a100c]/90 py-1 text-center font-display text-base text-gold">
           Landed · {hit.name}
         </p>
       ) : (
-        <p className="mt-2 rounded-lg bg-[#1a100c]/90 py-2 text-center text-sm text-[#fff6e0]">
-          {spinning ? "The wheel is turning…" : "Tap Free spin. The pointer at the top is the prize."}
+        <p className="py-0.5 text-center text-xs text-[#fff6e0]">
+          {spinning ? "The wheel is turning…" : "Pointer at the top is the prize."}
         </p>
       )}
-      <div className="mt-3 grid grid-cols-2 gap-2">
+      <div className="mt-1 grid grid-cols-2 gap-2">
         <Button
-          className="h-12 rounded-xl border-2 border-gold bg-accent font-display text-base shadow-[0_4px_0_#7a1810]"
+          className="h-11 rounded-xl border-2 border-gold bg-accent font-display text-base shadow-[0_4px_0_#7a1810]"
           disabled={spinning || !snap.wheelReady}
           onClick={() => spin(false)}
         >
@@ -173,7 +178,7 @@ export function WheelPage({ onClose: _onClose }: { onClose: () => void }) {
         </Button>
         <Button
           variant="secondary"
-          className="h-12 rounded-xl border-2 border-gold bg-gold text-parchment-ink font-display text-base shadow-[0_4px_0_#5a3018]"
+          className="h-11 rounded-xl border-2 border-gold bg-gold text-parchment-ink font-display text-base shadow-[0_4px_0_#5a3018]"
           disabled={spinning || snap.gems < snap.wheelCost}
           onClick={() => spin(true)}
         >
@@ -181,12 +186,11 @@ export function WheelPage({ onClose: _onClose }: { onClose: () => void }) {
         </Button>
       </div>
       {adsRewardedOn() ? (
-        <Button className="mt-2 h-12 w-full" disabled={spinning || watchBusy} onClick={() => void watchSpin()}>
+        <Button className="mt-1 h-11 w-full" disabled={spinning || watchBusy} onClick={() => void watchSpin()}>
           {watchBusy ? "Loading ad…" : "Watch for a spin"}
         </Button>
-      ) : (
-        <p className="mt-2 text-center text-[11px] text-muted">Rewarded spins turn on when ads go live. No fake ads.</p>
-      )}
+      ) : null}
+      </div>
     </div>
   );
 }

@@ -679,6 +679,8 @@ function DeskRail() {
 
 function MenuPage({ title, bg, children }: { title: string; parchment?: boolean; bg?: string; children: ReactNode }) {
   const setTab = useGame((s) => s.setTab);
+  const tab = useGame((s) => s.tab);
+  const huntPage = useGame((s) => s.huntPage);
   const desk = useDesk();
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
@@ -694,7 +696,7 @@ function MenuPage({ title, bg, children }: { title: string; parchment?: boolean;
             <img src="/tiles/hud-close.png" alt="" className="size-7 object-contain" crossOrigin="anonymous" />
           </button>
         </div>
-        <div className={cn("scroll-pane min-h-0 flex-1 px-2 pb-[max(1rem,env(safe-area-inset-bottom))]", desk && "mx-auto w-full max-w-[52rem]")}>{children}</div>
+        <div className={cn("scroll-pane min-h-0 flex-1 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]", desk && "mx-auto w-full max-w-[52rem]", huntPage === "wheel" && tab === "hunt" && "overflow-hidden")}>{children}</div>
       </div>
     </div>
   );
