@@ -157,7 +157,7 @@ export const RECIPES: RecipeDef[] = [
     blurb: "Wing and gold plume buy gems.",
     inputs: ["wing", "gold-plume"],
     chance: 0.9,
-    result: { kind: "gems", n: 40 },
+    result: { kind: "gems", n: 1 },
   },
   {
     id: "hymn",

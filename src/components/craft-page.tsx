@@ -9,10 +9,12 @@ import {
   lootIcon,
   matchRecipe,
   type LootId,
+  type RecipeResult,
 } from "@/game/loot";
 import { sfx, unlockAudio } from "@/game/audio";
 import { sim } from "@/game/sim";
 import { useGame } from "@/game/store";
+import { prizeArt } from "@/game/prize-art";
 import { cn } from "@/lib/utils";
 
 type Page = "bench" | "recipes" | "catalyst" | "market";
@@ -105,21 +107,24 @@ export function CraftPage({ onClose }: { onClose: () => void }) {
       <FullShell title="Recipes" onClose={onClose} onBack={() => setPage("bench")} snap={snap}>
         <ul className="flex flex-col gap-2">
           {RECIPES.map((r) => (
-            <li key={r.id} className="rounded-lg border border-border bg-bg/40 p-3">
-              <h3 className="font-display text-sm font-semibold">{r.name}</h3>
-              <p className="mt-1 text-xs text-muted">{r.blurb}</p>
-              <div className="mt-2 flex flex-wrap gap-1">
-                {r.inputs.map((id) => (
-                  <img key={id + r.id} src={lootIcon(id)} alt="" className="size-10 rounded-md object-cover" />
-                ))}
-                {r.catalyst ? (
-                  <span className="grid size-10 place-items-center rounded-md border border-gold/40 text-[10px] text-gold">
-                    +
-                  </span>
-                ) : null}
-                {r.catalyst ? <img src={lootIcon(r.catalyst)} alt="" className="size-10 rounded-md object-cover" /> : null}
+            <li key={r.id} className="flex items-center gap-3 rounded-lg border border-gold/30 bg-bg/80 p-3">
+              <img src={recipeArt(r.result)} alt="" className="size-14 shrink-0 rounded-md object-cover" />
+              <div className="min-w-0 flex-1">
+                <h3 className="font-display text-sm font-semibold text-fg">{r.name}</h3>
+                <p className="mt-0.5 text-xs text-muted">{r.blurb}</p>
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {r.inputs.map((id) => (
+                    <img key={id + r.id} src={lootIcon(id)} alt="" className="size-9 rounded-md object-cover" />
+                  ))}
+                  {r.catalyst ? (
+                    <>
+                      <span className="grid size-9 place-items-center text-gold">+</span>
+                      <img src={lootIcon(r.catalyst)} alt="" className="size-9 rounded-md object-cover" />
+                    </>
+                  ) : null}
+                </div>
+                <p className="mt-1 text-xs tabular-nums text-gold">Base chance {Math.round(r.chance * 100)}%</p>
               </div>
-              <p className="mt-2 text-xs tabular-nums text-gold">Base chance {Math.round(r.chance * 100)}%</p>
             </li>
           ))}
         </ul>
@@ -141,54 +146,81 @@ export function CraftPage({ onClose }: { onClose: () => void }) {
 
   return (
     <FullShell title="Craft" onClose={onClose} snap={snap}>
-      <Button className="mb-3 h-12 w-full" onClick={() => setPage("market")}>
-        Shop · Soul Well · gems
-      </Button>
-      <div className="relative mx-auto flex max-w-sm items-start gap-2">
+      <div className="mx-auto flex max-w-sm items-start gap-2">
         <button
           type="button"
-          className="grid size-16 shrink-0 place-items-center rounded-lg border border-gold/50 bg-surface"
+          className="grid w-16 shrink-0 place-items-center gap-1"
           onClick={() => setPage("recipes")}
         >
-          <img src={lootIcon("ticket")} alt="" className="size-10 rounded object-cover" />
+          <img src="/shop/forge-book.jpg" alt="" className="size-16 rounded-xl border-2 border-gold/50 object-cover" crossOrigin="anonymous" />
           <span className="text-[10px] tracking-wide text-gold uppercase">Recipes</span>
         </button>
-        <div className={cn("relative grid flex-1 grid-cols-3 gap-1 rounded-lg bg-bg p-1", busy && "bench-flash")}>
-          {slots.map((id, i) => (
-            <button
-              key={i}
-              type="button"
-              className="aspect-square rounded-md border border-border bg-bg"
-              onClick={() => (id ? clearSlot(i) : setPicking("slot"))}
-            >
-              {id ? <img src={lootIcon(id)} alt="" className="size-full rounded-md object-cover" /> : null}
-            </button>
-          ))}
-          {busy ? <img src="/sprites/hammer.png" alt="" className="hammer-strike pointer-events-none absolute inset-0 m-auto size-28" /> : null}
+        <div className={cn("relative min-w-0 flex-1 overflow-hidden rounded-xl border-2 border-gold/50", busy && "bench-flash")}>
+          <img src="/shop/forge-anvil.jpg" alt="" className="absolute inset-0 size-full object-cover" crossOrigin="anonymous" />
+          <div className="relative grid grid-cols-3 gap-1.5 p-2.5">
+            {slots.map((id, i) => (
+              <button
+                key={i}
+                type="button"
+                className={cn(
+                  "forge-slot aspect-square overflow-hidden rounded-lg border-2 border-gold/40 bg-[#0a0706]/70",
+                  id && "forge-slot-filled border-gold",
+                )}
+                onClick={() => (id ? clearSlot(i) : setPicking("slot"))}
+              >
+                {id ? (
+                  <img src={lootIcon(id)} alt="" className="size-full object-cover" />
+                ) : (
+                  <span className="font-display text-lg text-gold/35">+</span>
+                )}
+              </button>
+            ))}
+          </div>
+          {busy ? (
+            <>
+              <div className="forge-sparks pointer-events-none absolute inset-0" />
+              <img src="/sprites/hammer.png" alt="" className="hammer-strike pointer-events-none absolute inset-0 m-auto size-28" />
+            </>
+          ) : null}
         </div>
         <button
           type="button"
-          className="grid size-16 shrink-0 place-items-center rounded-lg border border-gold/50 bg-surface"
+          className="grid w-16 shrink-0 place-items-center gap-1"
           onClick={() => setPage("catalyst")}
         >
-          {catalyst ? (
-            <img src={lootIcon(catalyst)} alt="" className="size-10 rounded object-cover" />
-          ) : (
-            <img src={lootIcon("flask")} alt="" className="size-10 rounded object-cover opacity-50" />
-          )}
-          <span className="text-[10px] tracking-wide text-gold uppercase">Catalyst</span>
+          <span className="grid size-16 place-items-center overflow-hidden rounded-xl border-2 border-gold/50 bg-[#1a100c]">
+            {catalyst ? (
+              <img src={lootIcon(catalyst)} alt="" className="size-full object-cover" />
+            ) : (
+              <img src={lootIcon("flask")} alt="" className="size-10 object-cover opacity-70" />
+            )}
+          </span>
+          <span className="text-[10px] tracking-wide text-gold uppercase">Flask</span>
         </button>
       </div>
 
-      <div className="mt-3 flex items-center gap-3 rounded-lg border border-border bg-bg/40 p-3">
-        <img src={lootIcon("ticket")} alt="" className="size-12 rounded-md object-cover" />
+      <div className="mt-3 flex items-center gap-3 rounded-xl border-2 border-gold/40 bg-[#1a100c]/90 p-3">
+        <img
+          src={recipe ? recipeArt(recipe.result) : "/shop/forge-hammer.jpg"}
+          alt=""
+          className="size-16 shrink-0 rounded-lg object-cover"
+          crossOrigin="anonymous"
+        />
         <div className="min-w-0 flex-1">
-          <p className="text-xs text-muted">Base chance: {filled ? `${Math.round(chance * 100)}%` : "—"}</p>
-          <p className="text-xs text-muted">Catalysts: {catalyst ? LOOT.find((l) => l.id === catalyst)?.name : "—"}</p>
-          <p className="mt-1 font-display text-sm text-gold">{recipe ? recipe.name : filled ? "Random smash" : "Empty bench"}</p>
+          <p className="font-display text-base text-gold">{recipe ? recipe.name : filled ? "Random smash" : "Empty anvil"}</p>
+          <p className="text-xs text-[#f0e6d8]">
+            {filled ? `${Math.round(chance * 100)}% strike` : "Put loot in the wells."}
+            {catalyst ? ` · ${LOOT.find((l) => l.id === catalyst)?.name}` : ""}
+          </p>
+          {filled ? (
+            <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-bg">
+              <div className="h-full rounded-full bg-gold" style={{ width: `${Math.round(chance * 100)}%` }} />
+            </div>
+          ) : null}
         </div>
-        <Button className="h-14 w-24 shrink-0" disabled={busy || filled === 0} onClick={create}>
-          {busy ? "…" : "Create"}
+        <Button className="h-16 w-20 shrink-0 flex-col gap-0 px-1" disabled={busy || filled === 0} onClick={create}>
+          <img src="/shop/forge-hammer.jpg" alt="" className="size-8 rounded object-cover" crossOrigin="anonymous" />
+          <span className="text-[11px]">{busy ? "…" : "Strike"}</span>
         </Button>
       </div>
       {note ? <p className="mt-2 text-sm text-gold">{note}</p> : null}
@@ -217,6 +249,16 @@ export function CraftPage({ onClose }: { onClose: () => void }) {
       </Button>
     </FullShell>
   );
+}
+
+function recipeArt(r: RecipeResult): string {
+  if (r.kind === "item") return lootIcon(r.id);
+  if (r.kind === "ember") return prizeArt("ember");
+  if (r.kind === "gems") return prizeArt("gems");
+  if (r.kind === "souls") return prizeArt("souls");
+  if (r.kind === "chest") return prizeArt("chest");
+  if (r.kind === "rune") return prizeArt("rune");
+  return "/shop/forge-hammer.jpg";
 }
 
 function FullShell({
@@ -286,7 +328,7 @@ function ItemGrid({
             sfx.ui();
             onPick(b.id);
           }}
-          className="relative aspect-square overflow-hidden rounded-md border border-border bg-bg disabled:opacity-40"
+          className="relative aspect-square overflow-hidden rounded-md border border-gold/30 bg-bg/80 disabled:opacity-40"
         >
           <img src={lootIcon(b.id)} alt={b.name} className="size-full object-cover" />
           <span className="absolute right-0.5 bottom-0.5 rounded-sm bg-bg/80 px-1 text-[10px] tabular-nums text-fg">
