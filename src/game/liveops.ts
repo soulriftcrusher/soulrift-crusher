@@ -37,7 +37,7 @@ const MARKET_POOL: MarketDeal[] = [
   { id: "scrap", name: "Scrap crate", blurb: "Cheap gold for a chest.", gold: 400, giveChests: 1 },
   { id: "ember-cup", name: "Ember cup", blurb: "10 gems → 12 ember.", gems: 10, giveEmber: 12 },
   { id: "soul-sip", name: "Soul sip", blurb: "A swallow of names.", gold: 800, giveSouls: 3 },
-  { id: "gem-crumb", name: "Gem crumb", blurb: "Gold for a few gems.", gold: 2500, giveGems: 15 },
+  { id: "gem-crumb", name: "Gem crumb", blurb: "A fortune in gold for two gems.", gold: 80000, giveGems: 2 },
   { id: "war-bag", name: "War bag", blurb: "Two chests, no questions.", gems: 25, giveChests: 2 },
   { id: "bone-pot", name: "Bone pot", blurb: "Ember for the bench.", gold: 1200, giveEmber: 18 },
   { id: "rift-pinch", name: "Rift pinch", blurb: "Souls on the cheap.", gems: 18, giveSouls: 6 },
@@ -107,12 +107,12 @@ export function monthDay(now = Date.now()): number {
 }
 
 export function monthReward(day: number): { gems: number; chests: number } {
-  const gems = 1 + Math.floor(day / 4) + (day % 7 === 0 ? 3 : 0);
-  const chests = day % 10 === 0 ? 2 : day % 5 === 0 ? 1 : 0;
+  const gems = day === 30 ? 2 : day % 7 === 0 ? 1 : 0;
+  const chests = day % 10 === 0 ? 1 : 0;
   return { gems, chests };
 }
 
-export const WEEKLY_LOGIN = [1, 1, 2, 2, 3, 4, 6];
+export const WEEKLY_LOGIN = [1, 1, 1, 1, 1, 1, 2];
 
 export const BP_STEP = 80;
 export const BP_MAX = 25;
@@ -127,7 +127,7 @@ export function bpFreeLoot(rank: number): { gold: number; chests: number } {
 }
 
 export function bpPremLoot(rank: number): { gems: number; souls: number } {
-  return { gems: 1 + Math.floor(rank / 5), souls: rank % 4 === 0 ? 1 : 0 };
+  return { gems: rank % 8 === 0 ? 1 : 0, souls: rank % 4 === 0 ? 1 : 0 };
 }
 
 export const WHEEL: { name: string; gems?: number; gold?: number; souls?: number; chests?: number }[] = [
@@ -143,5 +143,5 @@ export const WHEEL: { name: string; gems?: number; gold?: number; souls?: number
 
 export const CARD_GEMS = 40;
 export const CARD_MS = 30 * 24 * 60 * 60 * 1000;
-export const WATCH_GEMS = 2;
+export const WATCH_GEMS = 1;
 

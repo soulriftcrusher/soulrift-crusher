@@ -5,7 +5,7 @@ export const WHEEL_JACKPOT_CHANCE = 0.02;
 export const WHEEL_CHANCE_STEP = 0.005;
 export const WHEEL_CHANCE_CAP = 0.2;
 export const WHEEL_DAY_MS = 24 * 60 * 60 * 1000;
-export const WHEEL_POT_START = 50;
+export const WHEEL_POT_START = 20;
 export const SHIELD_GEMS = 25;
 export const SHIELD_MS = 8 * 60 * 60 * 1000;
 export const HYMN_SHIELD_MS = 2 * 60 * 60 * 1000;
@@ -26,11 +26,11 @@ export type WheelSlice = {
 
 export const WHEEL_SLICES: WheelSlice[] = [
   { id: "gold", name: "Gold pinch", gold: 80, weight: 28 },
-  { id: "g1", name: "1 gem", gems: 1, weight: 18 },
-  { id: "soul", name: "A soul", souls: 1, weight: 16 },
-  { id: "chest", name: "A chest", chests: 1, weight: 12 },
-  { id: "dust", name: "Dust", gold: 40, weight: 14 },
-  { id: "g6", name: "6 gems", gems: 6, weight: 7 },
+  { id: "g1", name: "1 gem", gems: 1, weight: 8 },
+  { id: "soul", name: "A soul", souls: 1, weight: 18 },
+  { id: "chest", name: "A chest", chests: 1, weight: 14 },
+  { id: "dust", name: "Dust", gold: 40, weight: 16 },
+  { id: "g6", name: "2 gems", gems: 2, weight: 3 },
   { id: "souls", name: "2 souls", souls: 2, weight: 3 },
   { id: "jack", name: "A spark", jackpot: true, weight: 2 },
 ];

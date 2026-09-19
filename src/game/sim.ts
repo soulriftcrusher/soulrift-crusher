@@ -587,7 +587,7 @@ export class GameSim {
   buyGemPouchMax(): boolean {
     const cost = this.pouchCost();
     if (cost <= 0 || this.state.gold < cost) return false;
-    const n = Math.min(200, Math.floor(this.state.gold / cost));
+    const n = Math.min(3, Math.floor(this.state.gold / cost));
     if (n <= 0) return false;
     this.state.gold -= n * cost;
     this.state.gems += n;
@@ -596,7 +596,12 @@ export class GameSim {
   }
 
   pouchCost(): number {
-    return Math.max(400, Math.floor(220 * Math.pow(1.28, Math.max(0, this.state.maxFloor / 4))));
+    const floor = Math.max(1, this.state.maxFloor);
+    const owned = Math.min(80, Math.max(0, Math.floor(this.state.gems)));
+    return Math.max(
+      18000,
+      Math.floor(14000 * Math.pow(1.82, (floor - 1) / 2) * (1 + owned * 8)),
+    );
   }
 
   buyRelic(id: RelicId): boolean {
@@ -886,7 +891,7 @@ export class GameSim {
     this.state.bpPts = (this.state.bpPts ?? 0) + (isBoss ? 6 : 1);
     if (isBoss) {
       this.state.bossKills += 1;
-      this.state.gems += Math.random() < 0.12 ? 1 : 0;
+      this.state.gems += Math.random() < 0.012 ? 1 : 0;
     }
     const souls = Math.random() < (isBoss ? 0.55 : 0.12) ? 1 : 0;
     this.state.souls += souls;
@@ -1153,7 +1158,7 @@ export class GameSim {
     const r = recipe.result;
     if (r.kind === "item" && r.id) this.state.bag[r.id] = (this.state.bag[r.id] ?? 0) + (r.n ?? 1);
     if (r.kind === "ember") this.state.ember += r.n ?? 8;
-    if (r.kind === "gems") this.state.gems += r.n ?? 10;
+    if (r.kind === "gems") this.state.gems += r.n ?? 1;
     if (r.kind === "souls") this.state.souls += r.n ?? 4;
     if (r.kind === "chest") this.state.chests += r.n ?? 1;
     if (r.kind === "rune") this.grantRune(mintRune(this.state.kills + 3, this.state.floor, true));
@@ -1175,9 +1180,9 @@ export class GameSim {
     if (free) this.state.lastFreeWell = day;
     const pool = HEROES.filter((h) => h.acquire === "summon" && (this.state.heroLevel[h.id] ?? 0) <= 0);
     if (!pool.length) {
-      this.state.gems += 25;
+      this.state.gems += 3;
       this.save();
-      return { name: "25 gems (all summoned)", kind: "gems" };
+      return { name: "3 gems (all summoned)", kind: "gems" };
     }
     this.state.pity = (this.state.pity ?? 0) + 1;
     const pity = this.state.pity >= PITY_AT || hits >= 3;
@@ -1449,7 +1454,7 @@ export class GameSim {
     const r = monthReward(day);
     this.state.gems += r.gems;
     this.state.chests += r.chests;
-    if ((this.state.cardUntil ?? 0) > Date.now()) this.state.gems += 15;
+    if ((this.state.cardUntil ?? 0) > Date.now()) this.state.gems += 1;
     this.save();
     return true;
   }

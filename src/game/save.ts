@@ -25,7 +25,7 @@ export function defaultState(now = Date.now()): GameState {
     version: SAVE_VERSION,
     gold: 6,
     souls: 0,
-    gems: 3,
+    gems: 0,
     influence: 0,
     chests: 0,
     floor: 1,
