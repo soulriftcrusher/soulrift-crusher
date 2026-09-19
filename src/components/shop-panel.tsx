@@ -179,7 +179,9 @@ export function ShopPanel() {
           Apple and Google only take card money inside their stores. First Blood is $0.99 once — 10× the purse.
         </p>
         {!snap.firstBuy ? (
-          <div className="mt-3 rounded-md border border-gold/50 bg-gold/10 px-3 py-3">
+          <div className="mt-3 flex items-center gap-3 rounded-md border border-gold/50 bg-gold/10 px-3 py-3">
+            <img src="/shop/firstblood.jpg" alt="" className="size-14 shrink-0 rounded-md object-cover" crossOrigin="anonymous" />
+            <div className="min-w-0 flex-1">
             <p className="font-display text-sm text-gold">First Blood · {FIRST_PACK_USD}</p>
             <p className="text-xs text-muted">{FIRST_PACK_GEMS} gems. Once.</p>
             <Button
@@ -203,13 +205,14 @@ export function ShopPanel() {
             >
               Claim First Blood · {FIRST_PACK_USD}
             </Button>
+            </div>
           </div>
         ) : (
           <p className="mt-2 text-xs text-gold">First Blood claimed. 10× purse is yours.</p>
         )}
         <Button
           variant="secondary"
-          className="mt-2 h-12 w-full"
+          className="mt-2 flex h-12 w-full items-center justify-center gap-2"
           disabled={!snap.canPouch}
           onClick={() => {
             unlockAudio();
@@ -219,10 +222,11 @@ export function ShopPanel() {
             }
           }}
         >
+          <img src="/shop/pouch.jpg" alt="" className="size-8 rounded object-cover" crossOrigin="anonymous" />
           Gold pouch · {formatNum(snap.pouchCost)} gold → 1 gem
         </Button>
         <Button
-          className="mt-2 h-12 w-full"
+          className="mt-2 flex h-12 w-full items-center justify-center gap-2"
           variant="secondary"
           disabled={!snap.canPouch}
           onClick={() => {
@@ -233,13 +237,15 @@ export function ShopPanel() {
             }
           }}
         >
+          <img src="/shop/pouch.jpg" alt="" className="size-8 rounded object-cover" crossOrigin="anonymous" />
           Buy pouches until gold runs out
         </Button>
         <ul className="mt-3 flex flex-col gap-2">
           {GEM_PACKS.filter((p) => p.id !== "firstblood").map((p) => (
-            <li key={p.id} className="flex items-center justify-between rounded-md border border-border px-3 py-3">
-              <div>
-                <p className="font-display text-sm">
+            <li key={p.id} className="flex items-center gap-3 rounded-lg border border-gold/30 bg-bg/80 px-3 py-3">
+              <img src={`/shop/${p.id}.jpg`} alt="" className="size-14 shrink-0 rounded-md object-cover" crossOrigin="anonymous" />
+              <div className="min-w-0 flex-1">
+                <p className="font-display text-sm text-fg">
                   {p.name} {p.tag ? <span className="text-gold">· {p.tag}</span> : null}
                 </p>
                 <p className="text-xs text-muted">{p.gems} gems</p>
@@ -247,7 +253,7 @@ export function ShopPanel() {
               <Button
                 size="sm"
                 variant="secondary"
-                className="h-11"
+                className="h-11 min-w-[4.5rem]"
                 onClick={() => {
                   unlockAudio();
                   queueIap({ data: { packId: p.id } })
@@ -272,7 +278,7 @@ export function ShopPanel() {
       <p className="mt-5 mb-2 text-xs tracking-wide text-muted uppercase">Weapons</p>
       <Button
         variant="secondary"
-        className="mb-2 h-11 w-full"
+        className="mb-2 flex h-11 w-full items-center justify-center gap-2"
         onClick={() => {
           unlockAudio();
           if (sim.buyWeaponAll()) {
@@ -281,6 +287,7 @@ export function ShopPanel() {
           }
         }}
       >
+        <img src="/shop/ash-blade.jpg" alt="" className="size-7 rounded object-cover" crossOrigin="anonymous" />
         Max all weapons
       </Button>
       <ul className="flex flex-col gap-2">
@@ -288,8 +295,8 @@ export function ShopPanel() {
           const def = WEAPONS.find((x) => x.id === w.id)!;
           const levelMaxed = w.level >= WEAPON_RANK_CAP;
           return (
-            <li key={w.id} className="flex items-center gap-3 rounded-lg border border-border bg-bg/40 p-3">
-              <img src="/tiles/hud-swords.png" alt="" className="size-8 shrink-0 object-contain" crossOrigin="anonymous" />
+            <li key={w.id} className="flex items-center gap-3 rounded-lg border border-gold/30 bg-bg/80 p-3">
+              <img src={`/shop/${w.id}.jpg`} alt="" className="size-14 shrink-0 rounded-md object-cover" crossOrigin="anonymous" />
               <div className="min-w-0 flex-1">
                 <div className="flex items-baseline justify-between">
                   <h3 className="font-display text-sm font-semibold">{def.name}</h3>
@@ -337,7 +344,8 @@ export function ShopPanel() {
         {snap.sockets.map((s) => {
           const def = SOCKETS.find((x) => x.id === s.id)!;
           return (
-            <li key={s.id} className="flex items-center gap-3 rounded-lg border border-border bg-bg/40 p-3">
+            <li key={s.id} className="flex items-center gap-3 rounded-lg border border-gold/30 bg-bg/80 p-3">
+              <img src={`/shop/${s.id}.jpg`} alt="" className="size-14 shrink-0 rounded-md object-cover" crossOrigin="anonymous" />
               <div className="min-w-0 flex-1">
                 <h3 className="font-display text-sm font-semibold">
                   {def.name}
