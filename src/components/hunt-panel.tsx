@@ -127,39 +127,59 @@ export function HuntPanel() {
     const idx = snap.dailyReady ? snap.dailyStreak % 7 : Math.max(0, (snap.dailyStreak - 1) % 7);
     return (
       <Back>
-        <div className="rounded-lg border border-gold/40 bg-wood p-4">
-          <p className="text-xs tracking-wide text-gold uppercase">7-day login · streak {snap.dailyStreak}</p>
-          <ul className="mt-3 flex flex-col gap-1">
+        <div className="overflow-hidden rounded-xl border-2 border-gold/50 bg-[#1a100c]/92 p-3 shadow-[0_6px_0_#3a1c10]">
+          <div className="flex items-center gap-3">
+            <img src="/shop/login-flame.jpg" alt="" className="size-14 rounded-lg object-cover" crossOrigin="anonymous" />
+            <div className="min-w-0 flex-1">
+              <p className="font-display text-lg text-gold">Weekly rite</p>
+              <p className="text-xs text-[#f0e6d8]">
+                Streak {snap.dailyStreak}. Miss a day and it starts at 1.
+              </p>
+            </div>
+          </div>
+          <div className="mt-3 grid grid-cols-4 gap-2">
             {WEEKLY_LOGIN.map((g, i) => {
               const taken = i < idx || (!snap.dailyReady && i === idx);
               const today = snap.dailyReady && i === idx;
+              const week = i === 6;
               return (
-                <li
+                <div
                   key={i}
                   className={cn(
-                    "flex items-center justify-between rounded-md border px-3 py-2 text-sm",
-                    today ? "border-gold bg-gold/10 text-gold" : "border-border",
-                    taken ? "opacity-50" : "",
+                    "relative overflow-hidden rounded-xl border-2 p-2",
+                    week ? "col-span-2 min-h-[7.5rem]" : "min-h-[6.5rem]",
+                    today ? "login-today border-gold bg-gold/15" : "border-gold/25 bg-bg/50",
+                    taken ? "opacity-70" : "",
                   )}
                 >
-                  <span>Day {i + 1}</span>
-                  <span className="flex items-center gap-1 tabular-nums">
-                    <img src={prizeArt("gems")} alt="" className="size-7 object-contain" crossOrigin="anonymous" />
-                    {g} gems
-                    {i === 6 ? (
-                      <>
-                        <img src={prizeArt("chest")} alt="" className="size-7 object-contain" crossOrigin="anonymous" />
-                        +2
-                      </>
-                    ) : null}
-                    {taken ? " · taken" : today ? " · claim" : ""}
-                  </span>
-                </li>
+                  <p className="font-display text-[11px] tracking-wide text-gold uppercase">Day {i + 1}</p>
+                  <div className="mt-1 flex items-center justify-center">
+                    <img
+                      src={week ? "/shop/login-chest.jpg" : prizeArt("gems")}
+                      alt=""
+                      className={cn("object-contain", week ? "size-16" : "size-12")}
+                      crossOrigin="anonymous"
+                    />
+                  </div>
+                  <p className="mt-1 text-center text-xs tabular-nums text-[#fff6e0]">
+                    {g} gem{g === 1 ? "" : "s"}
+                    {week ? " · 2 chests" : ""}
+                  </p>
+                  {today ? <p className="text-center text-[10px] text-gold">Claim</p> : null}
+                  {taken ? (
+                    <img
+                      src="/shop/login-seal.jpg"
+                      alt=""
+                      className="pointer-events-none absolute inset-0 size-full object-cover opacity-80"
+                      crossOrigin="anonymous"
+                    />
+                  ) : null}
+                </div>
               );
             })}
-          </ul>
+          </div>
           <Button
-            className="mt-3 h-12 w-full"
+            className="mt-3 h-12 w-full font-display text-base"
             disabled={!snap.dailyReady}
             onClick={() => {
               unlockAudio();
@@ -169,7 +189,7 @@ export function HuntPanel() {
               }
             }}
           >
-            {snap.dailyReady ? `Claim ${snap.dailyGems} gems` : "Come back tomorrow"}
+            {snap.dailyReady ? `Claim day ${idx + 1}` : "Come back tomorrow"}
           </Button>
         </div>
         <div className="mt-3">
