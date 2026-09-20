@@ -110,6 +110,8 @@ export type GameState = {
   pouchesBought: number;
   skipDay: string;
   skipHits: number;
+  ritualReadyAt: number;
+  climbKills: number;
 };
 
 export type MonsterState = {
@@ -258,6 +260,8 @@ export type Snapshot = {
   contracts: ContractSnap[];
   ritualSouls: number;
   ritualUnlocked: boolean;
+  ritualReadyIn: number;
+  canRitual: boolean;
   startFloor: number;
   kills: number;
   rituals: number;

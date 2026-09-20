@@ -897,6 +897,7 @@ export class GameSim {
     this.state.gold += gold;
     this.state.lootGold += gold;
     this.state.kills += 1;
+    this.state.climbKills = (this.state.climbKills ?? 0) + 1;
     if (!this.state.codex) this.state.codex = {};
     this.state.codex[this.monster.kind] = (this.state.codex[this.monster.kind] ?? 0) + 1;
     this.state.bpPts = (this.state.bpPts ?? 0) + (isBoss ? 6 : 1);
@@ -940,11 +941,14 @@ export class GameSim {
   }
 
   ritual(): boolean {
+    if (!this.canRitual()) return false;
     const souls = this.ritualSouls();
     if (souls <= 0) return false;
     this.state.souls += souls;
     this.state.rituals += 1;
     this.state.gold = 0;
+    this.state.climbKills = 0;
+    this.state.ritualReadyAt = Date.now() + 24 * 60 * 60 * 1000;
     this.state.floor = this.startFloorAfterRitual();
     for (const h of HEROES) this.state.heroLevel[h.id] = h.id === "kael" ? 1 : 0;
     this.state.hires = 1;
@@ -962,9 +966,20 @@ export class GameSim {
   }
 
   ritualSouls(): number {
-    const f = this.state.maxFloor;
-    const raw = 2 + f * 0.35 + this.state.kills * 0.002;
-    return Math.max(1, Math.floor(raw * this.soulMult()));
+    const f = this.state.floor;
+    const raw = 2 + f * 0.35 + (this.state.climbKills ?? 0) * 0.002;
+    return Math.max(0, Math.floor(raw * this.soulMult()));
+  }
+
+  canRitual(): boolean {
+    if ((this.state.ritualReadyAt ?? 0) > Date.now()) return false;
+    if (this.state.floor < 12) return false;
+    if (this.state.floor <= this.startFloorAfterRitual()) return false;
+    return this.ritualSouls() > 0;
+  }
+
+  ritualReadyIn(): number {
+    return Math.max(0, (this.state.ritualReadyAt ?? 0) - Date.now());
   }
 
   setFarm(farm: boolean) {
@@ -1865,6 +1880,8 @@ export class GameSim {
       contracts,
       ritualSouls: this.ritualSouls(),
       ritualUnlocked: this.state.maxFloor >= 12,
+      ritualReadyIn: this.ritualReadyIn(),
+      canRitual: this.canRitual(),
       startFloor: this.startFloorAfterRitual(),
       kills: this.state.kills,
       rituals: this.state.rituals,

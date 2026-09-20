@@ -1546,6 +1546,7 @@ function RitualModal() {
       </p>
       <Button
         className="mt-4 h-12 w-full"
+        disabled={!snap.canRitual}
         onClick={() => {
           unlockAudio();
           if (sim.ritual()) {
@@ -1555,7 +1556,7 @@ function RitualModal() {
           }
         }}
       >
-        Harvest {formatNum(snap.ritualSouls)} souls
+        {snap.canRitual ? `Harvest ${formatNum(snap.ritualSouls)} souls` : "Not yet"}
       </Button>
     </Modal>
   );

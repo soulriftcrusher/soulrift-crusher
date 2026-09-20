@@ -484,10 +484,18 @@ export function HuntPanel() {
         <div className="rounded-lg border border-border bg-bg/40 p-4">
           <h3 className="font-display text-base font-semibold">Dark Ritual</h3>
           <p className="mt-2 text-sm text-muted">Reset the hunt for souls. Unlocks at floor 12. You keep relics, gems, and influence.</p>
-          <p className="mt-2 text-sm tabular-nums">{snap.ritualUnlocked ? `${formatNum(snap.ritualSouls)} souls` : "Reach floor 12"}</p>
+          <p className="mt-2 text-sm tabular-nums">
+            {!snap.ritualUnlocked
+              ? "Reach floor 12"
+              : snap.ritualReadyIn > 0
+                ? `Ready in ${formatTime(snap.ritualReadyIn / 1000)}`
+                : !snap.canRitual
+                  ? "Climb further this run"
+                  : `${formatNum(snap.ritualSouls)} souls`}
+          </p>
           <Button
             className="mt-3 h-12 w-full"
-            disabled={!snap.ritualUnlocked || snap.ritualSouls <= 0}
+            disabled={!snap.canRitual}
             onClick={() => useGame.getState().setRitualOpen(true)}
           >
             Begin ritual
