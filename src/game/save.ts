@@ -5,7 +5,7 @@ import { SOCKETS, WEAPONS } from "./meta";
 import type { GameState } from "./types";
 import { DEMO_SAVE, isDemoHunt } from "./demo-flag";
 
-export const SAVE_VERSION = 21;
+export const SAVE_VERSION = 22;
 const SAVE_KEY = "soulrift.save.v1";
 const HERO_KEY = "soulrift.heroes.v1";
 const IDB_NAME = "soulrift-vault";
@@ -123,6 +123,11 @@ export function defaultState(now = Date.now()): GameState {
     wheelPot: 50,
     lastPlunderAt: 0,
     avatarHero: "kael",
+    pouchDay: "",
+    pouchHits: 0,
+    pouchesBought: 0,
+    skipDay: "",
+    skipHits: 0,
   };
 }
 
@@ -175,6 +180,11 @@ function migrate(raw: GameState): GameState {
   if (!Number.isFinite(merged.wheelBoostAt)) merged.wheelBoostAt = 0;
   if (!Array.isArray(merged.looks)) merged.looks = ["ash"];
   if (typeof merged.avatarHero !== "string") merged.avatarHero = "";
+  if (!Number.isFinite(merged.pouchesBought)) merged.pouchesBought = 0;
+  if (!Number.isFinite(merged.pouchHits)) merged.pouchHits = 0;
+  if (!Number.isFinite(merged.skipHits)) merged.skipHits = 0;
+  if (typeof merged.pouchDay !== "string") merged.pouchDay = "";
+  if (typeof merged.skipDay !== "string") merged.skipDay = "";
   return merged;
 }
 

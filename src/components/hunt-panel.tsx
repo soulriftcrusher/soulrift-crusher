@@ -11,6 +11,7 @@ import { EVENT_SHOP } from "@/game/gear";
 import { prizeArt } from "@/game/prize-art";
 import { formatNum, formatTime } from "@/game/format";
 import { claimInbox, listInbox } from "@/game/live-net";
+import { MessagesPanel } from "@/components/messages-panel";
 import { sim } from "@/game/sim";
 import { sfx, unlockAudio } from "@/game/audio";
 import { useGame, type HuntPage } from "@/game/store";
@@ -47,7 +48,7 @@ export function HuntPanel() {
 
   if (page === "hub") {
     const items: { id: HuntPage; label: string; blurb: string; ping?: boolean }[] = [
-      { id: "inbox", label: "Inbox", blurb: "Mail and free gifts." },
+      { id: "inbox", label: "Inbox", blurb: "Mail, gifts, and whispers." },
       { id: "shop", label: "Shop", blurb: "Gems, Soul Well, relics, weapons." },
       { id: "wheel", label: "Fortune wheel", blurb: "Daily spin. Gold, souls, chests, gems.", ping: snap.wheelReady },
       { id: "raid", label: "Raids", blurb: "Shield up. Hit unshielded camps.", ping: !snap.shieldOn },
@@ -370,7 +371,7 @@ export function HuntPanel() {
         <Button
           variant="secondary"
           className="mt-3 h-12 w-full"
-          disabled={snap.isBoss || snap.gems < 15}
+          disabled={snap.isBoss || snap.skipLeft <= 0 || snap.gems < snap.skipCost}
           onClick={() => {
             unlockAudio();
             if (sim.skipFloor()) {
@@ -379,7 +380,11 @@ export function HuntPanel() {
             }
           }}
         >
-          Skip this floor · 15 gems
+          {snap.skipLeft <= 0
+            ? "Skip · none left today"
+            : snap.isBoss
+              ? "Can't skip a boss"
+              : `Skip this floor · ${snap.skipCost} gems · ${snap.skipLeft} left`}
         </Button>
       </Back>
     );
@@ -458,6 +463,9 @@ export function HuntPanel() {
     return (
       <Back>
         <InboxBox always />
+        <div className="mt-4">
+          <MessagesPanel />
+        </div>
       </Back>
     );
   }
@@ -535,8 +543,10 @@ function InboxBox({ always }: { always?: boolean }) {
       .catch(() => undefined);
   }, [user]);
   const open = mail.filter((m) => !m.claimed);
-  if (!always && !open.length) return <p className="text-sm text-muted">Inbox is empty.</p>;
-  if (!open.length) return <p className="text-sm text-muted">No mail waiting.</p>;
+  if (!open.length) {
+    if (always) return null;
+    return <p className="text-sm text-muted">Inbox is empty.</p>;
+  }
   return (
     <div className="rounded-lg border border-gold/40 bg-wood p-4">
       <p className="text-xs tracking-wide text-gold uppercase">Inbox · {open.length}</p>

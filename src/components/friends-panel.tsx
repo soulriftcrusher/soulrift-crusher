@@ -13,6 +13,7 @@ import {
 import { sendFriendGift } from "@/game/live-net";
 import { HunterName } from "@/components/hunter-card";
 import { sfx, unlockAudio } from "@/game/audio";
+import { useGame } from "@/game/store";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { Link } from "@tanstack/react-router";
 
@@ -154,6 +155,19 @@ export function FriendsPanel() {
               </div>
               <Button
                 size="sm"
+                className="h-11"
+                disabled={busy}
+                onClick={() => {
+                  unlockAudio();
+                  sfx.ui();
+                  useGame.getState().openMessages(f.userId, f.name);
+                }}
+              >
+                Msg
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
                 className="h-11"
                 disabled={busy}
                 onClick={() => {

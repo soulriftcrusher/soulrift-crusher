@@ -146,6 +146,9 @@ export function Guide({ onBack }: { onBack?: () => void } = {}) {
             <strong className="text-gold">World chat</strong> — talk. Online count is on the plaza.
           </li>
           <li>
+            <strong className="text-gold">Messages</strong> — tap a hunter’s name, then Message. Lives in Hunt Inbox.
+          </li>
+          <li>
             <strong className="text-gold">Trade</strong> — open a window, put loot in, both accept.
           </li>
         </ul>

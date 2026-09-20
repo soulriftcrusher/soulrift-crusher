@@ -37,7 +37,7 @@ const MARKET_POOL: MarketDeal[] = [
   { id: "scrap", name: "Scrap crate", blurb: "Cheap gold for a chest.", gold: 400, giveChests: 1 },
   { id: "ember-cup", name: "Ember cup", blurb: "10 gems → 12 ember.", gems: 10, giveEmber: 12 },
   { id: "soul-sip", name: "Soul sip", blurb: "A swallow of names.", gold: 800, giveSouls: 3 },
-  { id: "gem-crumb", name: "Gem crumb", blurb: "A fortune in gold for two gems.", gold: 80000, giveGems: 2 },
+  { id: "soul-crumb", name: "Soul crumb", blurb: "A fortune in gold for a handful of souls.", gold: 80000, giveSouls: 4 },
   { id: "war-bag", name: "War bag", blurb: "Two chests, no questions.", gems: 25, giveChests: 2 },
   { id: "bone-pot", name: "Bone pot", blurb: "Ember for the bench.", gold: 1200, giveEmber: 18 },
   { id: "rift-pinch", name: "Rift pinch", blurb: "Souls on the cheap.", gems: 18, giveSouls: 6 },

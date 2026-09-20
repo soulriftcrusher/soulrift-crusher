@@ -105,6 +105,11 @@ export type GameState = {
   shieldHymnDay: string;
   lastPlunderAt: number;
   avatarHero: string;
+  pouchDay: string;
+  pouchHits: number;
+  pouchesBought: number;
+  skipDay: string;
+  skipHits: number;
 };
 
 export type MonsterState = {
@@ -269,6 +274,9 @@ export type Snapshot = {
   summonCost: number;
   pouchCost: number;
   canPouch: boolean;
+  pouchLeft: number;
+  skipCost: number;
+  skipLeft: number;
   socket: SocketId | null;
   realm: RealmId;
   realmName: string;

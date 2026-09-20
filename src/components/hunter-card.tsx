@@ -15,6 +15,7 @@ import { HeroFace } from "@/components/hero-face";
 import { formatNum } from "@/game/format";
 import { heroPortrait } from "@/game/data";
 import { sfx, unlockAudio } from "@/game/audio";
+import { useGame } from "@/game/store";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 
 type Card = { userId: string; name: string; maxFloor?: number; power?: number } | null;
@@ -204,6 +205,21 @@ export function HunterCard() {
           {!mine ? (
             <Button
               className="h-12 w-full"
+              disabled={busy}
+              onClick={() => {
+                unlockAudio();
+                sfx.ui();
+                useGame.getState().openMessages(card.userId, profile?.name ?? card.name);
+                close();
+              }}
+            >
+              Message
+            </Button>
+          ) : null}
+          {!mine ? (
+            <Button
+              className="h-12 w-full"
+              variant="secondary"
               disabled={busy}
               onClick={() => run(() => sendFriendRequest({ data: { toId: card.userId } }), "Friend request sent.")}
             >

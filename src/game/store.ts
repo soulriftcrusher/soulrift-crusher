@@ -15,6 +15,7 @@ export type ClanPage =
   | "manage"
   | "profile"
   | "chat"
+  | "clanchat"
   | "rating"
   | "servers"
   | "friends";
@@ -65,6 +66,7 @@ type GameUI = {
   isStaff: boolean;
   demoHunt: boolean;
   kicked: boolean;
+  dmPeer: { userId: string; name: string } | null;
   snap: Snapshot;
   setScreen: (s: GameUI["screen"]) => void;
   setTab: (t: Tab) => void;
@@ -92,6 +94,8 @@ type GameUI = {
   setIsStaff: (v: boolean) => void;
   setDemoHunt: (v: boolean) => void;
   setKicked: (v: boolean) => void;
+  setDmPeer: (p: { userId: string; name: string } | null) => void;
+  openMessages: (userId: string, name: string) => void;
   refresh: () => void;
 };
 
@@ -159,6 +163,7 @@ export const useGame = create<GameUI>((set, get) => {
   isStaff: readStaffFlag(),
   demoHunt: isDemoHunt(),
   kicked: false,
+  dmPeer: null,
   snap: sim.snapshot(1),
   setScreen: (screen) => {
     markHunting(screen === "play");
@@ -203,6 +208,8 @@ export const useGame = create<GameUI>((set, get) => {
   },
   setDemoHunt: (demoHunt) => set({ demoHunt }),
   setKicked: (kicked) => set({ kicked }),
+  setDmPeer: (dmPeer) => set({ dmPeer }),
+  openMessages: (userId, name) => set({ tab: "hunt", huntPage: "inbox", dmPeer: { userId, name } }),
   refresh: () => set({ snap: sim.snapshot(get().bulk) }),
   };
 });

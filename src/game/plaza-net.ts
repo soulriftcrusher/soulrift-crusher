@@ -278,6 +278,110 @@ export const muteHunter = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
+export type ClanChatSnap = {
+  clanId: number;
+  tag: string;
+  name: string;
+  online: number;
+  chat: ChatMsg[];
+};
+
+async function gatherClanChat(
+  sql: Awaited<ReturnType<(typeof import("@/lib/db"))["getSql"]>>,
+  userId: string,
+  since = 0,
+): Promise<ClanChatSnap | null> {
+  const me = await sql<{ clan_id: number | null }>`select clan_id from crusaders where user_id = ${userId}`;
+  const clanId = me[0]?.clan_id;
+  if (!clanId) return null;
+  const clan = await sql<{ tag: string; name: string }>`select tag, name from clans where id = ${clanId}`;
+  if (!clan[0]) return null;
+  const muted = await sql<{ muted_id: string }>`
+    select muted_id from mutes where user_id = ${userId}
+  `.catch(() => [] as { muted_id: string }[]);
+  const hide = new Set(muted.map((m) => m.muted_id));
+  const rows =
+    since > 0
+      ? await sql<{ id: number; user_id: string; name: string; body: string; created_at: string }>`
+          select id, user_id, name, body, created_at from clan_chat
+          where clan_id = ${clanId} and id > ${since}
+          order by id asc
+          limit 50
+        `
+      : await sql<{ id: number; user_id: string; name: string; body: string; created_at: string }>`
+          select id, user_id, name, body, created_at from clan_chat
+          where clan_id = ${clanId}
+          order by id desc
+          limit 50
+        `;
+  const online = await sql<{ n: number }>`
+    select count(*)::int as n from crusaders
+    where clan_id = ${clanId} and last_seen > now() - interval '2 minutes'
+  `;
+  const mapped: ChatMsg[] = rows
+    .filter((r) => !hide.has(r.user_id))
+    .map((r) => ({
+      id: `cc-${r.id}`,
+      userId: r.user_id,
+      name: r.name,
+      body: r.body,
+      at: Date.parse(r.created_at) || Date.now(),
+      npc: false,
+    }));
+  const chat = since > 0 ? mapped : mapped.reverse();
+  return {
+    clanId,
+    tag: clan[0].tag,
+    name: clan[0].name,
+    online: Number(online[0]?.n ?? 1),
+    chat,
+  };
+}
+
+export const loadClanChat = createServerFn({ method: "POST" })
+  .validator((d: { since?: number } | undefined) => ({
+    since: Math.max(0, Math.floor(Number(d?.since ?? 0)) || 0),
+  }))
+  .middleware([authMiddleware])
+  .handler(async ({ context, data }): Promise<ClanChatSnap | null> => {
+    const { getSql } = await import("@/lib/db");
+    const sql = await getSql();
+    return gatherClanChat(sql, context.userId, data.since);
+  });
+
+export const sendClanChat = createServerFn({ method: "POST" })
+  .validator((d: { body: string; name: string }) => d)
+  .middleware([authMiddleware])
+  .handler(async ({ context, data }): Promise<ClanChatSnap> => {
+    const body = cleanChat(data.body);
+    if (body.length < 1) throw new Error("Say something.");
+    const name =
+      String(data.name ?? "Crusader")
+        .replace(/[^\w \-']/g, "")
+        .trim()
+        .slice(0, 24) || "Crusader";
+    const { getSql } = await import("@/lib/db");
+    const sql = await getSql();
+    const { assertNotBanned } = await import("./net");
+    await assertNotBanned(sql, context.userId);
+    const me = await sql<{ clan_id: number | null }>`select clan_id from crusaders where user_id = ${context.userId}`;
+    if (!me[0]?.clan_id) throw new Error("Join a clan first.");
+    const last = await sql<{ created_at: string }>`
+      select created_at from clan_chat where user_id = ${context.userId} order by id desc limit 1
+    `;
+    if (last[0]) {
+      const t = Date.parse(last[0].created_at);
+      if (Number.isFinite(t) && Date.now() - t < 2000) throw new Error("Slow the hymn.");
+    }
+    await sql`
+      insert into clan_chat (clan_id, user_id, name, body)
+      values (${me[0].clan_id}, ${context.userId}, ${name}, ${body})
+    `;
+    const snap = await gatherClanChat(sql, context.userId);
+    if (!snap) throw new Error("Join a clan first.");
+    return snap;
+  });
+
 export const unmuteHunter = createServerFn({ method: "POST" })
   .validator((d: { userId: string }) => d)
   .middleware([authMiddleware])

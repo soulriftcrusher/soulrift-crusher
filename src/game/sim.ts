@@ -572,32 +572,42 @@ export class GameSim {
   }
 
   buyGemPouch(): boolean {
+    this.rollPouchDay();
+    if ((this.state.pouchHits ?? 0) >= 1) return false;
     const cost = this.pouchCost();
     if (this.state.gold < cost) return false;
     this.state.gold -= cost;
     this.state.gems += 1;
+    this.state.pouchHits = (this.state.pouchHits ?? 0) + 1;
+    this.state.pouchesBought = (this.state.pouchesBought ?? 0) + 1;
     this.save();
     return true;
   }
 
   buyGemPouchMax(): boolean {
-    const cost = this.pouchCost();
-    if (cost <= 0 || this.state.gold < cost) return false;
-    const n = Math.min(3, Math.floor(this.state.gold / cost));
-    if (n <= 0) return false;
-    this.state.gold -= n * cost;
-    this.state.gems += n;
-    this.save();
-    return true;
+    return this.buyGemPouch();
   }
 
   pouchCost(): number {
     const floor = Math.max(1, this.state.maxFloor);
-    const owned = Math.min(80, Math.max(0, Math.floor(this.state.gems)));
+    const bought = Math.max(0, Math.floor(this.state.pouchesBought ?? 0));
     return Math.max(
-      18000,
-      Math.floor(14000 * Math.pow(1.82, (floor - 1) / 2) * (1 + owned * 8)),
+      80000,
+      Math.floor(50000 * Math.pow(2.6, bought) * Math.pow(1.55, (floor - 1) / 3)),
     );
+  }
+
+  pouchLeft(): number {
+    this.rollPouchDay();
+    return Math.max(0, 1 - (this.state.pouchHits ?? 0));
+  }
+
+  private rollPouchDay() {
+    const d = dayKey();
+    if (this.state.pouchDay !== d) {
+      this.state.pouchDay = d;
+      this.state.pouchHits = 0;
+    }
   }
 
   buyRelic(id: RelicId): boolean {
@@ -848,8 +858,13 @@ export class GameSim {
     this.emit({ type: "skill", id });
     if (id === "strike") this.applyDamage(this.clickDamage() * 8, "skill", undefined, true);
     if (id === "harvest") {
-      const pct = this.monster.isBoss ? 0.12 : 0.35;
-      this.applyDamage(this.monster.max * pct, "skill");
+      const pct = this.monster.isBoss ? 0.08 : 0.22;
+      const cut = this.monster.hp * pct;
+      this.monster.hp = this.monster.isBoss
+        ? Math.max(1, this.monster.hp - cut)
+        : Math.max(0, this.monster.hp - cut);
+      this.emit({ type: "hit", amount: cut, crit: false, source: "skill" });
+      if (this.monster.hp <= 0) this.onKill();
     }
     if (persist) this.save();
     return true;
@@ -1338,12 +1353,33 @@ export class GameSim {
 
   skipFloor(): boolean {
     if (this.monster.isBoss) return false;
-    if (!this.spendGems(15)) return false;
+    this.rollSkipDay();
+    if ((this.state.skipHits ?? 0) >= 3) return false;
+    const cost = this.skipCost();
+    if (!this.spendGems(cost)) return false;
+    this.state.skipHits = (this.state.skipHits ?? 0) + 1;
     this.state.floor += 1;
-    this.state.maxFloor = Math.max(this.state.maxFloor, this.state.floor);
     this.monster = this.makeMonster(this.state.floor, this.isBossFloor(this.state.floor) && !this.state.farm);
     this.save();
     return true;
+  }
+
+  skipCost(): number {
+    this.rollSkipDay();
+    return Math.floor(25 * Math.pow(3, this.state.skipHits ?? 0));
+  }
+
+  skipLeft(): number {
+    this.rollSkipDay();
+    return Math.max(0, 3 - (this.state.skipHits ?? 0));
+  }
+
+  private rollSkipDay() {
+    const d = dayKey();
+    if (this.state.skipDay !== d) {
+      this.state.skipDay = d;
+      this.state.skipHits = 0;
+    }
   }
 
   markTutorial() {
@@ -1844,7 +1880,10 @@ export class GameSim {
       freeWell: this.state.lastFreeWell !== dayKey(),
       summonCost: 40,
       pouchCost: this.pouchCost(),
-      canPouch: this.state.gold >= this.pouchCost(),
+      canPouch: this.pouchLeft() > 0 && this.state.gold >= this.pouchCost(),
+      pouchLeft: this.pouchLeft(),
+      skipCost: this.skipCost(),
+      skipLeft: this.skipLeft(),
       socket: this.state.socket,
       realm: realm.id,
       realmName: realm.name,

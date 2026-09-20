@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { formatNum } from "@/game/format";
 import { HunterName } from "@/components/hunter-card";
@@ -13,10 +13,14 @@ import {
   sendWorldChat,
   setTradeOffer,
   stallTrade,
+  loadClanChat,
+  sendClanChat,
   type PlazaSnap,
+  type ClanChatSnap,
 } from "@/game/plaza-net";
 import { sim } from "@/game/sim";
 import { sfx, unlockAudio } from "@/game/audio";
+import { readClanChatCache, writeClanChatCache } from "@/game/clan-chat-cache";
 import { useGame } from "@/game/store";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { cn } from "@/lib/utils";
@@ -298,6 +302,147 @@ export function PlazaPanel() {
           </ul>
         </>
       )}
+      {note ? <p className="mt-3 text-sm text-gold">{note}</p> : null}
+    </div>
+  );
+}
+
+function lastChatSeq(chat: { id: string }[]): number {
+  let max = 0;
+  for (const m of chat) {
+    const n = Number(String(m.id).replace(/^cc-/, ""));
+    if (Number.isFinite(n) && n > max) max = n;
+  }
+  return max;
+}
+
+function mergeClanChat(prev: ClanChatSnap, next: ClanChatSnap): ClanChatSnap {
+  if (prev.clanId !== next.clanId) return next;
+  if (next.chat.length === 0) return { ...prev, online: next.online, tag: next.tag, name: next.name };
+  const seen = new Set(prev.chat.map((m) => m.id));
+  const extra = next.chat.filter((m) => !seen.has(m.id));
+  return {
+    ...next,
+    chat: extra.length ? [...prev.chat, ...extra].slice(-80) : prev.chat,
+  };
+}
+
+export function ClanChatPanel() {
+  const { user } = useCurrentUserState();
+  const [snap, setSnap] = useState<ClanChatSnap | null>(() =>
+    user ? readClanChatCache(user.id) : null,
+  );
+  const [body, setBody] = useState("");
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [ready, setReady] = useState(() => Boolean(user && readClanChatCache(user.id)));
+  const snapRef = useRef(snap);
+  snapRef.current = snap;
+
+  function keep(next: ClanChatSnap | null) {
+    setSnap(next);
+    setReady(true);
+    if (user) writeClanChatCache(user.id, next);
+  }
+
+  async function pull(full = false) {
+    const cur = snapRef.current;
+    const since = !full && cur ? lastChatSeq(cur.chat) : 0;
+    const next = await loadClanChat({ data: { since } });
+    if (!next) {
+      keep(null);
+      return;
+    }
+    keep(cur && since > 0 ? mergeClanChat(cur, next) : next);
+  }
+
+  useEffect(() => {
+    if (!user) return;
+    const cached = readClanChatCache(user.id);
+    if (cached) {
+      setSnap(cached);
+      setReady(true);
+    }
+    pull(true).catch((e) => {
+      setNote(errMessage(e));
+      setReady(true);
+    });
+    const id = window.setInterval(() => {
+      if (document.visibilityState === "hidden") return;
+      pull(false).catch(() => undefined);
+    }, 1200);
+    const onVis = () => {
+      if (document.visibilityState === "visible") pull(false).catch(() => undefined);
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      window.clearInterval(id);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, [user]);
+
+  if (!user) {
+    return <p className="text-sm text-muted">Sign in to talk with your warband.</p>;
+  }
+  if (!ready) return <div className="mt-3 h-24 animate-pulse rounded-lg border border-border bg-bg/40" />;
+  if (!snap) {
+    return (
+      <div className="rounded-lg border border-border bg-bg/40 p-4">
+        <h3 className="font-display text-base text-gold">Clan chat</h3>
+        <p className="mt-2 text-sm text-muted">Join a clan first. Then this hall is yours.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="pt-1">
+      <p className="font-display text-center text-sm text-gold">
+        [{snap.tag}] {snap.name}
+      </p>
+      <p className="text-center text-xs tabular-nums text-muted">
+        {snap.online} in hall
+      </p>
+      <ul className="mt-3 flex max-h-[46vh] min-h-[12rem] flex-col gap-2 overflow-y-auto rounded-lg border border-border bg-bg/40 p-2">
+        {snap.chat.length === 0 ? <li className="text-sm text-muted">No warband talk yet.</li> : null}
+        {snap.chat.map((m) => (
+          <li key={m.id} className="text-sm">
+            <HunterName
+              userId={m.userId}
+              name={m.name}
+              className="font-display text-gold underline-offset-2 hover:underline"
+            />
+            <span className="text-fg"> · {m.body}</span>
+          </li>
+        ))}
+      </ul>
+      <form
+        className="mt-2 flex gap-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (!body.trim() || busy) return;
+          unlockAudio();
+          setBusy(true);
+          sendClanChat({ data: { body, name: readHuntName(user.displayName ?? "Crusader") } })
+            .then((next) => {
+              setBody("");
+              sfx.ui();
+              keep(next);
+            })
+            .catch((err) => setNote(errMessage(err)))
+            .finally(() => setBusy(false));
+        }}
+      >
+        <input
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          maxLength={120}
+          placeholder="Talk to the banner…"
+          className="h-12 min-w-0 flex-1 rounded-md border border-border bg-bg px-3 text-sm"
+        />
+        <Button className="h-12" disabled={busy || !body.trim()}>
+          Send
+        </Button>
+      </form>
       {note ? <p className="mt-3 text-sm text-gold">{note}</p> : null}
     </div>
   );

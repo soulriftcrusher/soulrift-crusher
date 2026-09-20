@@ -223,22 +223,9 @@ export function ShopPanel() {
           }}
         >
           <img src="/shop/pouch.jpg" alt="" className="size-8 rounded object-cover" crossOrigin="anonymous" />
-          Gold pouch · {formatNum(snap.pouchCost)} gold → 1 gem
-        </Button>
-        <Button
-          className="mt-2 flex h-12 w-full items-center justify-center gap-2"
-          variant="secondary"
-          disabled={!snap.canPouch}
-          onClick={() => {
-            unlockAudio();
-            if (sim.buyGemPouchMax()) {
-              sfx.gold();
-              refresh();
-            }
-          }}
-        >
-          <img src="/shop/pouch.jpg" alt="" className="size-8 rounded object-cover" crossOrigin="anonymous" />
-          Buy pouches until gold runs out
+          {snap.pouchLeft > 0
+            ? `Gold pouch · ${formatNum(snap.pouchCost)} gold → 1 gem · 1 today`
+            : "Gold pouch · already bought today"}
         </Button>
         <ul className="mt-3 flex flex-col gap-2">
           {GEM_PACKS.filter((p) => p.id !== "firstblood").map((p) => (

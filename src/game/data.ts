@@ -467,7 +467,7 @@ export const SKILLS: SkillDef[] = [
   { id: "strike", name: "Soul Strike", blurb: "Instant smash. Always crits. You start with this.", cooldown: 8, duration: 0 },
   { id: "goldrush", name: "Gold Rush", blurb: "Gold drops x2 for 12s. Party skill — no hire needed.", cooldown: 28, duration: 12 },
   { id: "rage", name: "Bloodrage", blurb: "Everyone's damage x2 for 10s. Party skill — no hire needed.", cooldown: 30, duration: 10 },
-  { id: "harvest", name: "Dark Harvest", blurb: "Carve 35% HP off trash, 12% off a boss. Party skill — no hire needed.", cooldown: 16, duration: 0 },
+  { id: "harvest", name: "Dark Harvest", blurb: "Carve 22% of a trash pack's remaining HP. 8% of a boss's remaining HP — cannot finish a boss.", cooldown: 32, duration: 0 },
 ];
 
 export const SCIENCES: ScienceDef[] = [

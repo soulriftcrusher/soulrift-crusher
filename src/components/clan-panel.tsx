@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { ServerPanel } from "@/components/server-panel";
-import { PlazaPanel } from "@/components/plaza-panel";
+import { PlazaPanel, ClanChatPanel } from "@/components/plaza-panel";
 import { ArenaDuel } from "@/components/arena-duel";
 import { HunterName, openHunter } from "@/components/hunter-card";
 import { FriendsPanel } from "@/components/friends-panel";
@@ -165,6 +165,7 @@ export function ClanPanel() {
       { id: "servers", label: "Servers", blurb: "Pick a shard. 1,000 hunters each." },
       { id: "friends", label: "Friends", blurb: "Add hunters. Send a daily gift." },
       { id: "chat", label: "World chat", blurb: "Talk to everyone on this server." },
+      { id: "clanchat", label: "Clan chat", blurb: "Talk only to your warband." },
       { id: "rating", label: "Rating", blurb: "Who is strongest right now." },
       { id: "clan", label: "My Clan", blurb: "Join, raid, and share a banner." },
       { id: "science", label: "Science", blurb: "Spend influence on the clan." },
@@ -218,6 +219,17 @@ export function ClanPanel() {
           ← Clans
         </button>
         <PlazaPanel />
+      </div>
+    );
+  }
+
+  if (page === "clanchat") {
+    return (
+      <div className="pt-3">
+        <button type="button" className="mb-3 h-12 text-sm text-gold" onClick={() => setPage("hub")}>
+          ← Clans
+        </button>
+        <ClanChatPanel />
       </div>
     );
   }
