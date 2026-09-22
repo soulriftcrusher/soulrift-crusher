@@ -906,9 +906,16 @@ export const importHuntPack = createServerFn({ method: "POST" })
     const { getSql } = await import("@/lib/db");
     const sql = await getSql();
     await assertNotBanned(sql, context.userId);
+    const { applyIncoming, mergeProgress } = await import("./save");
+    const incoming = applyIncoming(JSON.parse(raw));
+    const have = await sql<{ payload: string }>`select payload from game_saves where user_id = ${context.userId}`;
+    const merged = have[0]?.payload
+      ? mergeProgress(applyIncoming(JSON.parse(have[0].payload)), incoming)
+      : incoming;
+    const payload = JSON.stringify(merged);
     await sql`
       insert into game_saves (user_id, payload, updated_at)
-      values (${context.userId}, ${raw}, now())
+      values (${context.userId}, ${payload}, now())
       on conflict (user_id) do update set payload = excluded.payload, updated_at = now()
     `;
     const roster = Array.isArray(data.roster) ? data.roster : [];
@@ -1136,6 +1143,63 @@ export const staffGift = createServerFn({ method: "POST" })
       `;
     }
     return { ok: true as const, gold, souls, gems, chests };
+  });
+
+export const staffCopySave = createServerFn({ method: "POST" })
+  .validator((d: { fromId: string; ontoId: string }) => d)
+  .middleware([authMiddleware])
+  .handler(async ({ context, data }) => {
+    const { getSql } = await import("@/lib/db");
+    const sql = await getSql();
+    const mine = await asStaff(sql, context.userId);
+    if (!mine[0]) throw new Error("Staff only.");
+    const fromId = String(data.fromId ?? "").slice(0, 80);
+    const ontoId = String(data.ontoId ?? "").slice(0, 80);
+    if (!fromId || !ontoId || fromId === ontoId) throw new Error("Pick two different hunters.");
+    const src = await sql<{ payload: string }>`select payload from game_saves where user_id = ${fromId}`;
+    if (!src[0]?.payload) throw new Error("That hunter has no cloud hunt to copy.");
+    const { applyIncoming, mergeProgress } = await import("./save");
+    const incoming = applyIncoming(JSON.parse(src[0].payload));
+    const have = await sql<{ payload: string }>`select payload from game_saves where user_id = ${ontoId}`;
+    const merged = have[0]?.payload
+      ? mergeProgress(applyIncoming(JSON.parse(have[0].payload)), incoming)
+      : incoming;
+    const payload = JSON.stringify(merged);
+    await sql`
+      insert into game_saves (user_id, payload, updated_at)
+      values (${ontoId}, ${payload}, now())
+      on conflict (user_id) do update set payload = excluded.payload, updated_at = now()
+    `;
+    const roster = await sql<{
+      hero_id: string;
+      level: number;
+      gild: number;
+      prestige: number;
+      craft: number;
+      down_until: number;
+    }>`
+      select hero_id, level, gild, prestige, craft, coalesce(down_until, 0) as down_until
+      from hero_progress where user_id = ${fromId}
+    `;
+    for (const r of roster) {
+      await sql`
+        insert into hero_progress (user_id, hero_id, level, gild, prestige, craft, down_until, updated_at)
+        values (${ontoId}, ${r.hero_id}, ${r.level}, ${r.gild}, ${r.prestige}, ${r.craft}, ${r.down_until}, now())
+        on conflict (user_id, hero_id) do update set
+          level = greatest(hero_progress.level, excluded.level),
+          gild = greatest(hero_progress.gild, excluded.gild),
+          prestige = greatest(hero_progress.prestige, excluded.prestige),
+          craft = greatest(hero_progress.craft, excluded.craft),
+          down_until = excluded.down_until,
+          updated_at = now()
+      `;
+    }
+    const floor = Number(merged.maxFloor ?? 0);
+    await sql`
+      update crusaders set max_floor = greatest(max_floor, ${floor}), last_seen = now()
+      where user_id = ${ontoId}
+    `.catch(() => undefined);
+    return { ok: true as const, maxFloor: floor, heroes: roster.length };
   });
 
 export type HunterProfile = {

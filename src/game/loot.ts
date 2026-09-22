@@ -96,7 +96,7 @@ export const LOOT: LootDef[] = [
 export const LOOT_BY_ID = Object.fromEntries(LOOT.map((l) => [l.id, l])) as Record<LootId, LootDef>;
 
 export function lootIcon(id: LootId): string {
-  return `/sprites/loot/${id}.jpg`;
+  return `/sprites/loot/${id}.jpg?v=12`;
 }
 
 export const MONSTER_DROP: Record<MonsterKind, LootId> = {

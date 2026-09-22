@@ -171,11 +171,12 @@ export class GameSim {
     if (kind === "serpent") kind = "rimeknight";
     const hp = this.monsterHp(floor, boss);
     const timerMax = boss ? 55 + Math.min(40, Math.floor(floor / 20)) : 0;
+    const name = monsterName(kind, floor);
     return {
       hp,
       max: hp,
       kind,
-      name: monsterName(kind, floor),
+      name,
       isBoss: boss,
       timer: timerMax,
       timerMax,
@@ -1864,7 +1865,7 @@ export class GameSim {
       clickDmg: this.clickDamage(),
       monsterHp: this.monster.hp,
       monsterMax: this.monster.max,
-      monsterName: this.monster.name,
+      monsterName: monsterName(this.monster.kind, this.state.floor),
       monsterKind: this.monster.kind,
       isBoss: this.monster.isBoss,
       bossTime: this.monster.timer,

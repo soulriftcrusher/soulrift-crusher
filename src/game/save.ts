@@ -551,35 +551,40 @@ export function mergeProgress(local: GameState, incoming: GameState): GameState 
   const localNewer = (local.lastSaveAt ?? 0) >= (incoming.lastSaveAt ?? 0);
   const newerSave = localNewer ? local : incoming;
   const older = localNewer ? incoming : local;
-  const heroLevel = { ...older.heroLevel };
+  const kitL = local.founderKit ?? 0;
+  const kitI = incoming.founderKit ?? 0;
+  const kitGrant = kitL !== kitI;
+  const deeper = local.maxFloor > incoming.maxFloor ? local : incoming.maxFloor > local.maxFloor ? incoming : newerSave;
+  const floorGap = Math.abs((local.maxFloor ?? 0) - (incoming.maxFloor ?? 0));
+  const spendSrc = floorGap >= 10 ? deeper : newerSave;
+  const lvOf = (s: GameState, id: HeroId) => Number((s.heroLevel ?? {})[id] ?? 0);
+  const prOf = (s: GameState, id: HeroId) => Number((s.heroPrestige ?? {})[id] ?? 0);
+  const heroLevel = { ...(older.heroLevel ?? {}) };
   for (const h of HEROES) {
-    const pN = Number((newerSave.heroPrestige ?? {})[h.id] ?? 0);
-    const pO = Number((older.heroPrestige ?? {})[h.id] ?? 0);
-    const lN = Number(newerSave.heroLevel[h.id] ?? 0);
-    const lO = Number(older.heroLevel[h.id] ?? 0);
+    const pN = prOf(newerSave, h.id);
+    const pO = prOf(older, h.id);
+    const lN = lvOf(newerSave, h.id);
+    const lO = lvOf(older, h.id);
     if (pN > pO) heroLevel[h.id] = lN;
     else if (pO > pN) heroLevel[h.id] = lO;
     else heroLevel[h.id] = Math.max(lN, lO);
   }
-  const kitL = local.founderKit ?? 0;
-  const kitI = incoming.founderKit ?? 0;
-  const kitGrant = kitL !== kitI;
   return migrate({
     ...older,
     ...newerSave,
-    gold: kitGrant ? Math.max(local.gold, incoming.gold) : newerSave.gold,
-    souls: kitGrant ? Math.max(local.souls, incoming.souls) : newerSave.souls,
-    gems: kitGrant ? Math.max(local.gems, incoming.gems) : newerSave.gems,
-    influence: newerSave.influence,
-    chests: newerSave.chests,
-    ember: newerSave.ember ?? 0,
-    bone: newerSave.bone ?? 0,
-    riftDust: newerSave.riftDust ?? 0,
-    eventPts: newerSave.eventPts ?? 0,
-    siegePts: newerSave.siegePts ?? 0,
+    gold: kitGrant ? Math.max(local.gold, incoming.gold) : spendSrc.gold,
+    souls: kitGrant ? Math.max(local.souls, incoming.souls) : spendSrc.souls,
+    gems: kitGrant ? Math.max(local.gems, incoming.gems) : spendSrc.gems,
+    influence: Math.max(local.influence ?? 0, incoming.influence ?? 0),
+    chests: Math.max(local.chests ?? 0, incoming.chests ?? 0),
+    ember: Math.max(local.ember ?? 0, incoming.ember ?? 0),
+    bone: Math.max(local.bone ?? 0, incoming.bone ?? 0),
+    riftDust: Math.max(local.riftDust ?? 0, incoming.riftDust ?? 0),
+    eventPts: Math.max(local.eventPts ?? 0, incoming.eventPts ?? 0),
+    siegePts: Math.max(local.siegePts ?? 0, incoming.siegePts ?? 0),
     arenaCharges: newerSave.arenaCharges ?? older.arenaCharges,
-    floor: newerSave.floor,
-    farm: newerSave.farm,
+    floor: deeper.floor,
+    farm: deeper.farm,
     maxFloor: Math.max(local.maxFloor, incoming.maxFloor),
     kills: Math.max(local.kills, incoming.kills),
     hires: Math.max(local.hires, incoming.hires),

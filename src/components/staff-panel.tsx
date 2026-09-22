@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { claimStaff, listReports, staffBan, staffGift, staffRoster, staffSetPassword, staffStatus, staffUnban } from "@/game/net";
+import { claimStaff, listReports, staffBan, staffCopySave, staffGift, staffRoster, staffSetPassword, staffStatus, staffUnban } from "@/game/net";
 import { formatNum } from "@/game/format";
 import { sfx, unlockAudio } from "@/game/audio";
 import { sim } from "@/game/sim";
@@ -50,6 +50,8 @@ export function StaffPanel() {
   const [resetEmail, setResetEmail] = useState("");
   const [resetPass, setResetPass] = useState("");
   const [q, setQ] = useState("");
+  const [fromId, setFromId] = useState("");
+  const [ontoId, setOntoId] = useState("");
   const [server, setServer] = useState("all");
   const [roster, setRoster] = useState<Row[]>([]);
   const [reports, setReports] = useState<{ id: number; fromName: string; aboutName: string; aboutId: string; reason: string }[]>([]);
@@ -76,16 +78,18 @@ export function StaffPanel() {
 
   const shown = useMemo(() => {
     const n = q.trim().toLowerCase();
-    return roster.filter((r) => {
-      if (server !== "all" && (r.shardId || "") !== server) return false;
-      if (!n) return true;
-      return (
-        r.name.toLowerCase().includes(n) ||
-        r.userId.toLowerCase().includes(n) ||
-        (r.shardName ?? "").toLowerCase().includes(n) ||
-        (r.shardTag ?? "").toLowerCase().includes(n)
-      );
-    });
+    return roster
+      .filter((r) => {
+        if (server !== "all" && (r.shardId || "") !== server) return false;
+        if (!n) return true;
+        return (
+          r.name.toLowerCase().includes(n) ||
+          r.userId.toLowerCase().includes(n) ||
+          (r.shardName ?? "").toLowerCase().includes(n) ||
+          (r.shardTag ?? "").toLowerCase().includes(n)
+        );
+      })
+      .sort((a, b) => b.maxFloor - a.maxFloor || b.power - a.power);
   }, [roster, q, server]);
 
   const serverCounts = useMemo(() => {
@@ -214,6 +218,37 @@ export function StaffPanel() {
             placeholder="Search hunters"
             className="mt-3 h-12 w-full rounded-md border border-border bg-bg px-3 text-sm"
           />
+          <div className="mt-3 rounded-md border border-gold/40 bg-bg/50 p-3">
+            <p className="text-xs tracking-wide text-gold uppercase">Restore a lost hunt</p>
+            <p className="mt-1 text-[11px] text-muted">
+              Google and email can make two hunters. Copy the high-floor hunt onto the one stuck at 20.
+            </p>
+            <input
+              value={fromId}
+              onChange={(e) => setFromId(e.target.value)}
+              placeholder="From (the 450 floor hunter id)"
+              className="mt-2 h-10 w-full rounded-md border border-border bg-bg px-3 text-xs"
+            />
+            <input
+              value={ontoId}
+              onChange={(e) => setOntoId(e.target.value)}
+              placeholder="Onto (the hunter stuck low)"
+              className="mt-2 h-10 w-full rounded-md border border-border bg-bg px-3 text-xs"
+            />
+            <Button
+              size="sm"
+              className="mt-2 h-10 w-full"
+              disabled={busy || !fromId || !ontoId}
+              onClick={() =>
+                run(
+                  () => staffCopySave({ data: { fromId: fromId.trim(), ontoId: ontoId.trim() } }),
+                  "Hunt copied. Tell them to close the app and sign in again.",
+                )
+              }
+            >
+              Copy hunt
+            </Button>
+          </div>
           <div className="mt-2 flex flex-wrap gap-1">
             <button
               type="button"
@@ -305,9 +340,18 @@ export function StaffPanel() {
                       variant="secondary"
                       className="h-10"
                       disabled={busy}
-                      onClick={() => run(() => staffGift({ data: { userId: r.userId, souls: 50, chests: 5 } }), `souls+chests → ${r.name}`)}
+                      onClick={() => setFromId(r.userId)}
                     >
-                      +50 souls / 5 chests
+                      From
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="h-10"
+                      disabled={busy}
+                      onClick={() => setOntoId(r.userId)}
+                    >
+                      Onto
                     </Button>
                     {r.banned ? (
                       <Button

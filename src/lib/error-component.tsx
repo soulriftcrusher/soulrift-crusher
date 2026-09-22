@@ -16,6 +16,7 @@ export function AppErrorComponent({ error }: ErrorComponentProps) {
           ? "The phone tried to translate the page and knocked the hunt over. Turn off Translate on this site. Your save is still here."
           : "Something in the page broke. Your gold, heroes, and souls are still saved on this phone."}
       </p>
+      {msg && !translateCrash ? <p className="max-w-md text-[11px] break-words text-muted">{msg}</p> : null}
       <button
         type="button"
         className="mt-2 grid h-12 min-w-[12rem] place-items-center rounded-md border-2 border-gold bg-accent font-display text-base text-parchment-ink"

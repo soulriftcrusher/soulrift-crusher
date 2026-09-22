@@ -539,7 +539,8 @@ export function monsterKindFor(floor: number, boss: boolean, avoid?: MonsterKind
 
 export function monsterName(kind: MonsterKind, floor: number): string {
   const list = MONSTER_NAMES[kind];
-  return list[floor % list.length]!;
+  if (!list?.length) return "Rift Beast";
+  return list[Math.abs(floor) % list.length]!;
 }
 
 export function biomeFor(floor: number): "crypt" | "frost" | "ember" | "void" | "soulwell" {
@@ -557,19 +558,19 @@ export function heroPortrait(id: HeroId): string {
 export function arenaFoeArt(name: string): string {
   switch (name) {
     case "Ashen Pact":
-      return "/sprites/monsters/wraith.png?v=7";
+      return "/sprites/monsters/wraith.png?v=8";
     case "Rime Banner":
-      return "/sprites/monsters/rimeknight.png?v=7";
+      return "/sprites/monsters/rimeknight.png?v=8";
     case "Cinder Host":
-      return "/sprites/monsters/harpy.png?v=7";
+      return "/sprites/monsters/harpy.png?v=8";
     case "Void Choir":
-      return "/sprites/monsters/lich.png?v=7";
+      return "/sprites/monsters/lich.png?v=8";
     case "Gilded Teeth":
-      return "/sprites/monsters/hound.png?v=7";
+      return "/sprites/monsters/hound.png?v=8";
     case "Nightwell":
       return "/portraits/selene.jpg?v=4";
     case "Iron Hymn":
-      return "/sprites/monsters/golem.png?v=7";
+      return "/sprites/monsters/golem.png?v=8";
     case "Last Coin":
       return "/portraits/ashur.jpg?v=4";
     default:

@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { DiscordBtn } from "@/components/discord-btn";
 import { LegalPage } from "@/components/legal-page";
 
 export const Route = createFileRoute("/support")({ component: Support });
@@ -17,6 +18,9 @@ export function SupportDoc({ onBack, onGo }: { onBack?: () => void; onGo?: (id: 
         </a>
         . World chat works for in-hunt questions.
       </p>
+      <div className="my-4">
+        <DiscordBtn />
+      </div>
       <h2 className="font-display text-lg text-gold">The hunt is blank or crashed</h2>
       <p>Force-close the app and open it again. If that fails, open the hunt in Chrome, then come back.</p>
       <h2 className="font-display text-lg text-gold">Progress vanished</h2>

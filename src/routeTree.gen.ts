@@ -15,6 +15,7 @@ import { Route as GuideRouteImport } from './routes/guide'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as SupportRouteImport } from './routes/support'
+import { Route as ApiAuthReadyRouteImport } from './routes/api/auth-ready'
 import { Route as ApiBgRouteImport } from './routes/api/bg'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
@@ -48,6 +49,11 @@ const SupportRoute = SupportRouteImport.update({
   path: '/support',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAuthReadyRoute = ApiAuthReadyRouteImport.update({
+  id: '/api/auth-ready',
+  path: '/api/auth-ready',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiBgRoute = ApiBgRouteImport.update({
   id: '/api/bg',
   path: '/api/bg',
@@ -66,6 +72,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
   '/support': typeof SupportRoute
+  '/api/auth-ready': typeof ApiAuthReadyRoute
   '/api/bg': typeof ApiBgRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
@@ -76,6 +83,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
   '/support': typeof SupportRoute
+  '/api/auth-ready': typeof ApiAuthReadyRoute
   '/api/bg': typeof ApiBgRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
@@ -87,6 +95,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
   '/support': typeof SupportRoute
+  '/api/auth-ready': typeof ApiAuthReadyRoute
   '/api/bg': typeof ApiBgRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
@@ -99,6 +108,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/privacy'
     | '/support'
+    | '/api/auth-ready'
     | '/api/bg'
     | '/api/auth/$'
   fileRoutesByTo: FileRoutesByTo
@@ -109,6 +119,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/privacy'
     | '/support'
+    | '/api/auth-ready'
     | '/api/bg'
     | '/api/auth/$'
   id:
@@ -119,6 +130,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/privacy'
     | '/support'
+    | '/api/auth-ready'
     | '/api/bg'
     | '/api/auth/$'
   fileRoutesById: FileRoutesById
@@ -130,6 +142,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   PrivacyRoute: typeof PrivacyRoute
   SupportRoute: typeof SupportRoute
+  ApiAuthReadyRoute: typeof ApiAuthReadyRoute
   ApiBgRoute: typeof ApiBgRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
@@ -178,6 +191,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SupportRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/auth-ready': {
+      id: '/api/auth-ready'
+      path: '/api/auth-ready'
+      fullPath: '/api/auth-ready'
+      preLoaderRoute: typeof ApiAuthReadyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/bg': {
       id: '/api/bg'
       path: '/api/bg'
@@ -202,6 +222,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   PrivacyRoute: PrivacyRoute,
   SupportRoute: SupportRoute,
+  ApiAuthReadyRoute: ApiAuthReadyRoute,
   ApiBgRoute: ApiBgRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 }

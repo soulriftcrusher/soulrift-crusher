@@ -328,7 +328,7 @@ function ItemGrid({
             sfx.ui();
             onPick(b.id);
           }}
-          className="relative aspect-square overflow-hidden rounded-md border border-gold/30 bg-bg/80 disabled:opacity-40"
+          className="relative aspect-square overflow-hidden rounded-md border border-gold/30 bg-[#0a0706] disabled:opacity-40"
         >
           <img src={lootIcon(b.id)} alt={b.name} className="size-full object-cover" />
           <span className="absolute right-0.5 bottom-0.5 rounded-sm bg-bg/80 px-1 text-[10px] tabular-nums text-fg">

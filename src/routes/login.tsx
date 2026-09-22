@@ -4,6 +4,7 @@ import { GROK_PROVIDERS, authClient, authEnabled, signIn } from "@/lib/auth/clie
 import { REVIEWER_EMAIL } from "@/lib/auth/reviewer";
 import { ensureReviewer } from "@/game/reviewer-net";
 import { Button } from "@/components/ui/button";
+import { DiscordBtn } from "@/components/discord-btn";
 import { MOVE_LABEL, moveOpen, COM_HUNT } from "@/game/migrate";
 
 export const Route = createFileRoute("/login")({ component: Login });
@@ -221,6 +222,7 @@ function Login() {
               </p>
             ) : null}
           </div>
+          <DiscordBtn />
         </div>
       </div>
       <div className="relative z-10 mx-auto w-full max-w-sm shrink-0 bg-gradient-to-t from-bg via-bg/95 to-transparent px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2">

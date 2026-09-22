@@ -70,7 +70,7 @@ export function HuntPanel() {
           {items.map((it) => (
             <MenuTile
               key={it.id}
-              art={`/tiles/${it.id}.png`}
+              art={`/tiles/${it.id}.png?v=19`}
               label={it.label}
               blurb={it.blurb}
               ping={it.ping}

@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { queueBackgroundSync, registerBackgroundHunt } from "@/game/bg-sync";
 import { pullCloudSave, pullHeroRoster, pushCloudSave, pushHeroRoster } from "@/game/net";
 import { readHuntName } from "@/game/name";
-import { applyIncoming, applyRoster, recoverSave, rosterFromState } from "@/game/save";
+import { applyIncoming, applyRoster, mergeProgress, recoverSave, rosterFromState } from "@/game/save";
 import { sim } from "@/game/sim";
 import { useGame } from "@/game/store";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -61,7 +61,7 @@ export function CloudSync() {
               parsed &&
               typeof parsed === "object" &&
               (Number(parsed.lastSaveAt) > 0 || Number(parsed.maxFloor) > 1 || Number(parsed.hires) > 0);
-            if (real) sim.hydrate(applyIncoming(parsed));
+            if (real) sim.hydrate(mergeProgress(sim.state, applyIncoming(parsed)));
           } catch {
             /* keep the phone save */
           }

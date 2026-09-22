@@ -297,7 +297,7 @@ export class Renderer {
       "hound",
     ]) {
       jobs.push(
-        loadImage(`/sprites/monsters/${kind}.png?v=7`)
+        loadImage(`/sprites/monsters/${kind}.png?v=8`)
           .then((img) => {
             this.monsters.set(kind, img);
           })
@@ -633,7 +633,7 @@ export class Renderer {
         ctx.textBaseline = "top";
         const label = def.name;
         const tw = Math.max(36, ctx.measureText(label).width + 10);
-        const ly = pos.row === 1 ? -dh - 4 : 6;
+        const ly = 6;
         ctx.fillStyle = "rgba(12,10,11,0.75)";
         ctx.fillRect(-tw / 2, ly, tw, 14);
         ctx.fillStyle = "#f0e6d8";

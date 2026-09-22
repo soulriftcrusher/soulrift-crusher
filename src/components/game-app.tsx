@@ -8,6 +8,7 @@ import { HuntPanel } from "@/components/hunt-panel";
 import { HeroFace } from "@/components/hero-face";
 import { HunterCard } from "@/components/hunter-card";
 import { AdBanner } from "@/components/ad-banner";
+import { DiscordBtn } from "@/components/discord-btn";
 import { DeviceGate } from "@/components/device-gate";
 import { LegalOverlay } from "@/components/legal-overlay";
 import { adsReady } from "@/game/ads";
@@ -208,6 +209,9 @@ function TitleScreen() {
                 <img src="/tiles/hud-share.png" alt="" className="size-5 object-contain" crossOrigin="anonymous" />
                 Share this hunt
               </Button>
+              <div className="mt-2">
+                <DiscordBtn />
+              </div>
               <div className="mt-2 grid grid-cols-2 gap-2">
                 <button type="button" onClick={() => useGame.getState().setLegalPage("guide")} className="grid h-11 place-items-center rounded-md border border-gold/40 bg-bg/60 text-sm text-gold">
                   How to hunt
@@ -1378,6 +1382,9 @@ function SettingsModal() {
         <Button asChild variant="secondary" className="mt-2 h-12 w-full">
           <a href="mailto:soulriftcrusher@gmail.com">Email support</a>
         </Button>
+        <div className="mt-2">
+          <DiscordBtn />
+        </div>
         <Button
           variant="secondary"
           className="mt-2 h-12 w-full"
