@@ -1,7 +1,7 @@
 export type RealmId = "crypt" | "frost" | "ember" | "void" | "soulwell";
 export type WeaponId = "ash-blade" | "moon-string" | "iron-maul" | "cinder-rod" | "rift-fang";
 export type SocketId = "ruby" | "sapphire" | "emerald";
-export type PackId = "firstblood" | "purse" | "coffer" | "vault" | "hoard";
+export type PackId = "firstblood" | "purse" | "coffer" | "vault" | "hoard" | "god-auric" | "god-solenne" | "god-vael";
 
 export type RealmDef = {
   id: RealmId;
@@ -154,6 +154,9 @@ export const GEM_PACKS: PackDef[] = [
   { id: "coffer", name: "Cinder Coffer", gems: 500, usd: "$4.99", tag: "Best" },
   { id: "vault", name: "Void Vault", gems: 1200, usd: "$9.99", tag: "" },
   { id: "hoard", name: "Tyrant Hoard", gems: 2800, usd: "$19.99", tag: "" },
+  { id: "god-auric", name: "Auric, God of the Hoard", gems: 0, usd: "$19.99", tag: "God" },
+  { id: "god-solenne", name: "Solenne, God of the Well", gems: 0, usd: "$29.99", tag: "God" },
+  { id: "god-vael", name: "Vael, God of the Cut", gems: 0, usd: "$49.99", tag: "God" },
 ];
 
 export const SUMMON_COST = 80;

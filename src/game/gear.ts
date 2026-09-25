@@ -155,6 +155,10 @@ export const LEGENDS: Record<HeroId, LegendDef> = {
   wren: { name: "Well Stitch", blurb: "Party damage +12%.", unlock: 25 },
   jora: { name: "Rime Nock", blurb: "Critical chance +8%.", unlock: 25 },
   pike: { name: "Named Point", blurb: "Click damage +16%.", unlock: 25 },
+  auric: { name: "Hoard Made Flesh", blurb: "Gold finds x2.", unlock: 25 },
+  solenne: { name: "Well Crown", blurb: "Souls x2.", unlock: 25 },
+  vael: { name: "Open Rift", blurb: "Party damage x2.", unlock: 25 },
+  morvax: { name: "Priceless", blurb: "Party damage x2.", unlock: 25 },
 };
 
 export const HERO_CRAFTS: Record<HeroId, HeroCraftDef> = {
@@ -178,6 +182,10 @@ export const HERO_CRAFTS: Record<HeroId, HeroCraftDef> = {
   wren: { name: "Moss Crook", blurb: "Wren's damage +10% per rank." },
   jora: { name: "Rime Limb", blurb: "Jora's damage +10% per rank." },
   pike: { name: "Long Debt", blurb: "Pike's damage +10% per rank." },
+  auric: { name: "Sun Scepter", blurb: "Auric's damage +10% per rank." },
+  solenne: { name: "Well Lamp", blurb: "Solenne's damage +10% per rank." },
+  vael: { name: "Rift Edge", blurb: "Vael's damage +10% per rank." },
+  morvax: { name: "Gem Heart", blurb: "Morvax's damage +10% per rank." },
 };
 
 export const SIEGE_LAIRS: { id: RealmId; name: string; bonus: string }[] = [

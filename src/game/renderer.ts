@@ -64,6 +64,10 @@ const HERO_ORDER: HeroId[] = [
   "wren",
   "jora",
   "pike",
+  "auric",
+  "solenne",
+  "vael",
+  "morvax",
 ];
 
 function loadImage(src: string): Promise<HTMLImageElement> {
@@ -511,7 +515,7 @@ export class Renderer {
   private hiredIds(): HeroId[] {
     return HERO_ORDER.filter(
       (h) => (this.sim.state.heroLevel[h] ?? 0) > 0 && !this.sim.isDown(h),
-    ).slice(0, 10);
+    );
   }
 
   private heroPos(id: HeroId): { x: number; y: number; scale: number; row: number } | null {
@@ -519,19 +523,20 @@ export class Renderer {
     const i = hired.indexOf(id);
     if (i < 0) return null;
     const n = hired.length;
-    const front = Math.min(5, n);
-    const back = Math.max(0, n - front);
-    const inBack = i < back;
-    const row = inBack ? 1 : 0;
-    const slot = inBack ? i : i - back;
-    const cols = inBack ? back : front;
-    const gap = cols >= 5 ? 0.085 : cols >= 4 ? 0.1 : 0.12;
-    const left = 0.26 + (inBack ? 0.03 : 0);
-    const x = this.w * (left + slot * gap);
-    const scale = (row === 1 ? 0.9 : 1.12) * Math.min(1.36, this.h / 520);
-    const lift = row === 1 ? Math.max(36, Math.min(58, this.h * 0.09)) : 0;
+    const rows = n <= 6 ? 1 : n <= 14 ? 2 : 3;
+    const cols = Math.ceil(n / rows);
+    const rowFromBack = Math.floor(i / cols);
+    const slot = i % cols;
+    const inThis = rowFromBack === rows - 1 ? n - rowFromBack * cols : cols;
+    const span = 0.44;
+    const gap = inThis <= 1 ? 0 : span / (inThis - 1);
+    const x = this.w * (0.08 + slot * gap);
+    const depth = rows - 1 - rowFromBack;
+    const shrink = n > 16 ? 0.74 : n > 10 ? 0.86 : 1;
+    const scale = (depth === 0 ? 1 : depth === 1 ? 0.8 : 0.66) * shrink * Math.min(1.15, this.h / 560);
+    const lift = depth === 0 ? 0 : Math.max(28, this.h * 0.055) * depth;
     const y = this.groundY - 8 - lift;
-    return { x, y, scale, row };
+    return { x, y, scale, row: depth };
   }
 
   private draw() {
@@ -605,14 +610,17 @@ export class Renderer {
       if (!pos) continue;
       const art = this.sheets.get(id);
       if (!art) continue;
+      const def = HEROES.find((h) => h.id === id);
       const lunge = this.heroLunge[id] ?? 0;
       const bob = Math.sin(t * 2.4 + id.charCodeAt(0)) * 2.4 * pos.scale;
-      const dw = Math.round(118 * pos.scale);
-      const dh = Math.round(118 * pos.scale);
+      const ratio = art.img.width / Math.max(1, art.img.height);
+      const tall = !art.sheet && ratio < 0.85;
+      const dh = Math.round((tall ? 168 : 118) * pos.scale);
+      const dw = Math.round((tall ? 168 * ratio : 118) * pos.scale);
       ctx.save();
       ctx.translate(pos.x + lunge * 16 * pos.scale, pos.y + bob);
-      // Walk sheets face the beast (right). Portraits face left — flip those.
-      if (!art.sheet) ctx.scale(-1, 1);
+      // Walk sheets and the gods already face the beast. Portraits face left.
+      if (!art.sheet && !def?.facesRight) ctx.scale(-1, 1);
       if (art.sheet) {
         const frame = Math.floor(t * 6 + id.charCodeAt(0)) % 4;
         const col = frame % 2;
@@ -624,8 +632,7 @@ export class Renderer {
         ctx.drawImage(art.img, -dw / 2, -dh + 8, dw, dh);
       }
       ctx.restore();
-      const def = HEROES.find((h) => h.id === id);
-      if (def && this.showNames && hired.length <= 6) {
+      if (def && this.showNames && hired.length <= 8) {
         ctx.save();
         ctx.translate(pos.x + lunge * 16 * pos.scale, pos.y + bob);
         ctx.font = `600 ${Math.max(10, Math.floor(11 * pos.scale))}px Outfit, sans-serif`;

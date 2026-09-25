@@ -18,7 +18,11 @@ export type HeroId =
   | "dax"
   | "wren"
   | "jora"
-  | "pike";
+  | "pike"
+  | "auric"
+  | "solenne"
+  | "vael"
+  | "morvax";
 export type RelicId =
   | "blood-sigil"
   | "gilded-chalice"
@@ -67,8 +71,10 @@ export type HeroDef = {
   passive: string;
   unlockFloor: number;
   mark: string;
-  acquire: "gold" | "gems" | "summon";
+  acquire: "gold" | "gems" | "summon" | "cash";
   gemCost: number;
+  usd?: string;
+  facesRight?: boolean;
 };
 
 export type RelicDef = {
@@ -448,6 +454,81 @@ export const HEROES: HeroDef[] = [
     acquire: "gold",
     gemCost: 200,
   },
+  {
+    id: "auric",
+    name: "Auric",
+    title: "God of the Hoard",
+    blurb: "A god. Gold bends when he stands up. Real money only.",
+    role: "dps",
+    baseCost: 1e40,
+    costScale: 1.07,
+    baseDps: 2e9,
+    baseClick: 0,
+    sprite: "/sprites/auric.png?v=1",
+    passive: "Gold finds x2.5",
+    unlockFloor: 1,
+    mark: "Au",
+    acquire: "cash",
+    gemCost: 0,
+    usd: "$19.99",
+    facesRight: true,
+  },
+  {
+    id: "solenne",
+    name: "Solenne",
+    title: "God of the Well",
+    blurb: "A god. Souls answer her. Real money only.",
+    role: "dps",
+    baseCost: 1e40,
+    costScale: 1.07,
+    baseDps: 4e9,
+    baseClick: 0,
+    sprite: "/sprites/solenne.png?v=1",
+    passive: "Souls x2.5",
+    unlockFloor: 1,
+    mark: "So",
+    acquire: "cash",
+    gemCost: 0,
+    usd: "$29.99",
+    facesRight: true,
+  },
+  {
+    id: "vael",
+    name: "Vael",
+    title: "God of the Cut",
+    blurb: "A god. The rift opens where he points. Real money only.",
+    role: "dps",
+    baseCost: 1e40,
+    costScale: 1.07,
+    baseDps: 8e9,
+    baseClick: 0,
+    sprite: "/sprites/vael.png?v=1",
+    passive: "All damage x2",
+    unlockFloor: 1,
+    mark: "Va",
+    acquire: "cash",
+    gemCost: 0,
+    usd: "$49.99",
+    facesRight: true,
+  },
+  {
+    id: "morvax",
+    name: "Morvax",
+    title: "The Gem God",
+    blurb: "A god priced in gems. One billion. Nothing else buys him.",
+    role: "dps",
+    baseCost: 1e40,
+    costScale: 1.07,
+    baseDps: 1.5e10,
+    baseClick: 0,
+    sprite: "/sprites/morvax.png?v=1",
+    passive: "All damage x2.5",
+    unlockFloor: 1,
+    mark: "Mx",
+    acquire: "gems",
+    gemCost: 1_000_000_000,
+    facesRight: true,
+  },
 ];
 
 export const RELICS: RelicDef[] = [
@@ -583,7 +664,7 @@ export function heroStars(hero: HeroDef, gilds: number): number {
   if (hero.unlockFloor >= 8) s = 2;
   if (hero.unlockFloor >= 16) s = 3;
   if (hero.acquire === "summon") s = 4;
-  if (hero.acquire === "gems") s = 5;
+  if (hero.acquire === "gems" || hero.acquire === "cash") s = 5;
   if (hero.baseCost >= 1e12) s = 5;
   return Math.min(5, s + Math.max(0, gilds));
 }

@@ -149,8 +149,9 @@ export type HeroSnap = {
   gildCost: number;
   gildCount: number;
   canGild: boolean;
-  acquire: "gold" | "gems" | "summon";
+  acquire: "gold" | "gems" | "summon" | "cash";
   gemCost: number;
+  usd: string;
   canGemHire: boolean;
   stars: number;
   legendName: string;

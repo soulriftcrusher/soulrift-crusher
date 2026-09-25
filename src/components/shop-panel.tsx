@@ -170,6 +170,59 @@ export function ShopPanel() {
         </div>
       </div>
 
+      <div className="mt-4 rounded-lg border border-amber-300/50 bg-wood p-4 text-fg">
+        <h3 className="font-display text-lg font-semibold text-gold">Gods</h3>
+        <p className="mt-2 text-sm text-fg/80">
+          Four gods. Tap Get to take them for now. Prices come back when payment is hooked up. Own every god and the whole party hits harder.
+        </p>
+        <ul className="mt-3 flex flex-col gap-2">
+          {HEROES.filter((h) => h.acquire === "cash" || h.id === "morvax").map((h) => {
+            const owned = (snap.heroes.find((x) => x.id === h.id)?.level ?? 0) > 0;
+            return (
+              <li key={h.id} className="flex items-center gap-3 rounded-lg border border-gold/40 bg-bg/50 p-3">
+                <img src={heroPortrait(h.id)} alt="" className="size-14 shrink-0 rounded-md object-cover" crossOrigin="anonymous" />
+                <div className="min-w-0 flex-1">
+                  <p className="font-display text-sm text-gold">{h.name}</p>
+                  <p className="text-xs text-muted">{h.title}. {h.passive}.</p>
+                </div>
+                {owned ? (
+                  <span className="text-xs text-gold">Owned</span>
+                ) : h.acquire === "cash" ? (
+                  <Button
+                    size="sm"
+                    className="h-11"
+                    onClick={() => {
+                      unlockAudio();
+                      if (sim.claimGod(h.id)) {
+                        sfx.hire();
+                        refresh();
+                      }
+                    }}
+                  >
+                    Get
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="h-11"
+                    onClick={() => {
+                      unlockAudio();
+                      if (h.id === "morvax" ? sim.claimGod(h.id) : sim.buyHeroGems(h.id)) {
+                        sfx.hire();
+                        refresh();
+                      }
+                    }}
+                  >
+                    {h.id === "morvax" ? "Get" : `${formatNum(h.gemCost)} gems`}
+                  </Button>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+
       <div className="mt-4 rounded-lg border border-border bg-bg/40 p-4">
         <div className="flex items-center gap-2">
           <img src="/tiles/hud-gem.png" alt="" className="size-6 object-contain" crossOrigin="anonymous" />
@@ -228,7 +281,7 @@ export function ShopPanel() {
             : "Gold pouch · already bought today"}
         </Button>
         <ul className="mt-3 flex flex-col gap-2">
-          {GEM_PACKS.filter((p) => p.id !== "firstblood").map((p) => (
+          {GEM_PACKS.filter((p) => p.id !== "firstblood" && !p.id.startsWith("god-")).map((p) => (
             <li key={p.id} className="flex items-center gap-3 rounded-lg border border-gold/30 bg-bg/80 px-3 py-3">
               <img src={`/shop/${p.id}.jpg`} alt="" className="size-14 shrink-0 rounded-md object-cover" crossOrigin="anonymous" />
               <div className="min-w-0 flex-1">

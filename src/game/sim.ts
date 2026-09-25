@@ -227,6 +227,8 @@ export class GameSim {
     m *= 1 + this.scienceRank("greed") * 0.12;
     m *= 1 + this.runeBonus("gold");
     if ((this.state.heroLevel.vex ?? 0) > 0) m *= 1.16;
+    if ((this.state.heroLevel.auric ?? 0) > 0) m *= 2.5;
+    if (this.legendOn("auric")) m *= 2;
     if (this.legendOn("vex")) m *= 1.12;
     if (this.state.skillActive.goldrush > 0) m *= 2;
     if (this.state.siegeLair === "crypt") m *= 1.08;
@@ -245,6 +247,11 @@ export class GameSim {
     if ((this.state.heroLevel.wren ?? 0) > 0) m *= 1.12;
     if ((this.state.heroLevel.devourer ?? 0) > 0) m *= 1.3;
     if ((this.state.heroLevel.vorr ?? 0) > 0) m *= 1.4;
+    if ((this.state.heroLevel.vael ?? 0) > 0) m *= 2;
+    if (this.legendOn("vael")) m *= 2;
+    if ((this.state.heroLevel.morvax ?? 0) > 0) m *= 2.5;
+    if (this.legendOn("morvax")) m *= 2;
+    if (this.pantheon()) m *= 1.75;
     if (this.legendOn("rook")) m *= 1.14;
     if (this.legendOn("devourer")) m *= 1.16;
     if (this.state.skillActive.rage > 0) m *= 2;
@@ -311,6 +318,8 @@ export class GameSim {
     if ((this.state.heroLevel.morr ?? 0) > 0) m *= 1.2;
     if (this.legendOn("morr")) m *= 1.18;
     if (this.legendOn("selene") || (this.state.heroLevel.selene ?? 0) > 0) m *= 1.35;
+    if ((this.state.heroLevel.solenne ?? 0) > 0) m *= 2.5;
+    if (this.legendOn("solenne")) m *= 2;
     if (this.state.siegeLair === "void") m *= 1.08;
     m *= 1 + this.clanSouls / 100;
     return m;
@@ -341,8 +350,18 @@ export class GameSim {
     return 1 + this.relicRank("world-anchor") * 4 + this.scienceRank("depth") * 3;
   }
 
+  pantheon(): boolean {
+    return (
+      (this.state.heroLevel.auric ?? 0) > 0 &&
+      (this.state.heroLevel.solenne ?? 0) > 0 &&
+      (this.state.heroLevel.vael ?? 0) > 0 &&
+      (this.state.heroLevel.morvax ?? 0) > 0
+    );
+  }
+
   legendOn(id: HeroId): boolean {
-    return (this.state.heroLevel[id] ?? 0) >= 50;
+    const need = LEGENDS[id]?.unlock ?? 25;
+    return (this.state.heroLevel[id] ?? 0) >= need;
   }
 
   runeBonus(stat: import("./gear").RuneStat): number {
@@ -474,6 +493,18 @@ export class GameSim {
     if ((this.state.heroLevel[id] ?? 0) > 0) return false;
     if (this.state.gems < def.gemCost) return false;
     if (!this.spendGems(def.gemCost)) return false;
+    this.state.heroLevel[id] = 1;
+    this.state.hires += 1;
+    this.save();
+    this.pingHeroes();
+    return true;
+  }
+
+  /** Gods are free to claim until a real payment hook is turned on. */
+  claimGod(id: HeroId): boolean {
+    const def = HEROES.find((h) => h.id === id);
+    if (!def || (def.acquire !== "cash" && id !== "morvax")) return false;
+    if ((this.state.heroLevel[id] ?? 0) > 0) return false;
     this.state.heroLevel[id] = 1;
     this.state.hires += 1;
     this.save();
@@ -1103,11 +1134,12 @@ export class GameSim {
     this.state.arenaCharges = ARENA_CHARGE_MAX;
     this.state.floor = Math.max(this.state.floor, 80);
     this.state.maxFloor = Math.max(this.state.maxFloor, 80);
-    this.state.hires = HEROES.length;
+    this.state.hires = HEROES.filter((h) => h.acquire !== "cash" && h.id !== "morvax").length;
     this.state.kills = Math.max(this.state.kills, 400);
     this.state.bossKills = Math.max(this.state.bossKills, 40);
     this.state.socket = "ruby";
     for (const h of HEROES) {
+      if (h.acquire === "cash" || h.id === "morvax") continue;
       this.state.heroLevel[h.id] = HERO_LEVEL_CAP;
       this.state.heroGild[h.id] = 8;
       this.state.heroCraft[h.id] = 8;
@@ -1784,6 +1816,7 @@ export class GameSim {
         canGild: gildN > 0,
         acquire: h.acquire,
         gemCost: h.gemCost,
+        usd: h.usd ?? "",
         canGemHire: h.acquire === "gems" && level <= 0 && this.state.gems >= h.gemCost,
         stars: heroStars(h, gilds),
         legendName: legend?.name ?? "",

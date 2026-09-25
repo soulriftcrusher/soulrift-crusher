@@ -9,7 +9,7 @@ export const Route = createRootRoute({
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" },
       { title: APP_NAME },
       { name: "google", content: "notranslate" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
@@ -60,7 +60,7 @@ export const Route = createRootRoute({
         <HeadContent />
         <script
           dangerouslySetInnerHTML={{
-            __html: `if(location.hostname==='soulriftcrusher.com')location.replace('https://www.soulriftcrusher.com'+location.pathname+location.search+location.hash);if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js?v=9',{scope:'/'});window.addEventListener('error',function(e){var m=String(e&&e.message||'');if(m.indexOf('removeChild')<0&&m.indexOf('NotFoundError')<0)return;try{if(sessionStorage.getItem('soulrift.recover')==='1')return;sessionStorage.setItem('soulrift.recover','1');}catch(x){}location.reload();});try{if(sessionStorage.getItem('soulrift.recover')==='1')sessionStorage.removeItem('soulrift.recover');}catch(x){}`,
+            __html: `if(location.hostname==='soulriftcrusher.com')location.replace('https://www.soulriftcrusher.com'+location.pathname+location.search+location.hash);document.addEventListener('touchmove',function(e){if(e.touches&&e.touches.length>1)e.preventDefault();},{passive:false});document.addEventListener('gesturestart',function(e){e.preventDefault();});if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js?v=9',{scope:'/'});window.addEventListener('error',function(e){var m=String(e&&e.message||'');if(m.indexOf('removeChild')<0&&m.indexOf('NotFoundError')<0)return;try{if(sessionStorage.getItem('soulrift.recover')==='1')return;sessionStorage.setItem('soulrift.recover','1');}catch(x){}location.reload();});try{if(sessionStorage.getItem('soulrift.recover')==='1')sessionStorage.removeItem('soulrift.recover');}catch(x){}`,
           }}
         />
         <script

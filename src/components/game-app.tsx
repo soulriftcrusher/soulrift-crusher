@@ -212,6 +212,13 @@ function TitleScreen() {
               <div className="mt-2">
                 <DiscordBtn />
               </div>
+              <a
+                href="/ads/join-ad.mp4?v=3"
+                download="soulrift-join-ad.mp4"
+                className="mt-2 grid h-12 place-items-center rounded-md border border-gold/40 bg-bg/70 font-display text-sm text-gold"
+              >
+                Download ad
+              </a>
               <div className="mt-2 grid grid-cols-2 gap-2">
                 <button type="button" onClick={() => useGame.getState().setLegalPage("guide")} className="grid h-11 place-items-center rounded-md border border-gold/40 bg-bg/60 text-sm text-gold">
                   How to hunt
@@ -744,8 +751,11 @@ function HeroPanel() {
         ))}
       </div>
       <ul className="grid grid-cols-4 gap-2">
-        {snap.heroes.map((hero) => {
+        {[...snap.heroes]
+          .sort((a, b) => Number(b.acquire === "cash" || b.id === "morvax") - Number(a.acquire === "cash" || a.id === "morvax"))
+          .map((hero) => {
           const on = selected === hero.id;
+          const god = hero.acquire === "cash" || hero.id === "morvax";
           const locked = hero.level <= 0 && !hero.unlocked && !hero.canGemHire;
           return (
             <li key={hero.id}>
@@ -753,7 +763,7 @@ function HeroPanel() {
                 type="button"
                 className={cn(
                   "relative aspect-square w-full overflow-hidden rounded-xl border-2",
-                  on ? "border-gold" : "border-gold/25",
+                  on ? "border-gold" : god ? "border-amber-300/80" : "border-gold/25",
                   locked ? "opacity-55" : "",
                 )}
                 onClick={() => {
@@ -762,6 +772,9 @@ function HeroPanel() {
                 }}
               >
                 <img src={heroPortrait(hero.id as HeroId)} alt="" className="size-full object-cover" crossOrigin="anonymous" />
+                {god ? (
+                  <span className="absolute top-1 left-1 rounded bg-bg/80 px-1 font-display text-[9px] text-gold">GOD</span>
+                ) : null}
                 {hero.level > 0 ? (
                   <span className="absolute top-1 right-1 grid min-w-5 place-items-center rounded-md bg-bg/80 px-1 font-display text-[10px] text-gold">
                     {hero.level}
@@ -876,17 +889,29 @@ function HeroRow({ hero, open, onPeek }: { hero: HeroSnap; open: boolean; onPeek
               {hero.level <= 0 ? "Hire" : "Upgrade"} {formatNum(hero.cost)} gold
             </Button>
           ) : null}
-          {hero.canGemHire ? (
+          {hero.level <= 0 && def?.acquire === "cash" ? (
             <Button
-              variant="secondary"
               onClick={() => {
-                if (sim.buyHeroGems(hero.id as HeroId)) {
-                  sfx.ui();
+                if (sim.claimGod(hero.id as HeroId)) {
+                  sfx.hire();
                   refresh();
                 }
               }}
             >
-              Hire {hero.gemCost} gems
+              Get {def.name}
+            </Button>
+          ) : null}
+          {hero.level <= 0 && def?.acquire === "gems" ? (
+            <Button
+              variant="secondary"
+              onClick={() => {
+                if (def.id === "morvax" ? sim.claimGod(hero.id as HeroId) : sim.buyHeroGems(hero.id as HeroId)) {
+                  sfx.hire();
+                  refresh();
+                }
+              }}
+            >
+              {def.id === "morvax" ? "Get Morvax" : `Buy · ${formatNum(hero.gemCost)} gems`}
             </Button>
           ) : null}
           {hero.canGild ? (
