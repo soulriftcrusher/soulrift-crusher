@@ -314,7 +314,7 @@ function PlayScreen() {
             <DeskRail />
           </aside>
         ) : null}
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
           {tab === "shop" ? (
             <CraftPage onClose={() => setTab("fight")} />
           ) : tab === "heroes" ? (
@@ -646,7 +646,7 @@ function TabBar() {
       : { id: "realm", label: "Realms", art: "/tiles/realms.png" },
   );
   return (
-    <nav className="hunt-tabs grid shrink-0 grid-cols-6 gap-0.5 border-t border-border bg-wood px-1 pb-[max(0.25rem,env(safe-area-inset-bottom))] pt-1">
+    <nav className="hunt-tabs relative z-20 grid shrink-0 grid-cols-6 gap-0.5 border-t border-border bg-wood px-1 pb-[max(0.25rem,env(safe-area-inset-bottom))] pt-1">
       {items.map((it) => (
         <button
           key={it.id}
@@ -718,7 +718,7 @@ function MenuPage({ title, bg, children }: { title: string; parchment?: boolean;
             <img src="/tiles/hud-close.png" alt="" className="size-7 object-contain" crossOrigin="anonymous" />
           </button>
         </div>
-        <div className={cn("scroll-pane flex min-h-0 flex-1 flex-col px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]", desk && "mx-auto w-full max-w-[52rem]", huntPage === "wheel" && tab === "hunt" && "overflow-hidden")}>{children}</div>
+        <div className={cn("scroll-pane h-0 min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-2 pb-8", desk && "mx-auto w-full max-w-[52rem]", huntPage === "wheel" && tab === "hunt" && "overflow-hidden")}>{children}</div>
       </div>
     </div>
   );
@@ -772,8 +772,13 @@ function HeroPanel() {
                 }}
               >
                 <img src={heroPortrait(hero.id as HeroId)} alt="" className="size-full object-cover" crossOrigin="anonymous" />
-                {god ? (
+                {god && hero.level > 0 ? (
                   <span className="absolute top-1 left-1 rounded bg-bg/80 px-1 font-display text-[9px] text-gold">GOD</span>
+                ) : null}
+                {god && hero.level <= 0 ? (
+                  <span className="absolute inset-0 grid place-items-center bg-bg/60 font-display text-[11px] text-gold">
+                    {hero.id === "morvax" ? "1M gems" : "Locked"}
+                  </span>
                 ) : null}
                 {hero.level > 0 ? (
                   <span className="absolute top-1 right-1 grid min-w-5 place-items-center rounded-md bg-bg/80 px-1 font-display text-[10px] text-gold">
@@ -890,28 +895,22 @@ function HeroRow({ hero, open, onPeek }: { hero: HeroSnap; open: boolean; onPeek
             </Button>
           ) : null}
           {hero.level <= 0 && def?.acquire === "cash" ? (
-            <Button
-              onClick={() => {
-                if (sim.claimGod(hero.id as HeroId)) {
-                  sfx.hire();
-                  refresh();
-                }
-              }}
-            >
-              Get {def.name}
+            <Button disabled>
+              Locked · {def.usd}
             </Button>
           ) : null}
           {hero.level <= 0 && def?.acquire === "gems" ? (
             <Button
               variant="secondary"
+              disabled={!hero.canGemHire}
               onClick={() => {
-                if (def.id === "morvax" ? sim.claimGod(hero.id as HeroId) : sim.buyHeroGems(hero.id as HeroId)) {
+                if (sim.buyHeroGems(hero.id as HeroId)) {
                   sfx.hire();
                   refresh();
                 }
               }}
             >
-              {def.id === "morvax" ? "Get Morvax" : `Buy · ${formatNum(hero.gemCost)} gems`}
+              Buy · {formatNum(hero.gemCost)} gems
             </Button>
           ) : null}
           {hero.canGild ? (

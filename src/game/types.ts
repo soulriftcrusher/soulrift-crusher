@@ -33,6 +33,7 @@ export type GameState = {
   socketsOwned: Record<SocketId, boolean>;
   founderClaimed: boolean;
   founderKit: number;
+  morvaxPaid: boolean;
   lastFreeWell: string;
   kills: number;
   clicks: number;

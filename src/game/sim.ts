@@ -493,18 +493,7 @@ export class GameSim {
     if ((this.state.heroLevel[id] ?? 0) > 0) return false;
     if (this.state.gems < def.gemCost) return false;
     if (!this.spendGems(def.gemCost)) return false;
-    this.state.heroLevel[id] = 1;
-    this.state.hires += 1;
-    this.save();
-    this.pingHeroes();
-    return true;
-  }
-
-  /** Gods are free to claim until a real payment hook is turned on. */
-  claimGod(id: HeroId): boolean {
-    const def = HEROES.find((h) => h.id === id);
-    if (!def || (def.acquire !== "cash" && id !== "morvax")) return false;
-    if ((this.state.heroLevel[id] ?? 0) > 0) return false;
+    if (id === "morvax") this.state.morvaxPaid = true;
     this.state.heroLevel[id] = 1;
     this.state.hires += 1;
     this.save();

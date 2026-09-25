@@ -42,6 +42,7 @@ export function defaultState(now = Date.now()): GameState {
     socketsOwned: Object.fromEntries(SOCKETS.map((s) => [s.id, false])) as GameState["socketsOwned"],
     founderClaimed: false,
     founderKit: 0,
+    morvaxPaid: false,
     lastFreeWell: "",
     kills: 0,
     clicks: 0,
@@ -157,6 +158,7 @@ function migrate(raw: GameState): GameState {
   if (!Number.isFinite(merged.ember)) merged.ember = 0;
   if (!Number.isFinite(merged.bone)) merged.bone = 0;
   if (!Number.isFinite(merged.gold)) merged.gold = 0;
+  merged.morvaxPaid = Boolean(raw.morvaxPaid);
   if (!Number.isFinite(merged.souls)) merged.souls = 0;
   if (!Number.isFinite(merged.gems)) merged.gems = 0;
   if (!Number.isFinite(merged.founderKit)) merged.founderKit = 0;
@@ -354,6 +356,10 @@ export function applyRoster(state: GameState, roster: HeroRoster): GameState {
   for (const row of roster) {
     const id = row.id as HeroId;
     if (!id) continue;
+    if (id === "auric" || id === "solenne" || id === "vael" || (id === "morvax" && !state.morvaxPaid)) {
+      state.heroLevel[id] = 0;
+      continue;
+    }
     if (!state.heroPrestige) state.heroPrestige = {} as GameState["heroPrestige"];
     const pIn = Math.max(0, Number(row.prestige ?? 0));
     const pNow = Math.max(0, Number(state.heroPrestige[id] ?? 0));
@@ -387,6 +393,10 @@ export function applyRoster(state: GameState, roster: HeroRoster): GameState {
 export function lockRoster(state: GameState, extra?: HeroRoster | null): GameState {
   applyRoster(state, parseHeroBlob() ?? []);
   if (extra?.length) applyRoster(state, extra);
+  for (const id of ["auric", "solenne", "vael"] as const) {
+    state.heroLevel[id] = 0;
+  }
+  if (!state.morvaxPaid) state.heroLevel.morvax = 0;
   return state;
 }
 
@@ -569,6 +579,11 @@ export function mergeProgress(local: GameState, incoming: GameState): GameState 
     else if (pO > pN) heroLevel[h.id] = lO;
     else heroLevel[h.id] = Math.max(lN, lO);
   }
+  heroLevel.auric = 0;
+  heroLevel.solenne = 0;
+  heroLevel.vael = 0;
+  const morvaxPaid = Boolean(local.morvaxPaid || incoming.morvaxPaid);
+  if (!morvaxPaid) heroLevel.morvax = 0;
   return migrate({
     ...older,
     ...newerSave,
@@ -605,6 +620,7 @@ export function mergeProgress(local: GameState, incoming: GameState): GameState 
     socketsOwned: mergeSockets(local.socketsOwned, incoming.socketsOwned),
     founderClaimed: Boolean(local.founderClaimed || incoming.founderClaimed),
     founderKit: Math.max(local.founderKit ?? 0, incoming.founderKit ?? 0),
+    morvaxPaid,
     lastSaveAt: Math.max(local.lastSaveAt ?? 0, incoming.lastSaveAt ?? 0),
     lastHuntAt: Math.max(local.lastHuntAt ?? 0, incoming.lastHuntAt ?? 0),
     badges: maxRec((local.badges ?? {}) as Record<string, number>, (incoming.badges ?? {}) as Record<string, number>),

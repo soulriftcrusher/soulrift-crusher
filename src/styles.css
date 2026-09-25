@@ -130,7 +130,10 @@ canvas {
 }
 
 .scroll-pane {
-  overflow-y: scroll;
+  overflow-x: hidden;
+  overflow-y: auto;
+  min-height: 0;
+  flex: 1 1 auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;

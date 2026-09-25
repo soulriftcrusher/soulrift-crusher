@@ -515,7 +515,7 @@ export const HEROES: HeroDef[] = [
     id: "morvax",
     name: "Morvax",
     title: "The Gem God",
-    blurb: "A god priced in gems. One billion. Nothing else buys him.",
+    blurb: "A god priced in gems. One million. Nothing else buys him.",
     role: "dps",
     baseCost: 1e40,
     costScale: 1.07,
@@ -526,7 +526,7 @@ export const HEROES: HeroDef[] = [
     unlockFloor: 1,
     mark: "Mx",
     acquire: "gems",
-    gemCost: 1_000_000_000,
+    gemCost: 1_000_000,
     facesRight: true,
   },
 ];

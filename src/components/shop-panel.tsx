@@ -173,7 +173,7 @@ export function ShopPanel() {
       <div className="mt-4 rounded-lg border border-amber-300/50 bg-wood p-4 text-fg">
         <h3 className="font-display text-lg font-semibold text-gold">Gods</h3>
         <p className="mt-2 text-sm text-fg/80">
-          Four gods. Tap Get to take them for now. Prices come back when payment is hooked up. Own every god and the whole party hits harder.
+          Auric, Solenne, and Vael stay locked until payment is on. Morvax costs 1,000,000 gems. Own every god and the whole party hits harder.
         </p>
         <ul className="mt-3 flex flex-col gap-2">
           {HEROES.filter((h) => h.acquire === "cash" || h.id === "morvax").map((h) => {
@@ -188,33 +188,24 @@ export function ShopPanel() {
                 {owned ? (
                   <span className="text-xs text-gold">Owned</span>
                 ) : h.acquire === "cash" ? (
-                  <Button
-                    size="sm"
-                    className="h-11"
-                    onClick={() => {
-                      unlockAudio();
-                      if (sim.claimGod(h.id)) {
-                        sfx.hire();
-                        refresh();
-                      }
-                    }}
-                  >
-                    Get
+                  <Button size="sm" className="h-11" disabled>
+                    Locked · {h.usd}
                   </Button>
                 ) : (
                   <Button
                     size="sm"
                     variant="secondary"
                     className="h-11"
+                    disabled={snap.gems < h.gemCost}
                     onClick={() => {
                       unlockAudio();
-                      if (h.id === "morvax" ? sim.claimGod(h.id) : sim.buyHeroGems(h.id)) {
+                      if (sim.buyHeroGems(h.id)) {
                         sfx.hire();
                         refresh();
                       }
                     }}
                   >
-                    {h.id === "morvax" ? "Get" : `${formatNum(h.gemCost)} gems`}
+                    {formatNum(h.gemCost)} gems
                   </Button>
                 )}
               </li>
