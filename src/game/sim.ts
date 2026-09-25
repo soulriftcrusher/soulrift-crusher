@@ -127,6 +127,7 @@ export class GameSim {
     this.ensureEvent();
     this.ensureContracts();
     this.ensureFounderKit();
+    this.keepOwnerGods();
     const huntAt = state.lastHuntAt || state.lastSaveAt || Date.now();
     const huntGap = Math.max(0, (Date.now() - huntAt) / 1000);
     if (huntGap > 8) this.offlineGold = this.catchUp(huntGap);
@@ -1330,6 +1331,7 @@ export class GameSim {
     this.lastArena = null;
     this.ensureContracts();
     this.ensureFounderKit();
+    this.keepOwnerGods();
     this.monster = this.makeMonster(this.state.floor, this.isBossFloor(this.state.floor) && !this.state.farm);
     this.save();
   }
@@ -1338,8 +1340,26 @@ export class GameSim {
     this.state = lockRoster(next);
     this.combo = 0;
     this.lastArena = null;
+    this.keepOwnerGods();
     this.monster = this.makeMonster(this.state.floor, this.isBossFloor(this.state.floor) && !this.state.farm);
     this.save();
+  }
+
+  /** Founder keeps the four gods. Everyone else stays locked or pays the gem price. */
+  private keepOwnerGods() {
+    if (!this.state.founderClaimed) return;
+    this.state.morvaxPaid = true;
+    let gave = false;
+    for (const id of ["auric", "solenne", "vael", "morvax"] as const) {
+      if ((this.state.heroLevel[id] ?? 0) <= 0) {
+        this.state.heroLevel[id] = 1;
+        gave = true;
+      }
+    }
+    if (!gave) return;
+    let hires = 0;
+    for (const h of HEROES) if ((this.state.heroLevel[h.id] ?? 0) > 0) hires += 1;
+    this.state.hires = hires;
   }
 
   spendGems(n: number): boolean {

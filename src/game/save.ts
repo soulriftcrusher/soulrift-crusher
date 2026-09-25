@@ -356,7 +356,7 @@ export function applyRoster(state: GameState, roster: HeroRoster): GameState {
   for (const row of roster) {
     const id = row.id as HeroId;
     if (!id) continue;
-    if (id === "auric" || id === "solenne" || id === "vael" || (id === "morvax" && !state.morvaxPaid)) {
+    if (!state.founderClaimed && (id === "auric" || id === "solenne" || id === "vael" || (id === "morvax" && !state.morvaxPaid))) {
       state.heroLevel[id] = 0;
       continue;
     }
@@ -393,10 +393,12 @@ export function applyRoster(state: GameState, roster: HeroRoster): GameState {
 export function lockRoster(state: GameState, extra?: HeroRoster | null): GameState {
   applyRoster(state, parseHeroBlob() ?? []);
   if (extra?.length) applyRoster(state, extra);
-  for (const id of ["auric", "solenne", "vael"] as const) {
-    state.heroLevel[id] = 0;
+  if (state.founderClaimed) {
+    state.morvaxPaid = true;
+  } else {
+    for (const id of ["auric", "solenne", "vael"] as const) state.heroLevel[id] = 0;
+    if (!state.morvaxPaid) state.heroLevel.morvax = 0;
   }
-  if (!state.morvaxPaid) state.heroLevel.morvax = 0;
   return state;
 }
 
@@ -579,11 +581,14 @@ export function mergeProgress(local: GameState, incoming: GameState): GameState 
     else if (pO > pN) heroLevel[h.id] = lO;
     else heroLevel[h.id] = Math.max(lN, lO);
   }
-  heroLevel.auric = 0;
-  heroLevel.solenne = 0;
-  heroLevel.vael = 0;
-  const morvaxPaid = Boolean(local.morvaxPaid || incoming.morvaxPaid);
-  if (!morvaxPaid) heroLevel.morvax = 0;
+  const founder = Boolean(local.founderClaimed || incoming.founderClaimed);
+  const morvaxPaid = founder || Boolean(local.morvaxPaid || incoming.morvaxPaid);
+  if (!founder) {
+    heroLevel.auric = 0;
+    heroLevel.solenne = 0;
+    heroLevel.vael = 0;
+    if (!morvaxPaid) heroLevel.morvax = 0;
+  }
   return migrate({
     ...older,
     ...newerSave,
