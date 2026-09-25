@@ -705,7 +705,7 @@ function MenuPage({ title, bg, children }: { title: string; parchment?: boolean;
   const huntPage = useGame((s) => s.huntPage);
   const desk = useDesk();
   return (
-    <div className="relative flex min-h-0 flex-1 flex-col">
+    <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
       {bg ? (
         <img src={bg} alt="" className="absolute inset-0 size-full object-cover" crossOrigin="anonymous" decoding="async" />
       ) : null}
@@ -824,6 +824,7 @@ function HeroPanel() {
           }}
         />
       ) : null}
+      <div className="h-16 shrink-0" />
     </div>
   );
 }
@@ -932,7 +933,7 @@ function HeroRow({ hero, open, onPeek }: { hero: HeroSnap; open: boolean; onPeek
           ) : null}
           {hero.level > 0 ? (
             <p className="text-[11px] text-muted">
-              Gild stamps this hero with souls. Each stamp +50% their damage forever. Stars stop at 5. Stamped {hero.gilds} times. The x10 / x25 / x100 / MAX row applies here too.
+              Gild stamps this hero with souls. Each stamp +50% their damage forever. They are not born at 5 stars. The fifth star lights after 20 gilds. Stamped {hero.gilds} times. The x10 / x25 / x100 / MAX row applies here too.
             </p>
           ) : null}
           {hero.canCraft ? (

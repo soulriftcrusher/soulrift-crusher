@@ -661,12 +661,12 @@ export function arenaFoeArt(name: string): string {
 
 export function heroStars(hero: HeroDef, gilds: number): number {
   let s = 1;
-  if (hero.unlockFloor >= 8) s = 2;
-  if (hero.unlockFloor >= 16) s = 3;
-  if (hero.acquire === "summon") s = 4;
-  if (hero.acquire === "gems" || hero.acquire === "cash") s = 5;
-  if (hero.baseCost >= 1e12) s = 5;
-  return Math.min(5, s + Math.max(0, gilds));
+  if (hero.unlockFloor >= 8 || hero.baseCost >= 1e5) s = 2;
+  if (hero.unlockFloor >= 16 || hero.baseCost >= 1e7) s = 3;
+  if (hero.acquire === "summon" || (hero.acquire === "gems" && hero.id !== "morvax")) s = 3;
+  if (hero.acquire === "cash" || hero.id === "morvax") s = 4;
+  if (gilds >= 20) s = Math.min(5, s + 1);
+  return Math.min(5, s);
 }
 
 type Progress = {
