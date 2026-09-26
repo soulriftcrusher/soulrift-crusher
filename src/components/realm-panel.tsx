@@ -29,12 +29,13 @@ export function RealmPanel() {
       <ul className="mt-3 flex flex-col gap-2">
         {REALMS.map((r) => {
           const open = snap.maxFloor >= r.minFloor;
+          const climbed = snap.floor >= r.minFloor;
           const here = snap.realm === r.id;
           return (
             <li key={r.id} className={cn("overflow-hidden rounded-lg border border-border", here && "border-accent")}>
               <button
                 type="button"
-                disabled={!open}
+                disabled={!open || !climbed}
                 onClick={() => {
                   unlockAudio();
                   if (sim.travelRealm(r.id)) {
@@ -50,8 +51,14 @@ export function RealmPanel() {
                     {r.name}
                     {here ? <span className="ml-2 text-accent">here</span> : null}
                   </p>
-                  <p className="text-xs text-muted">{open ? r.blurb : `Unlocks at floor ${r.minFloor}`}</p>
-                  <p className="mt-1 text-xs tabular-nums text-muted">From floor {r.minFloor}</p>
+                  <p className="text-xs text-muted">
+                    {!open
+                      ? `Unlocks at floor ${r.minFloor}`
+                      : !climbed
+                        ? `Climb back to floor ${r.minFloor}. A ritual does not skip ahead.`
+                        : r.blurb}
+                  </p>
+                  <p className="mt-1 text-xs tabular-nums text-muted">Walk back to floor {r.minFloor}</p>
                 </div>
               </button>
             </li>

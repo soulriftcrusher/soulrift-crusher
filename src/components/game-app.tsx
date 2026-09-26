@@ -1082,15 +1082,20 @@ function HeroRow({ hero, open, onPeek }: { hero: HeroSnap; open: boolean; onPeek
           ) : null}
           {hero.level > 0 ? (
             <div>
-              <p className="text-[11px] tracking-wide text-gold uppercase">Runes {hero.runeSlots} slots</p>
+              <p className="text-[11px] tracking-wide text-gold uppercase">Runes stay on after a ritual</p>
               <div className="mt-1 flex gap-1">
-                {(hero.attached.length ? hero.attached : [null, null, null]).slice(0, Math.max(hero.runeSlots, 1)).map((rune, i) => (
+                {[0, 1, 2].map((i) => {
+                  const rune = hero.attached[i] ?? null;
+                  const open = i < hero.runeSlots;
+                  const need = i === 0 ? 1 : i === 1 ? 25 : 75;
+                  return (
                   <button
                     key={`${hero.id}-slot-${i}`}
                     type="button"
                     className={cn(
                       "flex h-16 min-w-0 flex-1 items-center gap-1 rounded-md border px-1 text-left text-[10px] text-gold",
                       rune ? RARITY_RING[rune.rarity] : "border-gold/40",
+                      !open && "opacity-80",
                     )}
                     onClick={() => {
                       if (!rune) return;
@@ -1109,14 +1114,15 @@ function HeroRow({ hero, open, onPeek }: { hero: HeroSnap; open: boolean; onPeek
                         <img src={runeArt(rune.stat)} alt="" className="size-10 shrink-0 rounded object-cover" />
                         <span className="min-w-0">
                           {rune.name}
-                          <span className="block text-muted">{describeRune(rune)}</span>
+                          <span className="block text-muted">{open ? describeRune(rune) : `Kept · slot opens at level ${need}`}</span>
                         </span>
                       </>
                     ) : (
-                      "Empty"
+                      open ? "Empty" : `Level ${need}`
                     )}
                   </button>
-                ))}
+                  );
+                })}
               </div>
               {bag.length ? (
                 <ul className="mt-2 flex flex-col gap-1">

@@ -625,7 +625,9 @@ export function mergeProgress(local: GameState, incoming: GameState): GameState 
     eventPts: Math.max(local.eventPts ?? 0, incoming.eventPts ?? 0),
     siegePts: Math.max(local.siegePts ?? 0, incoming.siegePts ?? 0),
     arenaCharges: newerSave.arenaCharges ?? older.arenaCharges,
-    floor: deeper.floor,
+    floor: (local.rituals ?? 0) !== (incoming.rituals ?? 0)
+      ? ((local.rituals ?? 0) >= (incoming.rituals ?? 0) ? local.floor : incoming.floor)
+      : deeper.floor,
     farm: deeper.farm,
     maxFloor: Math.max(local.maxFloor, incoming.maxFloor),
     kills: Math.max(local.kills, incoming.kills),

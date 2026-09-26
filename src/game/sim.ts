@@ -116,6 +116,7 @@ export class GameSim {
   private saveAcc = 0;
   private offlineGold = 0;
   private attackCursor = 0;
+  private monsterAge = 0;
   private clanDps = 0;
   private clanGold = 0;
   private clanSouls = 0;
@@ -196,6 +197,7 @@ export class GameSim {
     const hp = this.monsterHp(floor, boss);
     const timerMax = boss ? 55 + Math.min(40, Math.floor(floor / 20)) : 0;
     const name = monsterName(kind, floor);
+    this.monsterAge = 0;
     return {
       hp,
       max: hp,
@@ -224,7 +226,7 @@ export class GameSim {
 
   monsterHp(floor: number, boss: boolean): number {
     const n = Math.max(1, floor);
-    const hp = 80 * Math.pow(1.09, n - 1) * (boss ? 8 : 1);
+    const hp = 24 * Math.pow(1.067, n - 1) * (boss ? 8 : 1);
     if (!Number.isFinite(hp) || hp > 1e300) return 1e300;
     return Math.max(12, hp);
   }
@@ -412,7 +414,12 @@ export class GameSim {
   }
 
   grantRune(rune: import("./gear").OwnedRune) {
-    this.state.runes = [...(this.state.runes ?? []), rune].slice(-96);
+    const worn = new Set<string>();
+    for (const h of HEROES) for (const id of this.state.heroRunes[h.id] ?? []) if (id) worn.add(id);
+    const have = (this.state.runes ?? []).filter((r) => r.id !== rune.id);
+    const kept = have.filter((r) => worn.has(r.id));
+    const loose = have.filter((r) => !worn.has(r.id)).slice(-80);
+    this.state.runes = [...kept, ...loose, rune];
   }
 
   isDown(id: HeroId): boolean {
@@ -952,6 +959,11 @@ export class GameSim {
     if (this.monster.isBoss) dmg *= this.bossMult();
     const hp = this.monster.hp;
     if (dmg >= hp) {
+      if (!this.monster.isBoss && source === "hero" && this.monsterAge < 0.7) {
+        this.monster.hp = Math.max(1, this.monster.max * 0.08);
+        this.monster.chip = 0;
+        return;
+      }
       this.monster.hp = 0;
       this.monster.chip = 0;
       if (!silent) this.emit({ type: "hit", amount: dmg, crit, source, heroId });
@@ -1082,8 +1094,10 @@ export class GameSim {
   travelRealm(id: RealmId): boolean {
     const realm = REALMS.find((r) => r.id === id);
     if (!realm || this.state.maxFloor < realm.minFloor) return false;
-    const dest = Math.min(Math.max(this.state.maxFloor, realm.minFloor), this.state.maxFloor);
-    this.state.floor = Math.max(realm.minFloor, Math.min(dest, this.state.maxFloor));
+    // A realm walks you back to its gate. It never skips this climb, so a ritual
+    // that started at floor 1 stays there until you fight back up.
+    if (this.state.floor < realm.minFloor) return false;
+    this.state.floor = realm.minFloor;
     this.monster = this.makeMonster(this.state.floor, this.isBossFloor(this.state.floor) && !this.state.farm);
     this.save();
     return true;
@@ -2199,6 +2213,7 @@ export class GameSim {
       this.monster.hp = Math.max(1, this.monster.max * ratio);
     }
     const t = Math.min(dt, 0.1);
+    this.monsterAge += t;
     this.comboTimer -= t;
     if (this.comboTimer <= 0) this.combo = 0;
     for (const s of SKILLS) {
