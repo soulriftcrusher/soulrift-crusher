@@ -94,6 +94,8 @@ type GameUI = {
   setIsStaff: (v: boolean) => void;
   setDemoHunt: (v: boolean) => void;
   setKicked: (v: boolean) => void;
+  setCloudReady: (v: boolean) => void;
+  cloudReady: boolean;
   setDmPeer: (p: { userId: string; name: string } | null) => void;
   openMessages: (userId: string, name: string) => void;
   refresh: () => void;
@@ -108,6 +110,10 @@ function wasHunting(): boolean {
   } catch {
     return false;
   }
+}
+
+export function resumeHunt(): boolean {
+  return wasHunting();
 }
 
 function markHunting(on: boolean) {
@@ -163,6 +169,7 @@ export const useGame = create<GameUI>((set, get) => {
   isStaff: readStaffFlag(),
   demoHunt: isDemoHunt(),
   kicked: false,
+  cloudReady: false,
   dmPeer: null,
   snap: sim.snapshot(1),
   setScreen: (screen) => {
@@ -208,6 +215,7 @@ export const useGame = create<GameUI>((set, get) => {
   },
   setDemoHunt: (demoHunt) => set({ demoHunt }),
   setKicked: (kicked) => set({ kicked }),
+  setCloudReady: (cloudReady) => set({ cloudReady }),
   setDmPeer: (dmPeer) => set({ dmPeer }),
   openMessages: (userId, name) => set({ tab: "hunt", huntPage: "inbox", dmPeer: { userId, name } }),
   refresh: () => set({ snap: sim.snapshot(get().bulk) }),

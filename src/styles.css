@@ -139,6 +139,14 @@ canvas {
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
 }
+.scroll-pane:has(.hunt-hub) {
+  display: flex;
+  flex-direction: column;
+}
+.scroll-sheet {
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+}
 
 @keyframes hammer-strike {
   0% {

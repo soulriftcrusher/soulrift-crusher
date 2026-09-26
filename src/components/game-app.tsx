@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { ClanPanel, ClanSync } from "@/components/clan-panel";
@@ -36,7 +37,7 @@ import { moveOpen } from "@/game/migrate";
 import { seasonClock, formatSeasonLeft } from "@/game/shards";
 import { sim } from "@/game/sim";
 import { sfx, setMuted, unlockAudio } from "@/game/audio";
-import { useGame, type Tab } from "@/game/store";
+import { useGame, resumeHunt, type Tab } from "@/game/store";
 import type { ArenaResult, HeroSnap } from "@/game/types";
 import { authEnabled, signOut } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -55,44 +56,120 @@ export function GameApp() {
   const desk = useDesk();
   const { user, isPending } = useCurrentUserState();
   const demoHunt = useGame((s) => s.demoHunt);
+  const cloudReady = useGame((s) => s.cloudReady);
+  const entered = useRef(false);
+  const left = useRef(false);
+  const holdTimer = useRef(0);
+  const [bootHold, setBootHold] = useState(true);
+  const [sessionHold, setSessionHold] = useState(true);
+  const returning = resumeHunt() || screen === "play";
   useEffect(() => {
     if (isDemoHunt()) exitLocalDemo();
   }, []);
   useEffect(() => startHuntFit(), []);
   useEffect(() => {
+    const t = window.setTimeout(() => setSessionHold(false), 6000);
+    return () => window.clearTimeout(t);
+  }, []);
+  useEffect(() => {
+    const arm = () => {
+      window.clearTimeout(holdTimer.current);
+      holdTimer.current = window.setTimeout(() => setBootHold(false), 1200);
+    };
+    arm();
+    const onVis = () => {
+      if (document.visibilityState === "hidden") {
+        left.current = true;
+        setBootHold(true);
+        useGame.getState().setCloudReady(false);
+        return;
+      }
+      if (!left.current) return;
+      left.current = false;
+      setBootHold(true);
+      arm();
+      window.dispatchEvent(new Event("soulrift-reopen"));
+    };
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (!e.persisted) return;
+      setBootHold(true);
+      useGame.getState().setCloudReady(false);
+      arm();
+      window.dispatchEvent(new Event("soulrift-reopen"));
+    };
+    document.addEventListener("visibilitychange", onVis);
+    window.addEventListener("pageshow", onPageShow);
+    return () => {
+      window.clearTimeout(holdTimer.current);
+      document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("pageshow", onPageShow);
+    };
+  }, []);
+  useEffect(() => {
     document.documentElement.classList.toggle("hunt-desk", desk);
     return () => document.documentElement.classList.remove("hunt-desk");
   }, [desk]);
+  useEffect(() => {
+    if (demoHunt || !user || !returning || !cloudReady || entered.current) return;
+    entered.current = true;
+    useGame.setState({ offlineGold: sim.takeOfflineGold() });
+    useGame.getState().refresh();
+    if (useGame.getState().screen !== "play") useGame.getState().setScreen("play");
+  }, [demoHunt, user, returning, cloudReady]);
   const shell = cn(
     "flex h-full min-h-0 w-full flex-col overflow-hidden bg-bg text-fg select-none",
   );
-  if (authEnabled && isPending && !demoHunt) {
-    return (
-      <div className="grid hunt-shell place-items-center bg-bg text-gold">
-        <p className="font-display text-sm">Checking your hunt…</p>
-      </div>
-    );
-  }
-  if (authEnabled && !user && !demoHunt) {
-    return (
-      <div className={cn("hunt-shell", desk && "bg-[#070506]")}>
+  const showBoot = !demoHunt && ((isPending && sessionHold) || (Boolean(user) && (bootHold || !cloudReady) && returning));
+  return (
+    <div className={cn("hunt-shell", desk && "bg-[#070506]")}>
+      {!demoHunt ? <CloudSync /> : null}
+      {!showBoot && !(authEnabled && !user && !demoHunt) ? <ClanSync /> : null}
+      {showBoot ? (
+        <BootScreen />
+      ) : authEnabled && !user && !demoHunt ? (
         <div className={shell}>
           <TitleScreen />
           <LegalOverlay />
           {moveHuntOpen ? <MoveHunt /> : null}
         </div>
-      </div>
-    );
-  }
+      ) : (
+        <div className={shell}>
+          {screen === "title" ? <TitleScreen /> : <PlayScreen />}
+          <LegalOverlay />
+          <DeviceGate />
+          {moveHuntOpen ? <MoveHunt /> : null}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function BootScreen() {
+  const [load, setLoad] = useState(8);
+  useEffect(() => {
+    preloadHuntArt();
+    const id = window.setInterval(() => {
+      setLoad((n) => (n >= 92 ? 92 : n + 4));
+    }, 80);
+    return () => window.clearInterval(id);
+  }, []);
   return (
-    <div className={cn("hunt-shell", desk && "bg-[#070506]")}>
-      <CloudSync />
-      <ClanSync />
-      <div className={shell}>
-        {screen === "title" ? <TitleScreen /> : <PlayScreen />}
-        <LegalOverlay />
-        <DeviceGate />
-        {moveHuntOpen ? <MoveHunt /> : null}
+    <div className="relative flex h-full min-h-0 flex-col">
+      <img src="/bg/splash.jpg?v=fight" alt="" className="absolute inset-0 size-full object-cover" crossOrigin="anonymous" />
+      <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/50 to-bg/25" />
+      <div className="relative z-10 flex h-full flex-col items-center justify-end px-8 pb-[max(3rem,env(safe-area-inset-bottom))]">
+        <p className="font-display text-xs tracking-[0.32em] text-gold uppercase">Idle dungeon RPG</p>
+        <h1 className="font-display mt-2 text-center text-5xl leading-none font-semibold text-gold">
+          Soulrift
+          <span className="mt-1 block text-4xl text-fg">Crusher</span>
+        </h1>
+        <div className="mt-8 w-full max-w-sm">
+          <div className="h-3 overflow-hidden rounded-full border border-gold/50 bg-bg/80">
+            <div className="h-full bg-accent transition-[width] duration-150" style={{ width: `${load}%` }} />
+          </div>
+          <p className="mt-3 text-center font-display text-sm text-gold">Loading your hunt…</p>
+          <p className="mt-1 text-center text-xs text-fg/80">Refreshing anything new. No sign-in.</p>
+        </div>
       </div>
     </div>
   );
@@ -322,7 +399,7 @@ function PlayScreen() {
               <HeroPanel />
             </MenuPage>
           ) : tab === "realm" ? (
-            <MenuPage title="Realms" bg="/bg/realms-page.jpg?v=2">
+            <MenuPage title="Realms" bg="/bg/realms-page.jpg?v=3">
               <RealmPanel />
             </MenuPage>
           ) : tab === "hunt" ? (
@@ -630,14 +707,17 @@ function SideBtn({ art, label, onClick }: { art: string; label: string; onClick:
 function TabBar() {
   const tab = useGame((s) => s.tab);
   const setTab = useGame((s) => s.setTab);
+  const snap = useGame((s) => s.snap);
   const isStaff = useGame((s) => s.isStaff);
-  const founderClaimed = useGame((s) => s.snap.founderClaimed);
+  const founderClaimed = snap.founderClaimed;
   const showFounder = isStaff || founderClaimed;
-  const items: { id: Tab; label: string; art: string }[] = [
+  const huntDot = snap.huntPing || snap.chests > 0 || snap.dailyReady || snap.expeditionReady;
+  const heroDot = snap.heroes.some((h) => h.down);
+  const items: { id: Tab; label: string; art: string; dot?: boolean }[] = [
     { id: "fight", label: "Fight", art: "/tiles/fight.png" },
-    { id: "heroes", label: "Heroes", art: "/tiles/heroes.png" },
+    { id: "heroes", label: "Heroes", art: "/tiles/heroes.png", dot: heroDot },
     { id: "shop", label: "Craft", art: "/tiles/craft.png" },
-    { id: "hunt", label: "Hunt", art: "/tiles/pass.png" },
+    { id: "hunt", label: "Hunt", art: "/tiles/pass.png", dot: huntDot },
     { id: "clan", label: "Clans", art: "/tiles/clan.png" },
   ];
   items.push(
@@ -655,8 +735,9 @@ function TabBar() {
             sfx.ui();
             setTab(it.id);
           }}
-          className={cn("grid h-14 place-items-center rounded-md text-[10px]", tab === it.id ? "bg-gold/20 text-gold" : "text-muted")}
+          className={cn("relative grid h-14 place-items-center rounded-md text-[10px]", tab === it.id ? "bg-gold/20 text-gold" : "text-muted")}
         >
+          {it.dot ? <span className="absolute top-1 right-2 size-2.5 rounded-full bg-accent" /> : null}
           <img src={it.art} alt="" className="size-7 object-contain" crossOrigin="anonymous" />
           {it.label}
         </button>
@@ -668,13 +749,16 @@ function TabBar() {
 function DeskRail() {
   const setTab = useGame((s) => s.setTab);
   const tab = useGame((s) => s.tab);
+  const snap = useGame((s) => s.snap);
   const isStaff = useGame((s) => s.isStaff);
-  const founderClaimed = useGame((s) => s.snap.founderClaimed);
-  const items: { id: Tab; label: string; art: string }[] = [
+  const founderClaimed = snap.founderClaimed;
+  const huntDot = snap.huntPing || snap.chests > 0 || snap.dailyReady || snap.expeditionReady;
+  const heroDot = snap.heroes.some((h) => h.down);
+  const items: { id: Tab; label: string; art: string; dot?: boolean }[] = [
     { id: "fight", label: "Fight", art: "/tiles/fight.png" },
-    { id: "heroes", label: "Heroes", art: "/tiles/heroes.png" },
+    { id: "heroes", label: "Heroes", art: "/tiles/heroes.png", dot: heroDot },
     { id: "shop", label: "Craft", art: "/tiles/craft.png" },
-    { id: "hunt", label: "Hunt", art: "/tiles/pass.png" },
+    { id: "hunt", label: "Hunt", art: "/tiles/pass.png", dot: huntDot },
     { id: "clan", label: "Clans", art: "/tiles/clan.png" },
     { id: "realm", label: "Realms", art: "/tiles/realms.png" },
   ];
@@ -690,8 +774,9 @@ function DeskRail() {
             sfx.ui();
             setTab(it.id);
           }}
-          className={cn("grid size-12 place-items-center rounded-md", tab === it.id ? "bg-surface" : "opacity-70")}
+          className={cn("relative grid size-12 place-items-center rounded-md", tab === it.id ? "bg-surface" : "opacity-70")}
         >
+          {it.dot ? <span className="absolute top-1 right-1 size-2.5 rounded-full bg-accent" /> : null}
           <img src={it.art} alt="" className="size-8 object-contain" crossOrigin="anonymous" />
         </button>
       ))}
@@ -752,7 +837,7 @@ function HeroPanel() {
       </div>
       <ul className="grid grid-cols-4 gap-2">
         {[...snap.heroes]
-          .sort((a, b) => Number(b.acquire === "cash" || b.id === "morvax") - Number(a.acquire === "cash" || a.id === "morvax"))
+          .sort((a, b) => Number(a.acquire === "cash" || a.id === "morvax") - Number(b.acquire === "cash" || b.id === "morvax"))
           .map((hero) => {
           const on = selected === hero.id;
           const god = hero.acquire === "cash" || hero.id === "morvax";
@@ -763,7 +848,7 @@ function HeroPanel() {
                 type="button"
                 className={cn(
                   "relative aspect-square w-full overflow-hidden rounded-xl border-2",
-                  on ? "border-gold" : god ? "border-amber-300/80" : "border-gold/25",
+                  on ? "border-[3px] border-gold shadow-[inset_0_0_0_3px_rgba(232,200,114,0.95)]" : "border-2 border-gold/20",
                   locked ? "opacity-55" : "",
                 )}
                 onClick={() => {
@@ -882,7 +967,20 @@ function HeroRow({ hero, open, onPeek }: { hero: HeroSnap; open: boolean; onPeek
             >
               Revive {hero.reviveGems} gems
             </Button>
-          ) : hero.level > 0 || def?.acquire === "gold" ? (
+          ) : hero.atCap && hero.canPrestige ? (
+            <Button
+              onClick={() => {
+                if (sim.prestigeHero(hero.id as HeroId)) {
+                  sfx.ui();
+                  refresh();
+                }
+              }}
+            >
+              Prestige {hero.prestige + 1} · {hero.prestigeCost} souls
+            </Button>
+          ) : hero.atCap ? (
+            <Button disabled>Level 100 · prestige maxed</Button>
+          ) : hero.level > 0 || def?.acquire === "gold" || hero.prestige > 0 || hero.gilds > 0 || hero.godRebuy ? (
             <Button
               disabled={!hero.canAfford}
               onClick={() => {
@@ -895,12 +993,12 @@ function HeroRow({ hero, open, onPeek }: { hero: HeroSnap; open: boolean; onPeek
               {hero.level <= 0 ? "Hire" : "Upgrade"} {formatNum(hero.cost)} gold
             </Button>
           ) : null}
-          {hero.level <= 0 && def?.acquire === "cash" ? (
+          {hero.level <= 0 && def?.acquire === "cash" && !hero.godRebuy ? (
             <Button disabled>
               Locked · {def.usd}
             </Button>
           ) : null}
-          {hero.level <= 0 && def?.acquire === "gems" ? (
+          {hero.level <= 0 && def?.acquire === "gems" && !hero.godRebuy ? (
             <Button
               variant="secondary"
               disabled={!hero.canGemHire}
@@ -932,8 +1030,25 @@ function HeroRow({ hero, open, onPeek }: { hero: HeroSnap; open: boolean; onPeek
             </Button>
           ) : null}
           {hero.level > 0 ? (
+            <Button
+              variant="secondary"
+              onClick={() => {
+                if (sim.toggleLineup(hero.id as HeroId)) {
+                  sfx.ui();
+                  refresh();
+                }
+              }}
+            >
+              {hero.benched
+                ? "Benched · Send in"
+                : snap.lineup.includes(hero.id)
+                  ? "On the line · Bench"
+                  : "Send in"}
+            </Button>
+          ) : null}
+          {hero.level > 0 ? (
             <p className="text-[11px] text-muted">
-              Gild stamps this hero with souls. Each stamp +50% their damage forever. They are not born at 5 stars. The fifth star lights after 20 gilds. Stamped {hero.gilds} times. The x10 / x25 / x100 / MAX row applies here too.
+              Five stand on the fight line. Bench anyone, including the gods, and send someone else in. Damage stays on. Stamped {hero.gilds} times.
             </p>
           ) : null}
           {hero.canCraft ? (
@@ -953,7 +1068,7 @@ function HeroRow({ hero, open, onPeek }: { hero: HeroSnap; open: boolean; onPeek
               {hero.craftName} R{hero.craftRank}
             </p>
           ) : null}
-          {hero.canPrestige ? (
+          {hero.level > 0 && hero.canPrestige && !hero.atCap ? (
             <Button
               variant="secondary"
               onClick={() => {
@@ -1574,7 +1689,7 @@ function RitualModal() {
   return (
     <Modal onClose={close} title="Dark Ritual">
       <p className="text-sm text-muted">
-        The warband is unmade. Relics, gems, and influence stay. You climb again from floor {snap.startFloor} and harvest {formatNum(snap.ritualSouls)} souls.
+        The warband is unmade. Relics, gems, and influence stay. Gods go home too. You climb again from floor 1, harvest {formatNum(snap.ritualSouls)} souls, and hire the gods back with gold.
       </p>
       <Button
         className="mt-4 h-12 w-full"
@@ -1656,10 +1771,13 @@ function OfflineModal({ gold }: { gold: number }) {
 }
 
 function Modal({ onClose, title, children }: { onClose: () => void; title: string; children: ReactNode }) {
-  return (
-    <div className="fixed inset-0 z-50 grid place-items-end bg-black/60 p-3 sm:place-items-center" onClick={onClose}>
+  const sheet = (
+    <div
+      className="fixed inset-0 z-[80] flex items-end justify-center bg-black/60 p-3 pb-[max(5.5rem,env(safe-area-inset-bottom))] sm:items-center"
+      onClick={onClose}
+    >
       <div
-        className="max-h-[min(85dvh,calc(var(--app-h,100dvh)-2rem))] w-full max-w-md overflow-y-auto rounded-xl border border-gold/40 bg-bg p-4"
+        className="scroll-sheet max-h-[min(78dvh,calc(var(--app-h,100dvh)-7rem))] w-full max-w-md overflow-y-auto overscroll-contain rounded-xl border border-gold/40 bg-bg p-4"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-3 flex items-center justify-between">
@@ -1672,6 +1790,8 @@ function Modal({ onClose, title, children }: { onClose: () => void; title: strin
       </div>
     </div>
   );
+  if (typeof document === "undefined") return sheet;
+  return createPortal(sheet, document.body);
 }
 
 function ShareSheet({ onClose }: { onClose: () => void }) {

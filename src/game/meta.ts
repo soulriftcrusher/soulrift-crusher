@@ -58,7 +58,7 @@ export const REALMS: RealmDef[] = [
     title: "The first dark",
     blurb: "Bone and silence. Every crusade starts in the vaults.",
     minFloor: 1,
-    art: "/bg/crypt.jpg",
+    art: "/bg/crypt.jpg?v=3",
     biome: "crypt",
   },
   {
@@ -67,7 +67,7 @@ export const REALMS: RealmDef[] = [
     title: "Black ice",
     blurb: "The dead keep their shape in the cold.",
     minFloor: 12,
-    art: "/bg/frost.jpg",
+    art: "/bg/frost.jpg?v=3",
     biome: "frost",
   },
   {
@@ -76,7 +76,7 @@ export const REALMS: RealmDef[] = [
     title: "Cinder halls",
     blurb: "Gold runs liquid. The walls remember fire.",
     minFloor: 30,
-    art: "/bg/ember.jpg",
+    art: "/bg/ember.jpg?v=3",
     biome: "ember",
   },
   {
@@ -85,7 +85,7 @@ export const REALMS: RealmDef[] = [
     title: "The cut",
     blurb: "A wound in the world. Heroes come back thinner.",
     minFloor: 70,
-    art: "/bg/void.jpg",
+    art: "/bg/void.jpg?v=3",
     biome: "void",
   },
   {
@@ -94,7 +94,7 @@ export const REALMS: RealmDef[] = [
     title: "The harvest",
     blurb: "Where names go when the ritual ends.",
     minFloor: 100,
-    art: "/bg/soulwell.jpg",
+    art: "/bg/soulwell.jpg?v=3",
     biome: "soulwell",
   },
 ];

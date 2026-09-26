@@ -109,7 +109,7 @@ export function preloadHuntArt() {
     "/bg/craft.jpg?v=2",
     "/bg/clans.jpg?v=2",
     "/bg/founder.jpg?v=2",
-    "/bg/realms-page.jpg?v=2",
+    "/bg/realms-page.jpg?v=3",
     "/bg/shop-page.jpg?v=2",
     "/bg/wheel-1.jpg?v=2",
     "/bg/wheel-2.jpg?v=2",
@@ -266,11 +266,11 @@ export class Renderer {
       );
     }
     for (const [k, src] of [
-      ["crypt", "/bg/crypt.jpg"],
-      ["frost", "/bg/frost.jpg"],
-      ["ember", "/bg/ember.jpg"],
-      ["void", "/bg/void.jpg"],
-      ["soulwell", "/bg/soulwell.jpg"],
+      ["crypt", "/bg/crypt.jpg?v=3"],
+      ["frost", "/bg/frost.jpg?v=3"],
+      ["ember", "/bg/ember.jpg?v=3"],
+      ["void", "/bg/void.jpg?v=3"],
+      ["soulwell", "/bg/soulwell.jpg?v=3"],
     ] as const) {
       jobs.push(
         loadImage(src)
@@ -513,9 +513,7 @@ export class Renderer {
   }
 
   private hiredIds(): HeroId[] {
-    return HERO_ORDER.filter(
-      (h) => (this.sim.state.heroLevel[h] ?? 0) > 0 && !this.sim.isDown(h),
-    );
+    return this.sim.lineupIds();
   }
 
   private heroPos(id: HeroId): { x: number; y: number; scale: number; row: number } | null {

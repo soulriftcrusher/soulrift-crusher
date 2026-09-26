@@ -65,7 +65,7 @@ export function HuntPanel() {
       { id: "ritual", label: "Dark ritual", blurb: "Reset the hunt for souls." },
     ];
     return (
-      <div className="hunt-hub flex min-h-0 flex-1 flex-col pt-1">
+      <div className="hunt-hub flex h-full min-h-0 flex-1 flex-col pt-1">
         <MenuGrid compact>
           {items.map((it) => (
             <MenuTile
@@ -139,42 +139,30 @@ export function HuntPanel() {
             </div>
           </div>
           <div className="mt-3 grid grid-cols-4 gap-2">
-            {WEEKLY_LOGIN.map((g, i) => {
+            {WEEKLY_LOGIN.map((_, i) => {
               const taken = i < idx || (!snap.dailyReady && i === idx);
               const today = snap.dailyReady && i === idx;
-              const week = i === 6;
               return (
                 <div
                   key={i}
                   className={cn(
-                    "relative overflow-hidden rounded-xl border-2 p-2",
-                    week ? "col-span-2 min-h-[7.5rem]" : "min-h-[6.5rem]",
+                    "relative overflow-hidden rounded-xl border-2 p-2 min-h-[6.5rem]",
                     today ? "login-today border-gold bg-gold/15" : "border-gold/25 bg-bg/50",
-                    taken ? "opacity-70" : "",
+                    taken ? "opacity-60" : "",
                   )}
                 >
                   <p className="font-display text-[11px] tracking-wide text-gold uppercase">Day {i + 1}</p>
                   <div className="mt-1 flex items-center justify-center">
                     <img
-                      src={week ? "/shop/login-chest.jpg" : prizeArt("gems")}
+                      src="/shop/login-gem.jpg?v=1"
                       alt=""
-                      className={cn("object-contain", week ? "size-16" : "size-12")}
+                      className="size-12 rounded-md object-cover"
                       crossOrigin="anonymous"
                     />
                   </div>
-                  <p className="mt-1 text-center text-xs tabular-nums text-[#fff6e0]">
-                    {g} gem{g === 1 ? "" : "s"}
-                    {week ? " · 2 chests" : ""}
-                  </p>
+                  <p className="mt-1 text-center text-xs tabular-nums text-[#fff6e0]">1 gem</p>
                   {today ? <p className="text-center text-[10px] text-gold">Claim</p> : null}
-                  {taken ? (
-                    <img
-                      src="/shop/login-seal.jpg"
-                      alt=""
-                      className="pointer-events-none absolute inset-0 size-full object-cover opacity-80"
-                      crossOrigin="anonymous"
-                    />
-                  ) : null}
+                  {taken ? <p className="text-center text-[10px] text-muted">Taken</p> : null}
                 </div>
               );
             })}
@@ -589,19 +577,15 @@ function InboxBox({ always }: { always?: boolean }) {
 function ExpeditionBox() {
   const snap = useGame((s) => s.snap);
   const refresh = useGame((s) => s.refresh);
+  const [loot, setLoot] = useState<{ gold: number; souls: number; chests: number } | null>(null);
   const ready = snap.heroes.filter((h) => h.level > 0 && !h.down);
-  const sample = ready[0];
-  const previewGold = sample
-    ? Math.floor((40 + sample.level * 8) * snap.maxFloor * 0.35)
-    : Math.floor(48 * snap.maxFloor * 0.35);
   return (
     <div className="rounded-lg border border-border bg-bg/40 p-4">
       <p className="text-xs tracking-wide text-gold uppercase">Expedition · 2 hours</p>
       <h3 className="font-display mt-1 text-lg text-gold">Send a crusader out</h3>
       <p className="mt-2 text-sm leading-relaxed text-fg/85">
-        Pick one hired hero. They leave the fight for two hours and walk the rift alone. When they
-        come back, Collect for gold (about {previewGold.toLocaleString()} right now — it grows with
-        their level and your deepest floor), one soul, and a 35% shot at a chest.
+        Pick one hired hero. They leave the fight for two hours. When they come back, Collect pays gold
+        based on your deepest floor, souls, and a good chance at a chest.
       </p>
       <p className="mt-2 text-xs text-muted">
         Only one expedition at a time. A fallen hero cannot go. They do not deal damage while they
@@ -625,8 +609,10 @@ function ExpeditionBox() {
               className="mt-2 h-12 w-full"
               onClick={() => {
                 unlockAudio();
-                if (sim.collectExpedition()) {
+                const got = sim.collectExpedition();
+                if (got) {
                   sfx.chest();
+                  setLoot(got);
                   refresh();
                 }
               }}
@@ -664,6 +650,17 @@ function ExpeditionBox() {
           {ready.length === 0 ? <p className="text-xs text-muted">Hire someone first, then send them out.</p> : null}
         </div>
       )}
+      {loot ? (
+        <div className="mt-3 rounded-xl border-2 border-gold bg-bg/80 p-4 text-center">
+          <p className="font-display text-lg text-gold">They came back with</p>
+          <p className="mt-2 text-sm">{formatNum(loot.gold)} gold</p>
+          <p className="text-sm">{formatNum(loot.souls)} souls</p>
+          <p className="text-sm">{loot.chests ? `${loot.chests} chest` : "No chest this time"}</p>
+          <Button className="mt-3 h-11 w-full" onClick={() => setLoot(null)}>
+            Take it
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 }

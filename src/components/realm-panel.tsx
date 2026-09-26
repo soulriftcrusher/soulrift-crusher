@@ -15,7 +15,7 @@ export function RealmPanel() {
   return (
     <div className="pt-3">
       <div className="overflow-hidden rounded-lg border border-border">
-        <img src="/bg/realms.jpg" alt="" className="h-36 w-full object-cover" crossOrigin="anonymous" />
+        <img src="/bg/realms.jpg?v=3" alt="" className="h-40 w-full object-cover" crossOrigin="anonymous" />
         <div className="bg-bg/80 p-4">
           <div className="flex items-center gap-2">
             <img src="/tiles/realms.png" alt="" className="size-6 object-contain" crossOrigin="anonymous" />

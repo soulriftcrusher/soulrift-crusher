@@ -42,18 +42,27 @@ export function CloudSync() {
     }
     let alive = true;
     ready.current = false;
+    let pull = 0;
     const name = readHuntName(user.displayName ?? "Crusader");
     let steal = true;
+    let giveUp = window.setTimeout(() => {
+      if (alive) useGame.getState().setCloudReady(true);
+    }, 8000);
 
     async function boot() {
+      const token = ++pull;
+      window.clearTimeout(giveUp);
+      giveUp = window.setTimeout(() => {
+        if (alive) useGame.getState().setCloudReady(true);
+      }, 8000);
       try {
         const recovered = await recoverSave();
-        if (!alive) return;
+        if (!alive || token !== pull) return;
         if (recovered) sim.hydrate(recovered);
         await registerBackgroundHunt();
         if (navigator.storage?.persist) void navigator.storage.persist();
         const [cloud, heroes] = await Promise.all([pullCloudSave(), pullHeroRoster().catch(() => ({ roster: [] }))]);
-        if (!alive) return;
+        if (!alive || token !== pull) return;
         if (cloud.payload) {
           try {
             const parsed = JSON.parse(cloud.payload) as { lastSaveAt?: number; maxFloor?: number; hires?: number };
@@ -81,11 +90,15 @@ export function CloudSync() {
           pushCloudSave({ data: { payload: dump(), device: getDeviceId(), steal: true } }),
           flushHeroes().catch(() => undefined),
         ]);
+        if (!alive || token !== pull) return;
         steal = false;
         ready.current = true;
+        useGame.getState().setCloudReady(true);
       } catch {
+        if (!alive || token !== pull) return;
         queueCloud(name);
         ready.current = true;
+        useGame.getState().setCloudReady(true);
       }
     }
 
@@ -123,13 +136,16 @@ export function CloudSync() {
     window.addEventListener("pagehide", push);
     window.addEventListener("online", push);
     window.addEventListener("soulrift-heroes", onHeroes);
+    window.addEventListener("soulrift-reopen", boot);
     return () => {
       alive = false;
+      window.clearTimeout(giveUp);
       window.clearInterval(id);
       document.removeEventListener("visibilitychange", onHide);
       window.removeEventListener("pagehide", push);
       window.removeEventListener("online", push);
       window.removeEventListener("soulrift-heroes", onHeroes);
+      window.removeEventListener("soulrift-reopen", boot);
     };
   }, [user?.id, isPending, demoHunt]);
 

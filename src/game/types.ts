@@ -75,6 +75,9 @@ export type GameState = {
   pity: number;
   expeditionHero: HeroId | null;
   expeditionAt: number;
+  lineup: HeroId[];
+  bench: HeroId[];
+  godRebuy: HeroId[];
   marketDay: string;
   marketBought: string[];
   vipSpent: number;
@@ -163,6 +166,8 @@ export type HeroSnap = {
   craftEmber: number;
   craftBone: number;
   canCraft: boolean;
+  benched: boolean;
+  godRebuy: boolean;
   runeSlots: number;
   attached: (OwnedRune | null)[];
   prestige: number;
@@ -316,6 +321,7 @@ export type Snapshot = {
   expeditionName: string;
   expeditionLeft: number;
   expeditionReady: boolean;
+  lineup: HeroId[];
   market: { id: string; name: string; blurb: string; gold: number; gems: number; bought: boolean }[];
   vip: number;
   vipSpent: number;

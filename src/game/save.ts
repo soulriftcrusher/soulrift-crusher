@@ -93,6 +93,9 @@ export function defaultState(now = Date.now()): GameState {
     pity: 0,
     expeditionHero: null,
     expeditionAt: 0,
+    lineup: [],
+    bench: [],
+    godRebuy: [],
     marketDay: "",
     marketBought: [],
     vipSpent: 0,
@@ -189,7 +192,9 @@ function migrate(raw: GameState): GameState {
   if (!Number.isFinite(merged.skipHits)) merged.skipHits = 0;
   if (typeof merged.pouchDay !== "string") merged.pouchDay = "";
   if (typeof merged.skipDay !== "string") merged.skipDay = "";
-  if (!Number.isFinite(merged.ritualReadyAt)) merged.ritualReadyAt = 0;
+  if (!Array.isArray(merged.lineup)) merged.lineup = [];
+  if (!Array.isArray(merged.bench)) merged.bench = [];
+  if (!Array.isArray(merged.godRebuy)) merged.godRebuy = [];
   if (!Number.isFinite(merged.climbKills)) merged.climbKills = Math.max(0, merged.kills ?? 0);
   return merged;
 }
@@ -358,6 +363,9 @@ export function applyRoster(state: GameState, roster: HeroRoster): GameState {
     if (!id) continue;
     if (!state.founderClaimed && (id === "auric" || id === "solenne" || id === "vael" || (id === "morvax" && !state.morvaxPaid))) {
       state.heroLevel[id] = 0;
+      continue;
+    }
+    if ((state.godRebuy ?? []).includes(id)) {
       continue;
     }
     if (!state.heroPrestige) state.heroPrestige = {} as GameState["heroPrestige"];
@@ -581,6 +589,13 @@ export function mergeProgress(local: GameState, incoming: GameState): GameState 
     else if (pO > pN) heroLevel[h.id] = lO;
     else heroLevel[h.id] = Math.max(lN, lO);
   }
+  const rebuy = new Set([...(newerSave.godRebuy ?? []), ...(older.godRebuy ?? [])]);
+  for (const id of rebuy) {
+    const fromNew = (newerSave.godRebuy ?? []).includes(id);
+    const fromOld = (older.godRebuy ?? []).includes(id);
+    if (fromNew) heroLevel[id] = lvOf(newerSave, id);
+    else if (fromOld) heroLevel[id] = lvOf(older, id);
+  }
   const founder = Boolean(local.founderClaimed || incoming.founderClaimed);
   const morvaxPaid = founder || Boolean(local.morvaxPaid || incoming.morvaxPaid);
   if (!founder) {
@@ -640,6 +655,9 @@ export function mergeProgress(local: GameState, incoming: GameState): GameState 
     marketDay: newerSave.marketDay || older.marketDay || "",
     expeditionHero: newerSave.expeditionHero ?? null,
     expeditionAt: newerSave.expeditionHero ? newerSave.expeditionAt ?? 0 : 0,
+    lineup: newerSave.lineup ?? older.lineup ?? [],
+    bench: newerSave.bench ?? older.bench ?? [],
+    godRebuy: newerSave.godRebuy ?? older.godRebuy ?? [],
     autoSkill: Boolean(newerSave.autoSkill ?? older.autoSkill),
     monthHits: (newerSave.monthHits?.length ?? 0) >= (older.monthHits?.length ?? 0) ? newerSave.monthHits ?? [] : older.monthHits ?? [],
     monthKey: newerSave.monthKey || older.monthKey || "",

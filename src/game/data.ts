@@ -460,7 +460,7 @@ export const HEROES: HeroDef[] = [
     title: "God of the Hoard",
     blurb: "A god. Gold bends when he stands up. Real money only.",
     role: "dps",
-    baseCost: 1e40,
+    baseCost: 5e6,
     costScale: 1.07,
     baseDps: 2e9,
     baseClick: 0,
@@ -479,7 +479,7 @@ export const HEROES: HeroDef[] = [
     title: "God of the Well",
     blurb: "A god. Souls answer her. Real money only.",
     role: "dps",
-    baseCost: 1e40,
+    baseCost: 5e6,
     costScale: 1.07,
     baseDps: 4e9,
     baseClick: 0,
@@ -498,7 +498,7 @@ export const HEROES: HeroDef[] = [
     title: "God of the Cut",
     blurb: "A god. The rift opens where he points. Real money only.",
     role: "dps",
-    baseCost: 1e40,
+    baseCost: 5e6,
     costScale: 1.07,
     baseDps: 8e9,
     baseClick: 0,
@@ -517,7 +517,7 @@ export const HEROES: HeroDef[] = [
     title: "The Gem God",
     blurb: "A god priced in gems. One million. Nothing else buys him.",
     role: "dps",
-    baseCost: 1e40,
+    baseCost: 5e6,
     costScale: 1.07,
     baseDps: 1.5e10,
     baseClick: 0,
@@ -561,6 +561,15 @@ export const SCIENCES: ScienceDef[] = [
 ];
 
 export const HERO_LEVEL_CAP = 100;
+export const GOD_LEVEL_CAP = 100;
+
+export function isGod(id: HeroId): boolean {
+  return id === "auric" || id === "solenne" || id === "vael" || id === "morvax";
+}
+
+export function levelCap(id: HeroId): number {
+  return isGod(id) ? GOD_LEVEL_CAP : HERO_LEVEL_CAP;
+}
 export const HERO_PRESTIGE_MAX = 100;
 export const RELIC_RANK_CAP = 500;
 export const SCIENCE_RANK_CAP = 500;
@@ -659,14 +668,8 @@ export function arenaFoeArt(name: string): string {
   }
 }
 
-export function heroStars(hero: HeroDef, gilds: number): number {
-  let s = 1;
-  if (hero.unlockFloor >= 8 || hero.baseCost >= 1e5) s = 2;
-  if (hero.unlockFloor >= 16 || hero.baseCost >= 1e7) s = 3;
-  if (hero.acquire === "summon" || (hero.acquire === "gems" && hero.id !== "morvax")) s = 3;
-  if (hero.acquire === "cash" || hero.id === "morvax") s = 4;
-  if (gilds >= 20) s = Math.min(5, s + 1);
-  return Math.min(5, s);
+export function heroStars(_hero: HeroDef, gilds: number): number {
+  return Math.min(5, 1 + Math.max(0, gilds));
 }
 
 type Progress = {

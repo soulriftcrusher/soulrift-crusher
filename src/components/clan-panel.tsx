@@ -176,7 +176,7 @@ export function ClanPanel() {
       { id: "profile", label: "My Profile", blurb: "Your stats and titles." },
     ];
     return (
-      <div className="hunt-hub flex min-h-0 flex-1 flex-col pt-1">
+      <div className="hunt-hub flex h-full min-h-0 flex-1 flex-col pt-1">
         {world?.online ? (
           <p className="mb-1 shrink-0 text-center font-display text-xs text-gold tabular-nums">
             {world.online} crusader{world.online === 1 ? "" : "s"} online

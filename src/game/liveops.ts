@@ -112,7 +112,7 @@ export function monthReward(day: number): { gems: number; chests: number } {
   return { gems, chests };
 }
 
-export const WEEKLY_LOGIN = [1, 1, 1, 1, 1, 1, 2];
+export const WEEKLY_LOGIN = [1, 1, 1, 1, 1, 1, 1];
 
 export const BP_STEP = 80;
 export const BP_MAX = 25;

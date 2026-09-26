@@ -17,6 +17,8 @@ import {
   biomeFor,
   contractProgress,
   heroStars,
+  isGod,
+  levelCap,
   monsterKindFor,
   monsterName,
   rollContracts,
@@ -248,11 +250,13 @@ export class GameSim {
     if ((this.state.heroLevel.wren ?? 0) > 0) m *= 1.12;
     if ((this.state.heroLevel.devourer ?? 0) > 0) m *= 1.3;
     if ((this.state.heroLevel.vorr ?? 0) > 0) m *= 1.4;
-    if ((this.state.heroLevel.vael ?? 0) > 0) m *= 2;
+    if ((this.state.heroLevel.vael ?? 0) > 0) m *= 3;
     if (this.legendOn("vael")) m *= 2;
-    if ((this.state.heroLevel.morvax ?? 0) > 0) m *= 2.5;
+    if ((this.state.heroLevel.morvax ?? 0) > 0) m *= 3;
     if (this.legendOn("morvax")) m *= 2;
-    if (this.pantheon()) m *= 1.75;
+    if ((this.state.heroLevel.auric ?? 0) > 0) m *= 2;
+    if ((this.state.heroLevel.solenne ?? 0) > 0) m *= 2;
+    if (this.pantheon()) m *= 2;
     if (this.legendOn("rook")) m *= 1.14;
     if (this.legendOn("devourer")) m *= 1.16;
     if (this.state.skillActive.rage > 0) m *= 2;
@@ -396,7 +400,8 @@ export class GameSim {
     const gilds = this.state.heroGild[id] ?? 0;
     const craft = 1 + 0.1 * (this.state.heroCraft[id] ?? 0);
     const pres = 1 + 0.12 * (this.state.heroPrestige?.[id] ?? 0);
-    return def.baseDps * level * milestoneMult(level) * (1 + 0.5 * gilds) * craft * pres;
+    const god = isGod(id) ? 2 : 1;
+    return def.baseDps * level * god * milestoneMult(level) * (1 + 0.5 * gilds) * craft * pres;
   }
 
   heroClick(id: HeroId): number {
@@ -432,7 +437,7 @@ export class GameSim {
 
   bulkLevels(id: HeroId, bulk: Bulk): number {
     const level = this.state.heroLevel[id] ?? 0;
-    const room = Math.max(0, HERO_LEVEL_CAP - level);
+    const room = Math.max(0, levelCap(id) - level);
     if (bulk === -1) {
       let n = 0;
       let gold = this.state.gold;
@@ -453,13 +458,18 @@ export class GameSim {
     if (!def) return false;
     const level = this.state.heroLevel[id] ?? 0;
     if (this.state.maxFloor < def.unlockFloor && level <= 0) return false;
-    if (def.acquire !== "gold" && level <= 0) return false;
-    if (level >= HERO_LEVEL_CAP) return false;
+    const had =
+      (this.state.heroPrestige?.[id] ?? 0) > 0 ||
+      (this.state.heroGild[id] ?? 0) > 0 ||
+      (this.state.heroCraft[id] ?? 0) > 0 ||
+      (isGod(id) && (this.state.godRebuy ?? []).includes(id));
+    if (def.acquire !== "gold" && level <= 0 && !had) return false;
+    if (level >= levelCap(id)) return false;
     const n = this.bulkLevels(id, bulk);
     const cost = this.heroCost(id, level, Math.max(1, n));
     if (this.state.gold < cost) return false;
     this.state.gold -= cost;
-    const next = Math.min(HERO_LEVEL_CAP, level + Math.max(1, n));
+    const next = Math.min(levelCap(id), level + Math.max(1, n));
     this.state.heroLevel[id] = next;
     if (level <= 0) this.state.hires += 1;
     if (!quiet) {
@@ -504,7 +514,7 @@ export class GameSim {
 
   prestigeHero(id: HeroId): boolean {
     const level = this.state.heroLevel[id] ?? 0;
-    if (level < HERO_LEVEL_CAP) return false;
+    if (level < levelCap(id)) return false;
     const p = this.state.heroPrestige?.[id] ?? 0;
     if (p >= HERO_PRESTIGE_MAX) return false;
     const cost = 40 + p * 20;
@@ -858,8 +868,8 @@ export class GameSim {
     let souls = 0;
     let influence = 0;
     for (let i = 0; i < n; i++) {
-      gold += Math.floor((2 + Math.random() * 4) * f * this.goldMult() * 0.04);
-      souls += Math.random() < 0.55 ? 1 + Math.floor(f / 25) : 0;
+      gold += Math.floor(this.monsterGold(f, false) * this.goldMult() * (10 + Math.random() * 16));
+      souls += 1 + Math.floor(f / 18);
       influence += 4 + Math.floor(f / 8);
     }
     this.state.gold += gold;
@@ -971,9 +981,14 @@ export class GameSim {
     this.state.gold = 0;
     this.state.climbKills = 0;
     this.state.ritualReadyAt = Date.now() + 24 * 60 * 60 * 1000;
-    this.state.floor = this.startFloorAfterRitual();
+    this.state.floor = 1;
+    const gods = ["auric", "solenne", "vael", "morvax"] as const;
+    const owned = gods.filter((id) => (this.state.heroLevel[id] ?? 0) > 0);
+    this.state.godRebuy = [...new Set([...(this.state.godRebuy ?? []), ...owned])];
     for (const h of HEROES) this.state.heroLevel[h.id] = h.id === "kael" ? 1 : 0;
-    this.state.hires = 1;
+    this.state.lineup = (this.state.lineup ?? []).filter((id) => !isGod(id));
+    this.state.bench = (this.state.bench ?? []).filter((id) => !isGod(id));
+    this.state.hires = HEROES.filter((h) => (this.state.heroLevel[h.id] ?? 0) > 0).length;
     for (const s of SKILLS) {
       this.state.skillCd[s.id] = 0;
       this.state.skillActive[s.id] = 0;
@@ -995,8 +1010,7 @@ export class GameSim {
 
   canRitual(): boolean {
     if ((this.state.ritualReadyAt ?? 0) > Date.now()) return false;
-    if (this.state.floor < 12) return false;
-    if (this.state.floor <= this.startFloorAfterRitual()) return false;
+    if (Math.max(this.state.floor, this.state.maxFloor) < 12) return false;
     return this.ritualSouls() > 0;
   }
 
@@ -1087,10 +1101,10 @@ export class GameSim {
   }
 
   claimFounder(): boolean {
-    if (this.state.founderClaimed && (this.state.founderKit ?? 0) >= 6) return false;
+    if (this.state.founderClaimed && (this.state.founderKit ?? 0) >= 7) return false;
     this.state.founderClaimed = true;
     this.applyFounderMax();
-    this.state.founderKit = 6;
+    this.state.founderKit = 7;
     this.save();
     this.pingHeroes();
     return true;
@@ -1099,18 +1113,18 @@ export class GameSim {
   ensureFounderKit() {
     if (!this.state.founderClaimed) return;
     const kit = this.state.founderKit ?? 0;
-    if (kit >= 6) return;
+    if (kit >= 7) return;
     if (kit < 2) this.applyFounderMax();
     this.state.souls = Math.max(this.state.souls, 1e100);
     this.state.gems = Math.max(this.state.gems, 1e12);
-    this.state.gold = Math.max(this.state.gold, 1e70);
-    this.state.founderKit = 6;
+    this.state.gold = Math.max(this.state.gold, 1e120);
+    this.state.founderKit = 7;
     this.save();
     this.pingHeroes();
   }
 
   applyFounderMax() {
-    this.state.gold = 1e70;
+    this.state.gold = 1e120;
     this.state.souls = 1e100;
     this.state.gems = 1e12;
     this.state.influence = 50000;
@@ -1347,10 +1361,15 @@ export class GameSim {
 
   /** Founder keeps the four gods. Everyone else stays locked or pays the gem price. */
   private keepOwnerGods() {
+    for (const id of ["auric", "solenne", "vael", "morvax"] as const) {
+      if ((this.state.heroLevel[id] ?? 0) > HERO_LEVEL_CAP) this.state.heroLevel[id] = HERO_LEVEL_CAP;
+    }
     if (!this.state.founderClaimed) return;
     this.state.morvaxPaid = true;
+    const rebuy = this.state.godRebuy ?? [];
     let gave = false;
     for (const id of ["auric", "solenne", "vael", "morvax"] as const) {
+      if (rebuy.includes(id)) continue;
       if ((this.state.heroLevel[id] ?? 0) <= 0) {
         this.state.heroLevel[id] = 1;
         gave = true;
@@ -1403,7 +1422,6 @@ export class GameSim {
     this.state.loginClaimed = today;
     const gems = WEEKLY_LOGIN[(streak - 1) % 7] ?? 1;
     this.state.gems += gems;
-    if (streak % 7 === 0) this.state.chests += 2;
     this.save();
     return true;
   }
@@ -1456,6 +1474,35 @@ export class GameSim {
     return true;
   }
 
+  isBenched(id: HeroId): boolean {
+    return (this.state.bench ?? []).includes(id);
+  }
+
+  lineupIds(): HeroId[] {
+    const hired = HEROES.filter((h) => (this.state.heroLevel[h.id] ?? 0) > 0 && !this.isDown(h.id) && !this.isBenched(h.id)).map((h) => h.id);
+    const saved = (this.state.lineup ?? []).filter((id) => hired.includes(id) && !this.isBenched(id));
+    const gods = hired.filter((id) => isGod(id));
+    const rest = hired.filter((id) => !isGod(id));
+    if (saved.length) return saved.slice(0, 5);
+    return [...gods, ...rest].slice(0, 5);
+  }
+
+  toggleLineup(id: HeroId): boolean {
+    if ((this.state.heroLevel[id] ?? 0) <= 0) return false;
+    const showing = this.lineupIds().includes(id);
+    if (showing) {
+      const bench = (this.state.bench ?? []).filter((x) => x !== id);
+      this.state.bench = [...bench, id];
+      this.state.lineup = this.lineupIds().filter((x) => x !== id);
+    } else {
+      this.state.bench = (this.state.bench ?? []).filter((x) => x !== id);
+      const cur = this.lineupIds().filter((x) => x !== id);
+      this.state.lineup = [...cur, id].slice(-5);
+    }
+    this.save();
+    return true;
+  }
+
   startExpedition(id: HeroId): boolean {
     if ((this.state.heroLevel[id] ?? 0) <= 0 || this.isDown(id)) return false;
     if (this.state.expeditionHero && (this.state.expeditionAt ?? 0) > Date.now()) return false;
@@ -1466,20 +1513,22 @@ export class GameSim {
     return true;
   }
 
-  collectExpedition(): boolean {
-    if (!this.state.expeditionHero) return false;
-    if ((this.state.expeditionAt ?? 0) > Date.now()) return false;
+  collectExpedition(): { gold: number; souls: number; chests: number } | null {
+    if (!this.state.expeditionHero) return null;
+    if ((this.state.expeditionAt ?? 0) > Date.now()) return null;
     const lv = this.state.heroLevel[this.state.expeditionHero] ?? 1;
-    const gold = Math.floor((3 + lv * 0.4) * this.state.maxFloor * 0.05 * this.goldMult());
+    const gold = Math.floor(this.monsterGold(this.state.maxFloor, false) * this.goldMult() * (6 + lv * 0.02));
+    const souls = 1 + Math.floor(this.state.maxFloor / 40);
+    const chests = Math.random() < 0.55 ? 1 : 0;
     this.state.gold += gold;
     this.state.lootGold += gold;
-    this.state.souls += 1;
-    if (Math.random() < 0.35) this.state.chests += 1;
+    this.state.souls += souls;
+    this.state.chests += chests;
     this.state.expeditionHero = null;
     this.state.expeditionAt = 0;
     this.save();
     this.pingHeroes();
-    return true;
+    return { gold, souls, chests };
   }
 
   buyMarket(id: string): boolean {
@@ -1818,11 +1867,19 @@ export class GameSim {
         click: this.heroClick(h.id),
         cost,
         levels: n,
-        canAfford: this.state.gold >= cost && level < HERO_LEVEL_CAP && (level > 0 || (h.acquire === "gold" && this.state.maxFloor >= h.unlockFloor)),
+        canAfford:
+          this.state.gold >= cost &&
+          level < levelCap(h.id) &&
+          (level > 0 ||
+            (h.acquire === "gold" && this.state.maxFloor >= h.unlockFloor) ||
+            ((this.state.heroPrestige?.[h.id] ?? 0) > 0 ||
+              (this.state.heroGild[h.id] ?? 0) > 0 ||
+              (this.state.heroCraft[h.id] ?? 0) > 0 ||
+              (this.state.godRebuy ?? []).includes(h.id))),
         unlocked: level > 0 || (h.acquire === "gold" && this.state.maxFloor >= h.unlockFloor),
         gildCost,
         gildCount: Math.max(1, gildN),
-        canGild: gildN > 0,
+        canGild: level > 0 && gildN > 0,
         acquire: h.acquire,
         gemCost: h.gemCost,
         usd: h.usd ?? "",
@@ -1836,13 +1893,15 @@ export class GameSim {
         craftEmber: cc.ember,
         craftBone: cc.bone,
         canCraft: level > 0 && craft < 8 && (this.state.ember ?? 0) >= cc.ember && (this.state.bone ?? 0) >= cc.bone,
+        benched: this.isBenched(h.id),
+        godRebuy: (this.state.godRebuy ?? []).includes(h.id),
         runeSlots: slots,
         attached,
         prestige,
         prestigeMax: HERO_PRESTIGE_MAX,
         prestigeCost: 40 + prestige * 20,
-        canPrestige: level >= HERO_LEVEL_CAP && prestige < HERO_PRESTIGE_MAX && this.state.souls >= 40 + prestige * 20,
-        atCap: level >= HERO_LEVEL_CAP,
+        canPrestige: level >= levelCap(h.id) && prestige < HERO_PRESTIGE_MAX && this.state.souls >= 40 + prestige * 20,
+        atCap: level >= levelCap(h.id),
         down,
         downLeft: Math.max(0, downUntil - Date.now()),
         reviveGems: ARENA_REVIVE_GEMS,
@@ -1985,6 +2044,7 @@ export class GameSim {
       expeditionName: HEROES.find((h) => h.id === this.state.expeditionHero)?.name ?? "",
       expeditionLeft: Math.max(0, (this.state.expeditionAt ?? 0) - Date.now()),
       expeditionReady: Boolean(this.state.expeditionHero) && (this.state.expeditionAt ?? 0) <= Date.now(),
+      lineup: this.lineupIds(),
       market: (() => {
         const day = dayKey();
         if (this.state.marketDay !== day) {
