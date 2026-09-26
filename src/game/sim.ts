@@ -115,6 +115,7 @@ export class GameSim {
   lastArena: ArenaResult | null = null;
   private saveAcc = 0;
   private offlineGold = 0;
+  private attackCursor = 0;
   private clanDps = 0;
   private clanGold = 0;
   private clanSouls = 0;
@@ -184,6 +185,7 @@ export class GameSim {
       timer: timerMax,
       timerMax,
       artScale: (boss ? 0.9 : 0.72) + Math.random() * 0.18,
+      chip: 0,
     };
   }
 
@@ -202,15 +204,22 @@ export class GameSim {
 
   monsterHp(floor: number, boss: boolean): number {
     const n = Math.max(1, floor);
+    const hp = 40 * Math.pow(1.031, n - 1) * (boss ? 6 : 1);
+    if (!Number.isFinite(hp) || hp > 1e300) return 1e300 * (boss ? 1 : 1);
+    return Math.max(12, hp);
+  }
+
+  private economyHp(floor: number, boss: boolean): number {
+    const n = Math.max(1, floor);
     const base = 16 * Math.pow(1.26, n - 1);
     const band = Math.pow(1.08, Math.floor((n - 1) / 25));
     const hp = base * band * (boss ? 5 : 1);
     if (!Number.isFinite(hp)) return 1e15 * (boss ? 5 : 1);
-    return Math.max(8, Math.floor(hp));
+    return Math.max(8, hp);
   }
 
   monsterGold(floor: number, boss: boolean): number {
-    const hp = this.monsterHp(floor, false);
+    const hp = this.economyHp(floor, false);
     const raw = (hp / 4.2) * (boss ? 3.4 : 1) * 0.028;
     return Math.max(1, Math.floor(raw));
   }
@@ -917,7 +926,26 @@ export class GameSim {
     if (amount <= 0 || this.monster.hp <= 0) return;
     let dmg = amount;
     if (this.monster.isBoss) dmg *= this.bossMult();
-    this.monster.hp = Math.max(0, this.monster.hp - dmg);
+    const hp = this.monster.hp;
+    if (dmg >= hp) {
+      this.monster.hp = 0;
+      this.monster.chip = 0;
+      if (!silent) this.emit({ type: "hit", amount: dmg, crit, source, heroId });
+      this.onKill();
+      return;
+    }
+    const gap = Math.log10(hp) - Math.log10(Math.max(dmg, 1e-9));
+    if (gap < 12) {
+      this.monster.hp = hp - dmg;
+      this.monster.chip = 0;
+    } else {
+      this.monster.chip = (this.monster.chip ?? 0) + dmg;
+      const bankGap = Math.log10(hp) - Math.log10(Math.max(this.monster.chip, 1e-9));
+      if (bankGap < 12) {
+        this.monster.hp = Math.max(0, hp - this.monster.chip);
+        this.monster.chip = 0;
+      }
+    }
     if (!silent) this.emit({ type: "hit", amount: dmg, crit, source, heroId });
     if (this.monster.hp <= 0) this.onKill();
   }
@@ -1360,10 +1388,15 @@ export class GameSim {
   }
 
   /** Founder keeps the four gods. Everyone else stays locked or pays the gem price. */
-  private keepOwnerGods() {
+  keepOwnerGods() {
+    let clamped = false;
     for (const id of ["auric", "solenne", "vael", "morvax"] as const) {
-      if ((this.state.heroLevel[id] ?? 0) > HERO_LEVEL_CAP) this.state.heroLevel[id] = HERO_LEVEL_CAP;
+      if ((this.state.heroLevel[id] ?? 0) > HERO_LEVEL_CAP) {
+        this.state.heroLevel[id] = HERO_LEVEL_CAP;
+        clamped = true;
+      }
     }
+    if (clamped) this.save();
     if (!this.state.founderClaimed) return;
     this.state.morvaxPaid = true;
     const rebuy = this.state.godRebuy ?? [];
@@ -2129,6 +2162,16 @@ export class GameSim {
 
   step(dt: number) {
     this.banishCoil();
+    const fair = this.monsterHp(this.state.floor, this.monster.isBoss);
+    if (this.monster.max > fair * 1.25) {
+      const ratio = this.monster.max > 0 ? Math.min(1, this.monster.hp / this.monster.max) : 1;
+      const kind = this.monster.kind;
+      const name = this.monster.name;
+      this.monster = this.makeMonster(this.state.floor, this.monster.isBoss);
+      this.monster.kind = kind;
+      this.monster.name = name;
+      this.monster.hp = Math.max(1, this.monster.max * ratio);
+    }
     const t = Math.min(dt, 0.1);
     this.comboTimer -= t;
     if (this.comboTimer <= 0) this.combo = 0;
@@ -2157,14 +2200,24 @@ export class GameSim {
       }
     }
     const dps = this.dps();
-    if (dps > 0 && this.monster.hp > 0) this.applyDamage(dps * t, "hero", undefined, false, true);
-    for (const h of HEROES) {
-      const level = this.state.heroLevel[h.id] ?? 0;
-      if (level <= 0) continue;
-      this.attackCd[h.id] -= t;
-      if (this.attackCd[h.id] <= 0) {
-        this.attackCd[h.id] = 0.85 + (h.id.charCodeAt(0) % 5) * 0.12;
-        this.emit({ type: "heroAttack", heroId: h.id });
+    if (dps > 0 && this.monster.hp > 0) {
+      if (!this.monster.isBoss && dps * t > this.monster.hp * 2) {
+        const n = Math.min(3, Math.max(1, Math.floor((dps * t) / Math.max(1, this.monster.hp))));
+        for (let i = 0; i < n && !this.monster.isBoss && this.monster.hp > 0; i++) {
+          this.applyDamage(this.monster.hp, "hero", undefined, false, true);
+        }
+      } else {
+        this.applyDamage(dps * t, "hero", undefined, false, true);
+      }
+    }
+    const showing = this.lineupIds();
+    const attacker = showing.length ? showing[this.attackCursor % showing.length] : null;
+    if (attacker && (this.state.heroLevel[attacker] ?? 0) > 0) {
+      this.attackCd[attacker] = (this.attackCd[attacker] ?? 0) - t;
+      if (this.attackCd[attacker] <= 0) {
+        this.attackCd[attacker] = 0.45;
+        this.attackCursor += 1;
+        this.emit({ type: "heroAttack", heroId: attacker });
       }
     }
     this.saveAcc += t;

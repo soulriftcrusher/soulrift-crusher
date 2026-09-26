@@ -196,6 +196,10 @@ export class Renderer {
   private splash = "#e8a090";
   private onHud: (() => void) | null = null;
   private hudAcc = 0;
+  private drawAcc = 0;
+  private resizeAcc = 0;
+  private lastSfx = 0;
+  private phone = false;
   private groundY = 0;
   private monsterX = 0;
   private monsterY = 0;
@@ -316,6 +320,7 @@ export class Renderer {
     this.running = true;
     this.last = performance.now();
     this.reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches || this.reduced;
+    this.phone = window.matchMedia("(pointer: coarse)").matches;
     const loop = (t: number) => {
       if (!this.running) return;
       if (document.visibilityState !== "visible") {
@@ -340,8 +345,9 @@ export class Renderer {
     const now = performance.now();
     const rect = this.canvas.getBoundingClientRect();
     const raw = window.devicePixelRatio || 1;
-    // Phone is ~2.8x; old 1.15 cap made everyone look smeared.
-    let dpr = Math.min(2, Math.max(1, raw));
+    const coarse = window.matchMedia("(pointer: coarse)").matches;
+    const mem = (navigator as { deviceMemory?: number }).deviceMemory ?? 8;
+    let dpr = Math.min(coarse || mem <= 4 ? 1.5 : 2, Math.max(1, raw));
     let w = Math.max(1, Math.floor(rect.width * dpr));
     let h = Math.max(1, Math.floor(rect.height * dpr));
     const maxPx = 2_200_000;
@@ -361,14 +367,17 @@ export class Renderer {
     this.w = w;
     this.h = h;
     this.ctx.imageSmoothingEnabled = true;
-    this.ctx.imageSmoothingQuality = "high";
+    this.ctx.imageSmoothingQuality = "low";
   }
 
   private tick(dt: number) {
-    this.resize();
+    this.resizeAcc += dt;
+    if (this.resizeAcc >= 0.5 || this.w < 2) {
+      this.resizeAcc = 0;
+      this.resize();
+    }
     if (this.hitstop > 0) {
       this.hitstop -= dt;
-      if (this.paint && document.visibilityState === "visible") this.draw();
       return;
     }
     this.acc += dt;
@@ -384,12 +393,12 @@ export class Renderer {
       this.time += dt;
     }
     this.present(dt);
-    this.hudAcc += dt;
-    if (this.hudAcc >= 0.25) {
-      this.hudAcc = 0;
-      this.onHud?.();
+    this.drawAcc += dt;
+    const drawEvery = this.phone ? 1 / 30 : 1 / 50;
+    if (this.paint && document.visibilityState === "visible" && this.drawAcc >= drawEvery) {
+      this.drawAcc = 0;
+      this.draw();
     }
-    if (this.paint && document.visibilityState === "visible") this.draw();
   }
 
   private present(dt: number) {
@@ -447,9 +456,13 @@ export class Renderer {
     const my = this.monsterY - 40;
     if (e.type === "hit") {
       this.monsterHurt = 1;
-      this.trauma = Math.min(1, this.trauma + (e.crit ? 0.45 : 0.18));
-      if (e.crit && !this.reduced) this.hitstop = 0.045;
-      if (this.paint) sfx.hit(e.crit);
+      this.trauma = Math.min(1, this.trauma + (e.crit ? 0.28 : 0.08));
+      if (e.crit && !this.reduced) this.hitstop = 0.02;
+      const now = performance.now();
+      if (this.paint && now - this.lastSfx > 90) {
+        this.lastSfx = now;
+        sfx.hit(e.crit);
+      }
       if (!this.reduced) {
         this.floaters.push({
           x: mx + (Math.random() - 0.5) * 40,
@@ -479,7 +492,11 @@ export class Renderer {
       if (e.heroId) this.heroLunge[e.heroId] = 1;
     } else if (e.type === "kill") {
       this.monsterDead = 1;
-      if (this.paint) sfx.hit(true);
+      const now = performance.now();
+      if (this.paint && now - this.lastSfx > 90) {
+        this.lastSfx = now;
+        sfx.hit(true);
+      }
       const burst = this.reduced ? 2 : 8;
       for (let i = 0; i < burst; i++) {
         this.particles.push({

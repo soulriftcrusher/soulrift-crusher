@@ -127,6 +127,7 @@ export type MonsterState = {
   timer: number;
   timerMax: number;
   artScale: number;
+  chip: number;
 };
 
 export type SimEvent =

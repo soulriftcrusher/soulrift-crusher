@@ -1288,12 +1288,19 @@ export const fetchHunterProfile = createServerFn({ method: "POST" })
       bossKills,
       avatar: row[0].avatar || heroes[0]?.hero_id || "kael",
       banned: Boolean(banned[0]),
-      heroes: heroes.slice(0, 20).map((h) => ({
-        id: h.hero_id,
-        name: HEROES.find((x) => x.id === h.hero_id)?.name ?? h.hero_id,
-        level: Number(h.level),
-        prestige: Number(h.prestige),
-      })),
+      heroes: heroes
+        .slice()
+        .sort((a, b) => {
+          const ia = HEROES.findIndex((x) => x.id === a.hero_id);
+          const ib = HEROES.findIndex((x) => x.id === b.hero_id);
+          return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+        })
+        .map((h) => ({
+          id: h.hero_id,
+          name: HEROES.find((x) => x.id === h.hero_id)?.name ?? h.hero_id,
+          level: Number(h.level),
+          prestige: Number(h.prestige),
+        })),
       badges: ACHIEVEMENTS.filter((a) => earned.has(a.id)).map((a) => ({
         id: a.id,
         name: a.name,

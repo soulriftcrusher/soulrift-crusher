@@ -76,6 +76,7 @@ export function CloudSync() {
           }
         }
         if (heroes.roster?.length) applyRoster(sim.state, heroes.roster);
+        sim.keepOwnerGods();
         if (cloud.grantGems > 0) sim.grantGems(cloud.grantGems);
         sim.applyGift({
           gold: cloud.grantGold,

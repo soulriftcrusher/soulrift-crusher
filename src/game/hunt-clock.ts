@@ -30,7 +30,7 @@ export function startHuntClock(opts?: { onHud?: () => void; onIdle?: (gold: numb
     last = t;
     sim.step(dt);
     hudAcc += dt;
-    if (hudAcc >= 0.4) {
+    if (hudAcc >= 0.5) {
       hudAcc = 0;
       onHud?.();
     }

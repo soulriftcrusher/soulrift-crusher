@@ -556,7 +556,6 @@ function Battle() {
     renderer.setNames(showNames);
     renderer.setReduce(reduceFx);
     renderer.setSplash(SPLASH_COLOR[(splash as LookId) ?? "ash"] ?? "#e8a090");
-    renderer.setHud(() => useGame.getState().refresh());
     void renderer.load().then(() => renderer.start());
     return () => {
       renderer.stop();

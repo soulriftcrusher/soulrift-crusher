@@ -1,4 +1,4 @@
-import { ARENA_CHARGE_MAX, HEROES, RELICS, SCIENCES, SKILLS, rollContracts } from "./data";
+import { ARENA_CHARGE_MAX, HEROES, RELICS, SCIENCES, SKILLS, levelCap, rollContracts } from "./data";
 import type { HeroId } from "./data";
 import { LOOT } from "./loot";
 import { SOCKETS, WEAPONS } from "./meta";
@@ -10,6 +10,7 @@ const SAVE_KEY = "soulrift.save.v1";
 const HERO_KEY = "soulrift.heroes.v1";
 const IDB_NAME = "soulrift-vault";
 const IDB_STORE = "saves";
+let bakAt = 0;
 
 function emptyLevels<T extends string>(ids: readonly T[]): Record<T, number> {
   return Object.fromEntries(ids.map((id) => [id, 0])) as Record<T, number>;
@@ -375,11 +376,11 @@ export function applyRoster(state: GameState, roster: HeroRoster): GameState {
     const lvNow = Math.max(0, Number(state.heroLevel[id] ?? 0));
     if (pIn > pNow) {
       state.heroPrestige[id] = pIn;
-      state.heroLevel[id] = lvIn;
+      state.heroLevel[id] = Math.min(levelCap(id), lvIn);
     } else if (pNow > pIn) {
-      /* keep prestiged local level */
+      state.heroLevel[id] = Math.min(levelCap(id), lvNow);
     } else {
-      state.heroLevel[id] = Math.max(lvNow, lvIn);
+      state.heroLevel[id] = Math.min(levelCap(id), Math.max(lvNow, lvIn));
     }
     state.heroGild[id] = Math.max(Number(state.heroGild[id] ?? 0), Number(row.gild ?? 0));
     state.heroCraft[id] = Math.max(Number(state.heroCraft[id] ?? 0), Number(row.craft ?? 0));
@@ -449,8 +450,11 @@ export function persistState(state: GameState): void {
     writeHeroBlob(state);
     lockRoster(state);
     const json = JSON.stringify(state);
-    const prev = localStorage.getItem(SAVE_KEY);
-    if (prev) localStorage.setItem(SAVE_KEY + ":bak", prev);
+    if (Date.now() - bakAt > 20000) {
+      const prev = localStorage.getItem(SAVE_KEY);
+      if (prev) localStorage.setItem(SAVE_KEY + ":bak", prev);
+      bakAt = Date.now();
+    }
     localStorage.setItem(SAVE_KEY, json);
     sessionStorage.setItem(SAVE_KEY, json);
     void idbPut(state);
@@ -595,6 +599,9 @@ export function mergeProgress(local: GameState, incoming: GameState): GameState 
     const fromOld = (older.godRebuy ?? []).includes(id);
     if (fromNew) heroLevel[id] = lvOf(newerSave, id);
     else if (fromOld) heroLevel[id] = lvOf(older, id);
+  }
+  for (const h of HEROES) {
+    heroLevel[h.id] = Math.min(levelCap(h.id), Math.max(0, Number(heroLevel[h.id] ?? 0)));
   }
   const founder = Boolean(local.founderClaimed || incoming.founderClaimed);
   const morvaxPaid = founder || Boolean(local.morvaxPaid || incoming.morvaxPaid);
