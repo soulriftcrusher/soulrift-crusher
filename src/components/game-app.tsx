@@ -168,7 +168,6 @@ function BootScreen() {
             <div className="h-full bg-accent transition-[width] duration-150" style={{ width: `${load}%` }} />
           </div>
           <p className="mt-3 text-center font-display text-sm text-gold">Loading your hunt…</p>
-          <p className="mt-1 text-center text-xs text-fg/80">Refreshing anything new. No sign-in.</p>
         </div>
       </div>
     </div>
@@ -444,7 +443,7 @@ function Hud() {
   const muted = useGame((s) => s.muted);
   return (
     <header className="grid shrink-0 grid-cols-3 gap-1 border-b border-border bg-bg px-2 py-1.5 pt-[max(0.4rem,env(safe-area-inset-top))]">
-      <HudStat art="/tiles/hud-swords.png" value={formatNum(snap.clickDmg)} />
+      <HudStat art="/tiles/hud-swords.png" value={formatNum(snap.dps)} />
       <HudStat art="/tiles/hud-soul.png" value={formatNum(snap.souls)} />
       <HudStat art="/tiles/hud-gold.png" value={formatNum(snap.gold)} />
       <div className="col-span-3 mt-0.5 flex items-center gap-2 text-[11px] tabular-nums text-muted">
@@ -940,7 +939,7 @@ function HeroRow({ hero, open, onPeek }: { hero: HeroSnap; open: boolean; onPeek
           <p className="font-display text-gold">{def?.name ?? hero.id}</p>
           <p className="text-[11px] text-muted">
             Lv {hero.level}
-            {hero.prestige ? ` P${hero.prestige}` : ""} · {formatNum(hero.dps)} dps
+            {hero.prestige ? ` P${hero.prestige}` : ""} · G{hero.gilds} · {formatNum(hero.dps)} dps
             {hero.down ? " · DOWN" : ""}
           </p>
         </div>
@@ -1022,10 +1021,10 @@ function HeroRow({ hero, open, onPeek }: { hero: HeroSnap; open: boolean; onPeek
               }}
             >
               {bulk === -1
-                ? `Gild MAX · ${formatNum(hero.gildCost)} souls`
+                ? `Gild +${hero.gildCount} · ${hero.gilds} stamps · ${formatNum(hero.gildCost)} souls`
                 : bulk > 1
-                  ? `Gild x${hero.gildCount} · ${formatNum(hero.gildCost)} souls`
-                  : `Gild ${formatNum(hero.gildCost)} souls · ★${hero.stars}`}
+                  ? `Gild x${hero.gildCount} · ${hero.gilds} stamps · ${formatNum(hero.gildCost)} souls`
+                  : `Gild · ${hero.gilds} stamps · ${formatNum(hero.gildCost)} souls`}
             </Button>
           ) : null}
           {hero.level > 0 ? (

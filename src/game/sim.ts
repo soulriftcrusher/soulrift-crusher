@@ -100,6 +100,14 @@ function geometricSum(base: number, scale: number, from: number, n: number): num
   return base * Math.pow(scale, from) * ((Math.pow(scale, n) - 1) / (scale - 1));
 }
 
+function gildPower(gilds: number): number {
+  const n = Math.max(0, gilds);
+  const linear = 1 + 0.5 * n;
+  const curve = Math.pow(1.06, Math.min(n, 6000));
+  const p = Math.max(linear, Number.isFinite(curve) ? curve : linear);
+  return Number.isFinite(p) ? p : 1e300;
+}
+
 function milestoneMult(level: number): number {
   let m = 1;
   for (const t of MILESTONES) if (level >= t) m *= 2;
@@ -446,8 +454,8 @@ export class GameSim {
     const pres = 1 + 0.12 * (this.state.heroPrestige?.[id] ?? 0);
     const levelHit = level * Math.pow(1.02, Math.max(0, level - 1));
     const god = isGod(id) ? 12 : 1;
-    const raw = def.baseDps * levelHit * god * milestoneMult(level) * (1 + 0.5 * gilds) * craft * pres;
-    if (!Number.isFinite(raw) || raw > 1e30) return 1e30;
+    const raw = def.baseDps * levelHit * god * milestoneMult(level) * gildPower(gilds) * craft * pres;
+    if (!Number.isFinite(raw) || raw > 1e300) return 1e300;
     return Math.max(0, raw);
   }
 
@@ -456,14 +464,19 @@ export class GameSim {
     const level = this.state.heroLevel[id] ?? 0;
     if (level <= 0 || def.baseClick <= 0) return 0;
     if (this.isDown(id)) return 0;
-    return def.baseClick * level * milestoneMult(level);
+    const gilds = this.state.heroGild[id] ?? 0;
+    const craft = 1 + 0.1 * (this.state.heroCraft[id] ?? 0);
+    const pres = 1 + 0.12 * (this.state.heroPrestige?.[id] ?? 0);
+    const raw = def.baseClick * level * milestoneMult(level) * gildPower(gilds) * craft * pres;
+    if (!Number.isFinite(raw) || raw > 1e300) return 1e300;
+    return Math.max(0, raw);
   }
 
   dps(): number {
     let sum = 0;
     for (const h of HEROES) sum += this.heroDps(h.id);
     const v = sum * this.dpsMult();
-    if (!Number.isFinite(v) || v > 1e36) return 1e36;
+    if (!Number.isFinite(v) || v > 1e300) return 1e300;
     return Math.max(0, v);
   }
 
@@ -582,9 +595,9 @@ export class GameSim {
     if (bulk === -1) {
       const a = 2 * gilds + 1;
       const disc = a * a + 8 * souls;
-      if (!Number.isFinite(disc)) return 20000;
+      if (!Number.isFinite(disc)) return 10;
       const n = Math.floor((-a + Math.sqrt(Math.max(0, disc))) / 2);
-      return Math.max(0, Math.min(20000, n));
+      return Math.max(0, Math.min(10, n));
     }
     let n = 0;
     let left = souls;
@@ -2305,8 +2318,9 @@ export class GameSim {
     let guard = 0;
     while (left > 0.05 && guard++ < 40) {
       if (this.monster.isBoss) break;
+      this.monsterAge = Math.max(this.monsterAge, 0.7);
       const hp = Math.max(1, this.monster.hp);
-      const tta = hp / dps;
+      const tta = Math.max(this.monster.isBoss ? 0 : 0.7, hp / dps);
       if (tta > left) {
         this.applyDamage(dps * left, "hero", undefined, false, true);
         left = 0;
