@@ -9,6 +9,7 @@ import {
   lootIcon,
   matchRecipe,
   type LootId,
+  type RecipeDef,
   type RecipeResult,
 } from "@/game/loot";
 import { sfx, unlockAudio } from "@/game/audio";
@@ -30,6 +31,7 @@ export function CraftPage({ onClose }: { onClose: () => void }) {
   const [picking, setPicking] = useState<"slot" | "catalyst" | null>(null);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState("");
+  const [verdict, setVerdict] = useState<"ok" | "fail" | null>(null);
 
   const recipe = matchRecipe(slots, catalyst);
   const chance = craftChance(recipe, catalyst);
@@ -41,6 +43,46 @@ export function CraftPage({ onClose }: { onClose: () => void }) {
     if (catalyst) placed[catalyst] = (placed[catalyst] ?? 0) + 1;
     return snap.bag.map((b) => ({ ...b, count: Math.max(0, b.count - (placed[b.id] ?? 0)) }));
   }, [snap.bag, slots, catalyst]);
+
+  function owned(): Record<string, number> {
+    const c: Record<string, number> = {};
+    for (const b of snap.bag) c[b.id] = b.count;
+    return c;
+  }
+
+  function canLoad(r: RecipeDef, bag = owned()): boolean {
+    const need: Record<string, number> = {};
+    for (const id of r.inputs) need[id] = (need[id] ?? 0) + 1;
+    if (r.catalyst) need[r.catalyst] = (need[r.catalyst] ?? 0) + 1;
+    return Object.entries(need).every(([id, n]) => (bag[id] ?? 0) >= n);
+  }
+
+  function loadRecipe(r: RecipeDef) {
+    unlockAudio();
+    sfx.ui();
+    if (!canLoad(r)) {
+      setVerdict("fail");
+      setNote(`Missing parts for ${r.name}.`);
+      return;
+    }
+    const next: (LootId | null)[] = [null, null, null, null, null, null];
+    r.inputs.forEach((id, i) => {
+      if (i < next.length) next[i] = id;
+    });
+    setSlots(next);
+    setCatalyst(r.catalyst ?? null);
+    setVerdict(null);
+    setNote(`${r.name} is on the bench. Tap Strike.`);
+    setPage("bench");
+  }
+
+  function stillStocked(ids: (LootId | null)[], cat: LootId | null): boolean {
+    const bag = sim.state.bag ?? {};
+    const need: Record<string, number> = {};
+    for (const id of ids) if (id) need[id] = (need[id] ?? 0) + 1;
+    if (cat) need[cat] = (need[cat] ?? 0) + 1;
+    return Object.entries(need).every(([id, n]) => (bag[id as LootId] ?? 0) >= n);
+  }
 
   function put(id: LootId) {
     const row = bag.find((b) => b.id === id);
@@ -70,20 +112,25 @@ export function CraftPage({ onClose }: { onClose: () => void }) {
     unlockAudio();
     setBusy(true);
     setNote("");
+    setVerdict(null);
     sfx.hammer();
     window.setTimeout(() => {
       const result = sim.tryCraft(slots.filter((s): s is LootId => !!s), catalyst);
       refresh();
-      if (!result.ok) {
-        setNote(result.blurb);
-        setBusy(false);
-        return;
+      const keep = stillStocked(slots, catalyst);
+      if (!keep) {
+        setSlots([null, null, null, null, null, null]);
+        setCatalyst(null);
       }
-      setSlots([null, null, null, null, null, null]);
-      setCatalyst(null);
-      setNote(result.fail ? result.blurb : `${result.name}. ${result.blurb}`);
-      if (result.fail) sfx.fail();
-      else sfx.chest();
+      if (result.fail || !result.ok) {
+        setVerdict("fail");
+        setNote(result.fail ? `Failed. ${result.name || "That craft"} burned the parts.` : result.blurb);
+        sfx.fail();
+      } else {
+        setVerdict("ok");
+        setNote(keep ? `Success. You made ${result.name}. Tap Strike for another.` : `Success. You made ${result.name}. Out of parts.`);
+        sfx.chest();
+      }
       setBusy(false);
     }, 720);
   }
@@ -106,8 +153,15 @@ export function CraftPage({ onClose }: { onClose: () => void }) {
     return (
       <FullShell title="Recipes" onClose={onClose} onBack={() => setPage("bench")} snap={snap}>
         <ul className="flex flex-col gap-2">
-          {RECIPES.map((r) => (
-            <li key={r.id} className="flex items-center gap-3 rounded-lg border border-gold/30 bg-bg/80 p-3">
+          {RECIPES.map((r) => {
+            const ready = canLoad(r);
+            return (
+            <li key={r.id}>
+              <button
+                type="button"
+                onClick={() => loadRecipe(r)}
+                className="flex w-full items-center gap-3 rounded-lg border border-gold/30 bg-bg/80 p-3 text-left"
+              >
               <img src={recipeArt(r.result)} alt="" className="size-14 shrink-0 rounded-md object-cover" />
               <div className="min-w-0 flex-1">
                 <h3 className="font-display text-sm font-semibold text-fg">{r.name}</h3>
@@ -123,10 +177,14 @@ export function CraftPage({ onClose }: { onClose: () => void }) {
                     </>
                   ) : null}
                 </div>
-                <p className="mt-1 text-xs tabular-nums text-gold">Base chance {Math.round(r.chance * 100)}%</p>
+                <p className={cn("mt-1 text-xs font-semibold", ready ? "text-gold" : "text-accent")}>
+                  {ready ? "Tap to load the bench" : "Missing parts"} · {Math.round(r.chance * 100)}%
+                </p>
               </div>
+              </button>
             </li>
-          ))}
+            );
+          })}
         </ul>
       </FullShell>
     );
@@ -223,7 +281,19 @@ export function CraftPage({ onClose }: { onClose: () => void }) {
           <span className="text-[11px]">{busy ? "…" : "Strike"}</span>
         </Button>
       </div>
-      {note ? <p className="mt-2 text-sm text-gold">{note}</p> : null}
+      {verdict ? (
+        <p
+          className={cn(
+            "mt-3 rounded-lg border-2 px-3 py-3 text-center font-display text-base",
+            verdict === "ok" ? "border-[#7dff9a] bg-[#12301c] text-[#d8ffd8]" : "border-[#ff6b6b] bg-[#3a1212] text-[#ffd0d0]",
+          )}
+        >
+          {verdict === "ok" ? "SUCCESS" : "FAILED"}
+          {note ? <span className="mt-1 block text-sm font-normal">{note}</span> : null}
+        </p>
+      ) : note ? (
+        <p className="mt-2 text-sm text-gold">{note}</p>
+      ) : null}
 
       <div className="mt-3 grid grid-cols-5 gap-1.5">
         <ItemGrid items={shown} onPick={put} />

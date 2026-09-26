@@ -134,6 +134,26 @@ export class GameSim {
     const huntAt = state.lastHuntAt || state.lastSaveAt || Date.now();
     const huntGap = Math.max(0, (Date.now() - huntAt) / 1000);
     if (huntGap > 8) this.offlineGold = this.catchUp(huntGap);
+    this.settleRunaway();
+  }
+
+  /** Floors the last patch skipped get pulled back to a fight the party can actually win. */
+  settleRunaway() {
+    const dps = Math.max(1, this.dps());
+    const floor = Math.max(1, this.state.floor || 1);
+    if (this.monsterHp(floor, false) <= dps * 180 && floor <= 1500 && (this.state.maxFloor ?? 1) <= 1500) return;
+    let lo = 1;
+    let hi = Math.min(floor, 1500);
+    while (lo < hi) {
+      const mid = Math.ceil((lo + hi) / 2);
+      if (this.monsterHp(mid, false) > dps * 40) hi = mid - 1;
+      else lo = mid;
+    }
+    const next = Math.max(1, lo);
+    this.state.floor = next;
+    this.state.maxFloor = next;
+    this.monster = this.makeMonster(next, this.isBossFloor(next) && !this.state.farm);
+    this.save();
   }
 
   takeOfflineGold(): number {
@@ -204,8 +224,8 @@ export class GameSim {
 
   monsterHp(floor: number, boss: boolean): number {
     const n = Math.max(1, floor);
-    const hp = 40 * Math.pow(1.031, n - 1) * (boss ? 6 : 1);
-    if (!Number.isFinite(hp) || hp > 1e300) return 1e300 * (boss ? 1 : 1);
+    const hp = 80 * Math.pow(1.09, n - 1) * (boss ? 8 : 1);
+    if (!Number.isFinite(hp) || hp > 1e300) return 1e300;
     return Math.max(12, hp);
   }
 
@@ -410,7 +430,9 @@ export class GameSim {
     const craft = 1 + 0.1 * (this.state.heroCraft[id] ?? 0);
     const pres = 1 + 0.12 * (this.state.heroPrestige?.[id] ?? 0);
     const god = isGod(id) ? 2 : 1;
-    return def.baseDps * level * god * milestoneMult(level) * (1 + 0.5 * gilds) * craft * pres;
+    const raw = def.baseDps * level * god * milestoneMult(level) * (1 + 0.5 * gilds) * craft * pres;
+    if (!Number.isFinite(raw) || raw > 1e24) return 1e24;
+    return Math.max(0, raw);
   }
 
   heroClick(id: HeroId): number {
@@ -424,7 +446,9 @@ export class GameSim {
   dps(): number {
     let sum = 0;
     for (const h of HEROES) sum += this.heroDps(h.id);
-    return sum * this.dpsMult();
+    const v = sum * this.dpsMult();
+    if (!Number.isFinite(v) || v > 1e24) return 1e24;
+    return Math.max(0, v);
   }
 
   clickDamage(): number {
@@ -1238,7 +1262,7 @@ export class GameSim {
     if (Math.random() > chance) {
       this.state.crafts = (this.state.crafts ?? 0) + 1;
       this.save();
-      return { ok: false, fail: true, name: recipe?.name ?? "Scrap", blurb: "The hammer rang false." };
+      return { ok: false, fail: true, name: recipe?.name ?? "Scrap", blurb: "Failed. The parts burned." };
     }
     this.state.crafts = (this.state.crafts ?? 0) + 1;
     if (!recipe) {
@@ -1374,6 +1398,7 @@ export class GameSim {
     this.ensureContracts();
     this.ensureFounderKit();
     this.keepOwnerGods();
+    this.settleRunaway();
     this.monster = this.makeMonster(this.state.floor, this.isBossFloor(this.state.floor) && !this.state.farm);
     this.save();
   }
@@ -1383,6 +1408,7 @@ export class GameSim {
     this.combo = 0;
     this.lastArena = null;
     this.keepOwnerGods();
+    this.settleRunaway();
     this.monster = this.makeMonster(this.state.floor, this.isBossFloor(this.state.floor) && !this.state.farm);
     this.save();
   }
@@ -2200,16 +2226,7 @@ export class GameSim {
       }
     }
     const dps = this.dps();
-    if (dps > 0 && this.monster.hp > 0) {
-      if (!this.monster.isBoss && dps * t > this.monster.hp * 2) {
-        const n = Math.min(3, Math.max(1, Math.floor((dps * t) / Math.max(1, this.monster.hp))));
-        for (let i = 0; i < n && !this.monster.isBoss && this.monster.hp > 0; i++) {
-          this.applyDamage(this.monster.hp, "hero", undefined, false, true);
-        }
-      } else {
-        this.applyDamage(dps * t, "hero", undefined, false, true);
-      }
-    }
+    if (dps > 0 && this.monster.hp > 0) this.applyDamage(dps * t, "hero", undefined, false, true);
     const showing = this.lineupIds();
     const attacker = showing.length ? showing[this.attackCursor % showing.length] : null;
     if (attacker && (this.state.heroLevel[attacker] ?? 0) > 0) {
@@ -2256,7 +2273,7 @@ export class GameSim {
     }
     let left = t;
     let guard = 0;
-    while (left > 0.05 && guard++ < 800) {
+    while (left > 0.05 && guard++ < 40) {
       if (this.monster.isBoss) break;
       const hp = Math.max(1, this.monster.hp);
       const tta = hp / dps;
