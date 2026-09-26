@@ -562,6 +562,7 @@ export const SCIENCES: ScienceDef[] = [
 
 export const HERO_LEVEL_CAP = 100;
 export const GOD_LEVEL_CAP = 100;
+export const FLOOR_CAP = 100000;
 
 export function isGod(id: HeroId): boolean {
   return id === "auric" || id === "solenne" || id === "vael" || id === "morvax";

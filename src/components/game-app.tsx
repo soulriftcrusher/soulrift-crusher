@@ -595,7 +595,7 @@ function Battle() {
       />
       <div className="pointer-events-none absolute inset-x-0 top-2 z-10 flex flex-col items-center gap-1 px-3">
         <p className="rounded-md border border-gold/40 bg-bg/70 px-3 py-0.5 font-display text-sm tracking-wide text-gold uppercase">
-          Level {snap.floor}
+          Level {snap.floor}{snap.floor >= 100000 ? " · cap · ritual resets" : ""}
         </p>
         <p className="flex items-center gap-1 text-[11px] text-muted">
           <img src="/tiles/fight.png" alt="" className="size-4 object-contain" crossOrigin="anonymous" />

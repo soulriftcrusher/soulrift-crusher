@@ -6,6 +6,7 @@ import {
   ARENA_REVIVE_MS,
   HEROES,
   HERO_LEVEL_CAP,
+  FLOOR_CAP,
   HERO_PRESTIGE_MAX,
   RELIC_RANK_CAP,
   SCIENCE_RANK_CAP,
@@ -140,19 +141,21 @@ export class GameSim {
 
   /** Floors the last patch skipped get pulled back to a fight the party can actually win. */
   settleRunaway() {
+    if ((this.state.floor ?? 1) > FLOOR_CAP) this.state.floor = FLOOR_CAP;
+    if ((this.state.maxFloor ?? 1) > FLOOR_CAP) this.state.maxFloor = FLOOR_CAP;
     const dps = Math.max(1, this.dps());
     const floor = Math.max(1, this.state.floor || 1);
-    if (this.monsterHp(floor, false) <= dps * 180 && floor <= 1500 && (this.state.maxFloor ?? 1) <= 1500) return;
+    if (this.monsterHp(floor, false) <= dps * 1200) return;
     let lo = 1;
-    let hi = Math.min(floor, 1500);
+    let hi = Math.min(floor, FLOOR_CAP);
     while (lo < hi) {
       const mid = Math.ceil((lo + hi) / 2);
       if (this.monsterHp(mid, false) > dps * 40) hi = mid - 1;
       else lo = mid;
     }
     const next = Math.max(1, lo);
+    if (next >= floor) return;
     this.state.floor = next;
-    this.state.maxFloor = next;
     this.monster = this.makeMonster(next, this.isBossFloor(next) && !this.state.farm);
     this.save();
   }
@@ -225,10 +228,11 @@ export class GameSim {
   }
 
   monsterHp(floor: number, boss: boolean): number {
-    const n = Math.max(1, floor);
-    const hp = 24 * Math.pow(1.067, n - 1) * (boss ? 8 : 1);
-    if (!Number.isFinite(hp) || hp > 1e300) return 1e300;
-    return Math.max(12, hp);
+    const n = Math.max(1, Math.min(FLOOR_CAP, floor));
+    const log = 1.35 + 3 * Math.log10(n) + Math.pow(n / FLOOR_CAP, 2) * 4;
+    let hp = Math.pow(10, log) * (boss ? 8 : 1);
+    if (!Number.isFinite(hp) || hp > 1e300) hp = 1e300;
+    return Math.max(18, hp);
   }
 
   private economyHp(floor: number, boss: boolean): number {
@@ -281,13 +285,7 @@ export class GameSim {
     if ((this.state.heroLevel.wren ?? 0) > 0) m *= 1.12;
     if ((this.state.heroLevel.devourer ?? 0) > 0) m *= 1.3;
     if ((this.state.heroLevel.vorr ?? 0) > 0) m *= 1.4;
-    if ((this.state.heroLevel.vael ?? 0) > 0) m *= 3;
-    if (this.legendOn("vael")) m *= 2;
-    if ((this.state.heroLevel.morvax ?? 0) > 0) m *= 3;
-    if (this.legendOn("morvax")) m *= 2;
-    if ((this.state.heroLevel.auric ?? 0) > 0) m *= 2;
-    if ((this.state.heroLevel.solenne ?? 0) > 0) m *= 2;
-    if (this.pantheon()) m *= 2;
+    m *= this.godPower();
     if (this.legendOn("rook")) m *= 1.14;
     if (this.legendOn("devourer")) m *= 1.16;
     if (this.state.skillActive.rage > 0) m *= 2;
@@ -422,6 +420,16 @@ export class GameSim {
     this.state.runes = [...kept, ...loose, rune];
   }
 
+  godPower(): number {
+    const ids = ["auric", "solenne", "vael", "morvax"] as const;
+    let n = 0;
+    for (const id of ids) if ((this.state.heroLevel[id] ?? 0) > 0 && !this.isDown(id)) n += 1;
+    if (n <= 0) return 1;
+    let m = Math.pow(8, n);
+    if (n === 4) m *= 6;
+    return m;
+  }
+
   isDown(id: HeroId): boolean {
     if (this.state.expeditionHero === id && (this.state.expeditionAt ?? 0) > Date.now()) return true;
     const until = this.state.heroDown?.[id] ?? 0;
@@ -436,9 +444,10 @@ export class GameSim {
     const gilds = this.state.heroGild[id] ?? 0;
     const craft = 1 + 0.1 * (this.state.heroCraft[id] ?? 0);
     const pres = 1 + 0.12 * (this.state.heroPrestige?.[id] ?? 0);
-    const god = isGod(id) ? 2 : 1;
-    const raw = def.baseDps * level * god * milestoneMult(level) * (1 + 0.5 * gilds) * craft * pres;
-    if (!Number.isFinite(raw) || raw > 1e24) return 1e24;
+    const levelHit = level * Math.pow(1.02, Math.max(0, level - 1));
+    const god = isGod(id) ? 12 : 1;
+    const raw = def.baseDps * levelHit * god * milestoneMult(level) * (1 + 0.5 * gilds) * craft * pres;
+    if (!Number.isFinite(raw) || raw > 1e30) return 1e30;
     return Math.max(0, raw);
   }
 
@@ -454,7 +463,7 @@ export class GameSim {
     let sum = 0;
     for (const h of HEROES) sum += this.heroDps(h.id);
     const v = sum * this.dpsMult();
-    if (!Number.isFinite(v) || v > 1e24) return 1e24;
+    if (!Number.isFinite(v) || v > 1e36) return 1e36;
     return Math.max(0, v);
   }
 
@@ -1016,6 +1025,12 @@ export class GameSim {
     if (chest) this.state.chests += 1;
     if (isBoss || Math.random() < 0.08) this.grantRune(mintRune(this.state.kills + floor, floor, isBoss));
     this.emit({ type: "kill", gold, souls, isBoss, kind: this.monster.kind, chest });
+    if (this.state.floor >= FLOOR_CAP) {
+      this.state.floor = FLOOR_CAP;
+      this.state.maxFloor = Math.max(this.state.maxFloor, FLOOR_CAP);
+      this.monster = this.makeMonster(FLOOR_CAP, true);
+      return;
+    }
     if (this.state.farm && this.isBossFloor(floor)) {
       this.monster = this.makeMonster(floor, false);
       return;
@@ -1023,13 +1038,13 @@ export class GameSim {
     if (isBoss || !this.isBossFloor(floor + 1) || this.state.farm) {
       const next = isBoss || !this.isBossFloor(floor + 1) ? floor + 1 : floor;
       const target = this.state.farm && this.isBossFloor(floor + 1) ? floor : next;
-      this.state.floor = Math.max(1, target);
+      this.state.floor = Math.min(FLOOR_CAP, Math.max(1, target));
       this.state.maxFloor = Math.max(this.state.maxFloor, this.state.floor);
       const boss = this.isBossFloor(this.state.floor) && !this.state.farm;
       this.monster = this.makeMonster(this.state.floor, boss);
       if (boss) this.emit({ type: "bossStart" });
     } else {
-      this.state.floor = floor + 1;
+      this.state.floor = Math.min(FLOOR_CAP, floor + 1);
       this.state.maxFloor = Math.max(this.state.maxFloor, this.state.floor);
       this.monster = this.makeMonster(this.state.floor, true);
       this.emit({ type: "bossStart" });
@@ -1844,7 +1859,7 @@ export class GameSim {
 
   jumpMax(): boolean {
     if (this.state.floor >= this.state.maxFloor) return false;
-    this.state.floor = this.state.maxFloor;
+    this.state.floor = Math.min(FLOOR_CAP, this.state.maxFloor);
     this.monster = this.makeMonster(this.state.floor, this.isBossFloor(this.state.floor) && !this.state.farm);
     this.save();
     return true;
