@@ -149,6 +149,8 @@ export type HeroSnap = {
   dps: number;
   click: number;
   cost: number;
+  soulCost: number;
+  levelGems: number;
   levels: number;
   canAfford: boolean;
   unlocked: boolean;

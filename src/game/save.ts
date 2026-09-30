@@ -1,4 +1,4 @@
-import { ARENA_CHARGE_MAX, HEROES, RELICS, SCIENCES, SKILLS, levelCap, rollContracts } from "./data";
+import { ARENA_CHARGE_MAX, HEROES, RELICS, SCIENCES, SKILLS, GILD_MAX, levelCap, rollContracts } from "./data";
 import type { HeroId } from "./data";
 import { LOOT } from "./loot";
 import { SOCKETS, WEAPONS } from "./meta";
@@ -144,6 +144,10 @@ function migrate(raw: GameState): GameState {
   const merged: GameState = { ...base, ...raw };
   merged.heroLevel = { ...base.heroLevel, ...(raw.heroLevel ?? {}) };
   merged.heroGild = { ...base.heroGild, ...(raw.heroGild ?? {}) };
+  for (const id of Object.keys(merged.heroGild)) {
+    const n = Math.floor(Number(merged.heroGild[id as keyof typeof merged.heroGild] ?? 0));
+    merged.heroGild[id as keyof typeof merged.heroGild] = Math.max(0, Math.min(GILD_MAX, Number.isFinite(n) ? n : 0));
+  }
   merged.relicLevel = { ...base.relicLevel, ...(raw.relicLevel ?? {}) };
   merged.scienceLevel = { ...base.scienceLevel, ...(raw.scienceLevel ?? {}) };
   merged.skillCd = { ...base.skillCd, ...(raw.skillCd ?? {}) };
@@ -392,7 +396,7 @@ export function applyRoster(state: GameState, roster: HeroRoster): GameState {
     } else {
       state.heroLevel[id] = Math.min(levelCap(id), Math.max(lvNow, lvIn));
     }
-    state.heroGild[id] = Math.max(Number(state.heroGild[id] ?? 0), Number(row.gild ?? 0));
+    state.heroGild[id] = Math.min(GILD_MAX, Math.max(Number(state.heroGild[id] ?? 0), Number(row.gild ?? 0)));
     state.heroCraft[id] = Math.max(Number(state.heroCraft[id] ?? 0), Number(row.craft ?? 0));
     const down = Number(row.down ?? -1);
     if (down >= 0) {

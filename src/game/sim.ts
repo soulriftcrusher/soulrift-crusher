@@ -8,6 +8,7 @@ import {
   HERO_LEVEL_CAP,
   FLOOR_CAP,
   HERO_PRESTIGE_MAX,
+  GILD_MAX,
   RELIC_RANK_CAP,
   SCIENCE_RANK_CAP,
   WEAPON_RANK_CAP,
@@ -20,6 +21,7 @@ import {
   heroStars,
   isGod,
   levelCap,
+  gildPower,
   monsterKindFor,
   monsterName,
   rollContracts,
@@ -98,14 +100,6 @@ import type { ArenaResult, Bulk, GameState, MonsterState, SimEvent, Snapshot } f
 function geometricSum(base: number, scale: number, from: number, n: number): number {
   if (n <= 0) return 0;
   return base * Math.pow(scale, from) * ((Math.pow(scale, n) - 1) / (scale - 1));
-}
-
-function gildPower(gilds: number): number {
-  const n = Math.max(0, gilds);
-  const linear = 1 + 0.5 * n;
-  const curve = Math.pow(1.06, Math.min(n, 6000));
-  const p = Math.max(linear, Number.isFinite(curve) ? curve : linear);
-  return Number.isFinite(p) ? p : 1e300;
 }
 
 function milestoneMult(level: number): number {
@@ -489,7 +483,7 @@ export class GameSim {
 
   heroCost(id: HeroId, fromLevel: number, n: number): number {
     const def = HEROES.find((h) => h.id === id)!;
-    const scale = def.costScale + 0.1;
+    const scale = def.costScale + 0.32;
     if (fromLevel === 0) {
       if (n <= 1) return def.baseCost;
       return def.baseCost + geometricSum(def.baseCost, scale, 1, n - 1);
@@ -497,22 +491,44 @@ export class GameSim {
     return geometricSum(def.baseCost, scale, fromLevel, n);
   }
 
+  levelToll(fromLevel: number): { souls: number; gems: number } {
+    if (fromLevel <= 0) return { souls: 0, gems: 0 };
+    const souls = Math.max(6, Math.floor(Math.pow(1.22, fromLevel)) * 3);
+    const gems = fromLevel < 5 ? 0 : fromLevel < 15 ? 6 : fromLevel < 30 ? 18 : fromLevel < 50 ? 45 : fromLevel < 75 ? 120 : 300;
+    return { souls, gems };
+  }
+
+  levelTollSum(fromLevel: number, n: number): { souls: number; gems: number } {
+    let souls = 0;
+    let gems = 0;
+    const steps = Math.max(0, Math.floor(n));
+    for (let i = 0; i < steps; i++) {
+      const t = this.levelToll(fromLevel + i);
+      souls += t.souls;
+      gems += t.gems;
+    }
+    return { souls, gems };
+  }
+
   bulkLevels(id: HeroId, bulk: Bulk): number {
     const level = this.state.heroLevel[id] ?? 0;
     const room = Math.max(0, levelCap(id) - level);
-    if (bulk === -1) {
-      let n = 0;
-      let gold = this.state.gold;
-      while (n < room) {
-        const c = this.heroCost(id, level + n, 1);
-        if (gold < c) break;
-        gold -= c;
-        n += 1;
-        if (n > 400) break;
-      }
-      return Math.max(1, n);
+    const cap = bulk === -1 ? room : Math.min(room, Math.max(1, bulk));
+    let n = 0;
+    let gold = this.state.gold;
+    let souls = this.state.souls;
+    let gems = this.state.gems;
+    while (n < cap) {
+      const c = this.heroCost(id, level + n, 1);
+      const t = this.levelToll(level + n);
+      if (gold < c || souls < t.souls || gems < t.gems) break;
+      gold -= c;
+      souls -= t.souls;
+      gems -= t.gems;
+      n += 1;
+      if (n >= 80) break;
     }
-    return Math.min(room || 1, bulk);
+    return Math.max(1, n);
   }
 
   hireOrUpgrade(id: HeroId, bulk: Bulk, quiet = false): boolean {
@@ -528,9 +544,13 @@ export class GameSim {
     if (def.acquire !== "gold" && level <= 0 && !had) return false;
     if (level >= levelCap(id)) return false;
     const n = this.bulkLevels(id, bulk);
-    const cost = this.heroCost(id, level, Math.max(1, n));
-    if (this.state.gold < cost) return false;
+    const steps = Math.max(1, n);
+    const cost = this.heroCost(id, level, steps);
+    const toll = this.levelTollSum(level, steps);
+    if (this.state.gold < cost || this.state.souls < toll.souls || this.state.gems < toll.gems) return false;
     this.state.gold -= cost;
+    this.state.souls -= toll.souls;
+    this.state.gems -= toll.gems;
     const next = Math.min(levelCap(id), level + Math.max(1, n));
     this.state.heroLevel[id] = next;
     if (level <= 0) this.state.hires += 1;
@@ -607,18 +627,20 @@ export class GameSim {
   }
 
   gildCount(gilds: number, souls: number, bulk: Bulk): number {
-    if (souls < 1 + gilds) return 0;
+    const have = Math.min(GILD_MAX, Math.max(0, gilds));
+    const room = GILD_MAX - have;
+    if (room <= 0 || souls < 1 + have) return 0;
     if (bulk === -1) {
-      const a = 2 * gilds + 1;
+      const a = 2 * have + 1;
       const disc = a * a + 8 * souls;
-      if (!Number.isFinite(disc)) return 10;
+      if (!Number.isFinite(disc)) return Math.min(10, room);
       const n = Math.floor((-a + Math.sqrt(Math.max(0, disc))) / 2);
-      return Math.max(0, Math.min(10, n));
+      return Math.max(0, Math.min(10, room, n));
     }
     let n = 0;
     let left = souls;
-    while (n < bulk) {
-      const c = 1 + gilds + n;
+    while (n < bulk && n < room) {
+      const c = 1 + have + n;
       if (left < c) break;
       left -= c;
       n += 1;
@@ -633,13 +655,13 @@ export class GameSim {
 
   gildHero(id: HeroId, bulk: Bulk = 1): boolean {
     if ((this.state.heroLevel[id] ?? 0) <= 0) return false;
-    const gilds = this.state.heroGild[id] ?? 0;
+    const gilds = Math.min(GILD_MAX, this.state.heroGild[id] ?? 0);
     const n = this.gildCount(gilds, this.state.souls, bulk);
     if (n <= 0) return false;
     const cost = this.gildSpend(gilds, n);
     if (this.state.souls < cost) return false;
     this.state.souls -= cost;
-    this.state.heroGild[id] = gilds + n;
+    this.state.heroGild[id] = Math.min(GILD_MAX, gilds + n);
     this.save();
     this.pingHeroes();
     return true;
@@ -1995,7 +2017,9 @@ export class GameSim {
     const heroes = HEROES.map((h) => {
       const level = this.state.heroLevel[h.id] ?? 0;
       const n = this.bulkLevels(h.id, bulk);
-      const cost = this.heroCost(h.id, level, Math.max(1, n));
+      const steps = Math.max(1, n);
+      const cost = this.heroCost(h.id, level, steps);
+      const toll = this.levelTollSum(level, steps);
       const gilds = this.state.heroGild[h.id] ?? 0;
       const gildN = this.gildCount(gilds, this.state.souls, bulk);
       const gildCost = gildN > 0 ? this.gildSpend(gilds, gildN) : 1 + gilds;
@@ -2016,9 +2040,13 @@ export class GameSim {
         dps: this.heroDps(h.id),
         click: this.heroClick(h.id),
         cost,
+        soulCost: toll.souls,
+        levelGems: toll.gems,
         levels: n,
         canAfford:
           this.state.gold >= cost &&
+          this.state.souls >= toll.souls &&
+          this.state.gems >= toll.gems &&
           level < levelCap(h.id) &&
           (level > 0 ||
             (h.acquire === "gold" && this.state.maxFloor >= h.unlockFloor) ||

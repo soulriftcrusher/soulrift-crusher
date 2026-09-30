@@ -19,7 +19,7 @@ import { StaffPanel } from "@/components/staff-panel";
 import { SummonGame } from "@/components/summon-game";
 import { exitLocalDemo } from "@/game/demo";
 import { isDemoHunt } from "@/game/demo-flag";
-import { HEROES, SKILLS, heroPortrait, type HeroId, type SkillId } from "@/game/data";
+import { HEROES, SKILLS, GILD_MAX, gildPower, heroPortrait, type HeroId, type SkillId } from "@/game/data";
 import { formatNum, formatTime } from "@/game/format";
 import { prizeArt } from "@/game/prize-art";
 import { setHuntName, staffStatus, claimStaff, startCheckout } from "@/game/net";
@@ -989,6 +989,8 @@ function HeroRow({ hero, open, onPeek }: { hero: HeroSnap; open: boolean; onPeek
               }}
             >
               {hero.level <= 0 ? "Hire" : "Upgrade"} {formatNum(hero.cost)} gold
+              {hero.soulCost > 0 ? ` · ${formatNum(hero.soulCost)} souls` : ""}
+              {hero.levelGems > 0 ? ` · ${formatNum(hero.levelGems)} gems` : ""}
             </Button>
           ) : null}
           {hero.level <= 0 && def?.acquire === "cash" && !hero.godRebuy ? (
@@ -1019,7 +1021,11 @@ function HeroRow({ hero, open, onPeek }: { hero: HeroSnap; open: boolean; onPeek
               Buy · {formatNum(hero.gemCost)} gems
             </Button>
           ) : null}
-          {hero.canGild ? (
+          {hero.level > 0 && hero.gilds >= GILD_MAX ? (
+            <Button disabled>
+              Gild max · {GILD_MAX}/{GILD_MAX} · x{formatNum(gildPower(hero.gilds))} damage
+            </Button>
+          ) : hero.canGild ? (
             <Button
               variant="secondary"
               onClick={() => {
@@ -1030,10 +1036,10 @@ function HeroRow({ hero, open, onPeek }: { hero: HeroSnap; open: boolean; onPeek
               }}
             >
               {bulk === -1
-                ? `Gild +${hero.gildCount} · ${hero.gilds} stamps · ${formatNum(hero.gildCost)} souls`
+                ? `Gild +${hero.gildCount} · ${hero.gilds}/${GILD_MAX} · x${formatNum(gildPower(hero.gilds + hero.gildCount))} damage · ${formatNum(hero.gildCost)} souls`
                 : bulk > 1
-                  ? `Gild x${hero.gildCount} · ${hero.gilds} stamps · ${formatNum(hero.gildCost)} souls`
-                  : `Gild · ${hero.gilds} stamps · ${formatNum(hero.gildCost)} souls`}
+                  ? `Gild x${hero.gildCount} · ${hero.gilds}/${GILD_MAX} · x${formatNum(gildPower(hero.gilds + hero.gildCount))} damage · ${formatNum(hero.gildCost)} souls`
+                  : `Gild · ${hero.gilds}/${GILD_MAX} · x${formatNum(gildPower(hero.gilds + 1))} damage · ${formatNum(hero.gildCost)} souls`}
             </Button>
           ) : null}
           {hero.level > 0 ? (
@@ -1055,7 +1061,7 @@ function HeroRow({ hero, open, onPeek }: { hero: HeroSnap; open: boolean; onPeek
           ) : null}
           {hero.level > 0 ? (
             <p className="text-[11px] text-muted">
-              Five stand on the fight line. Bench anyone, including the gods, and send someone else in. Damage stays on. Stamped {hero.gilds} times.
+              Five stand on the fight line. Bench anyone, including the gods, and send someone else in. Damage stays on. Stamped {Math.min(GILD_MAX, hero.gilds)}/{GILD_MAX}. Each stamp raises this hero's damage.
             </p>
           ) : null}
           {hero.canCraft ? (

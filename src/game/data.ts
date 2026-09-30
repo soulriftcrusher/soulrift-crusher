@@ -572,6 +572,14 @@ export function levelCap(id: HeroId): number {
   return isGod(id) ? GOD_LEVEL_CAP : HERO_LEVEL_CAP;
 }
 export const HERO_PRESTIGE_MAX = 100;
+export const GILD_MAX = 100;
+
+/** Each stamp is +6% damage, compounding, and it stops at GILD_MAX. */
+export function gildPower(gilds: number): number {
+  const n = Math.max(0, Math.min(GILD_MAX, Math.floor(gilds)));
+  const p = Math.pow(1.06, n);
+  return Number.isFinite(p) ? p : 1;
+}
 export const RELIC_RANK_CAP = 500;
 export const SCIENCE_RANK_CAP = 500;
 export const WEAPON_RANK_CAP = 2000;

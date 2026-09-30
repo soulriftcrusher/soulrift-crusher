@@ -139,7 +139,7 @@ export function HuntPanel() {
             </div>
           </div>
           <div className="mt-3 grid grid-cols-4 gap-2">
-            {WEEKLY_LOGIN.map((_, i) => {
+            {WEEKLY_LOGIN.map((g, i) => {
               const taken = i < idx || (!snap.dailyReady && i === idx);
               const today = snap.dailyReady && i === idx;
               return (
@@ -154,13 +154,13 @@ export function HuntPanel() {
                   <p className="font-display text-[11px] tracking-wide text-gold uppercase">Day {i + 1}</p>
                   <div className="mt-1 flex items-center justify-center">
                     <img
-                      src="/shop/login-gem.jpg?v=1"
+                      src={prizeArt("gems")}
                       alt=""
-                      className="size-12 rounded-md object-cover"
+                      className="size-12 object-contain"
                       crossOrigin="anonymous"
                     />
                   </div>
-                  <p className="mt-1 text-center text-xs tabular-nums text-[#fff6e0]">1 gem</p>
+                  <p className="mt-1 text-center text-xs tabular-nums text-[#fff6e0]">{g} gems</p>
                   {today ? <p className="text-center text-[10px] text-gold">Claim</p> : null}
                   {taken ? <p className="text-center text-[10px] text-muted">Taken</p> : null}
                 </div>
