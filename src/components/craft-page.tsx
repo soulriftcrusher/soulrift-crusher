@@ -295,7 +295,8 @@ export function CraftPage({ onClose }: { onClose: () => void }) {
           <span className="text-[11px]">{busy ? "…" : "×1"}</span>
         </Button>
       </div>
-      <div className="mt-2 grid grid-cols-3 gap-1.5">
+      <p className="mt-2 text-center text-xs tracking-wide text-gold uppercase">Batch strike</p>
+      <div className="mt-1 grid grid-cols-3 gap-1.5">
         {[10, 20, 25].map((n) => (
           <Button key={n} variant="secondary" className="h-11" disabled={busy || filled === 0} onClick={() => create(n)}>
             Strike ×{n}

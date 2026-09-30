@@ -51,7 +51,7 @@ export function HuntPanel() {
       { id: "inbox", label: "Inbox", blurb: "Mail, gifts, and whispers." },
       { id: "shop", label: "Shop", blurb: "Gems, Soul Well, relics, weapons." },
       { id: "wheel", label: "Fortune wheel", blurb: "Daily spin. Gold, souls, chests, gems.", ping: snap.wheelReady },
-      { id: "raid", label: "Raids", blurb: "Shield up. Hit unshielded camps.", ping: !snap.shieldOn },
+      { id: "raid", label: "Raids", blurb: "Shield up. Hit unshielded camps." },
       { id: "daily", label: "Daily login", blurb: "Free gems every day.", ping: snap.dailyReady },
       { id: "calendar", label: "30-day stamp", blurb: "Bigger gems all month.", ping: snap.monthReady },
       { id: "pass", label: "Battle pass", blurb: "Kill monsters, climb ranks.", ping: snap.bpFreeReady + snap.bpPremReady > 0 },

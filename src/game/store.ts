@@ -176,7 +176,12 @@ export const useGame = create<GameUI>((set, get) => {
     markHunting(screen === "play");
     set({ screen });
   },
-  setTab: (tab) => set({ tab, huntPage: tab === "hunt" ? "hub" : get().huntPage }),
+  setTab: (tab) =>
+    set({
+      tab,
+      huntPage: tab === "hunt" ? "hub" : get().huntPage,
+      clanPage: tab === "clan" ? "hub" : get().clanPage,
+    }),
   setClanPage: (clanPage) => set({ clanPage }),
   setHuntPage: (huntPage) => set({ huntPage }),
   openHunt: (huntPage) => set({ tab: "hunt", huntPage }),

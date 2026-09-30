@@ -703,7 +703,11 @@ export function mergeProgress(local: GameState, incoming: GameState): GameState 
     splash: newerSave.splash || older.splash || "ash",
     shieldUntil: Math.max(local.shieldUntil ?? 0, incoming.shieldUntil ?? 0),
     playMs: Math.max(local.playMs ?? 0, incoming.playMs ?? 0),
-    wellToken: Math.max(local.wellToken ?? 0, incoming.wellToken ?? 0),
+    wellToken: newerSave.wellToken ?? older.wellToken ?? 0,
+    lastFreeWell:
+      (local.lastFreeWell ?? "") >= (incoming.lastFreeWell ?? "")
+        ? (local.lastFreeWell ?? "")
+        : (incoming.lastFreeWell ?? ""),
     wellHymnDay: newerSave.wellHymnDay || older.wellHymnDay || "",
     shieldHymnDay: newerSave.shieldHymnDay || older.shieldHymnDay || "",
     wheelPot: Number.isFinite(newerSave.wheelPot) ? newerSave.wheelPot : older.wheelPot ?? 50,

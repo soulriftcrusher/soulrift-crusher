@@ -489,7 +489,7 @@ export class GameSim {
 
   heroCost(id: HeroId, fromLevel: number, n: number): number {
     const def = HEROES.find((h) => h.id === id)!;
-    const scale = def.costScale + 0.06;
+    const scale = def.costScale + 0.1;
     if (fromLevel === 0) {
       if (n <= 1) return def.baseCost;
       return def.baseCost + geometricSum(def.baseCost, scale, 1, n - 1);
@@ -946,7 +946,7 @@ export class GameSim {
     const n = Math.min(Math.max(0, Math.floor(count)), this.state.chests);
     if (n <= 0) return null;
     this.state.chests -= n;
-    const f = Math.max(1, this.state.maxFloor);
+    const f = Math.max(1, this.state.floor);
     let gold = 0;
     let souls = 0;
     let influence = 0;
@@ -1098,6 +1098,7 @@ export class GameSim {
     this.state.souls += souls;
     this.state.rituals += 1;
     this.state.gold = 0;
+    this.state.chests = 0;
     this.state.climbKills = 0;
     this.state.ritualReadyAt = Date.now() + 24 * 60 * 60 * 1000;
     this.state.floor = 1;
@@ -1376,11 +1377,11 @@ export class GameSim {
   }
 
   summon(hits: number): { name: string; kind: "hero" | "gems" } | null {
-    const cost = hits >= 3 ? 0 : 40;
+    const cost = 40;
     const day = dayKey();
     const free = this.state.lastFreeWell !== day;
     const token = (this.state.wellToken ?? 0) > 0;
-    if (!free && !token && cost > 0 && !this.spendGems(cost)) return null;
+    if (!free && !token && !this.spendGems(cost)) return null;
     if (token && !free) this.state.wellToken = Math.max(0, (this.state.wellToken ?? 0) - 1);
     if (free) this.state.lastFreeWell = day;
     const pool = HEROES.filter((h) => h.acquire === "summon" && (this.state.heroLevel[h.id] ?? 0) <= 0);
@@ -1413,7 +1414,7 @@ export class GameSim {
     const win = yourPower * (0.85 + Math.random() * 0.3) >= theirPower;
     const foe = ARENA_FOES[Math.floor(Math.random() * ARENA_FOES.length)]!;
     const influence = win ? 10 + Math.floor(this.state.maxFloor / 4) : 2;
-    const souls = win ? 2 : 0;
+    const souls = win ? Math.max(2, 2 + Math.floor(this.state.maxFloor / 25)) : 0;
     const gold = win ? 0 : Math.floor(20 * this.state.maxFloor);
     const chests = win && Math.random() < 0.2 ? 1 : 0;
     this.state.influence += influence;
@@ -2225,9 +2226,7 @@ export class GameSim {
         Boolean(nextChapter(this.state.chapterClaim ?? 0, this.state.maxFloor)) ||
         (Boolean(this.state.expeditionHero) && (this.state.expeditionAt ?? 0) <= Date.now()) ||
         !(this.state.monthHits ?? []).includes(monthDay()) ||
-        this.state.watchDay !== dayKey() ||
         (this.state.wheelFreeAt ?? 0) + WHEEL_DAY_MS <= Date.now() ||
-        !(this.state.shieldUntil > Date.now()) ||
         bpRank(this.state.bpPts ?? 0) > (this.state.bpFree ?? 0),
       autoSkill: Boolean(this.state.autoSkill),
       monthDay: monthDay(),
