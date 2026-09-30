@@ -44,6 +44,7 @@ export function defaultState(now = Date.now()): GameState {
     founderClaimed: false,
     founderKit: 0,
     morvaxPaid: false,
+    paidGods: [],
     lastFreeWell: "",
     kills: 0,
     clicks: 0,
@@ -163,6 +164,9 @@ function migrate(raw: GameState): GameState {
   if (!Number.isFinite(merged.bone)) merged.bone = 0;
   if (!Number.isFinite(merged.gold)) merged.gold = 0;
   merged.morvaxPaid = Boolean(raw.morvaxPaid);
+  merged.paidGods = (Array.isArray(raw.paidGods) ? raw.paidGods : []).filter(
+    (id): id is HeroId => id === "auric" || id === "solenne" || id === "vael",
+  );
   if (!Number.isFinite(merged.souls)) merged.souls = 0;
   if (!Number.isFinite(merged.gems)) merged.gems = 0;
   if (!Number.isFinite(merged.founderKit)) merged.founderKit = 0;
@@ -357,12 +361,18 @@ export function rosterFromState(state: GameState): HeroRoster {
   }));
 }
 
+function cashGodLocked(state: GameState, id: HeroId): boolean {
+  if (id === "auric" || id === "solenne" || id === "vael") return !(state.paidGods ?? []).includes(id);
+  if (id === "morvax") return !state.morvaxPaid;
+  return false;
+}
+
 export function applyRoster(state: GameState, roster: HeroRoster): GameState {
   if (!Array.isArray(roster)) return state;
   for (const row of roster) {
     const id = row.id as HeroId;
     if (!id) continue;
-    if (!state.founderClaimed && (id === "auric" || id === "solenne" || id === "vael" || (id === "morvax" && !state.morvaxPaid))) {
+    if (!state.founderClaimed && cashGodLocked(state, id)) {
       state.heroLevel[id] = 0;
       continue;
     }
@@ -405,7 +415,9 @@ export function lockRoster(state: GameState, extra?: HeroRoster | null): GameSta
   if (state.founderClaimed) {
     state.morvaxPaid = true;
   } else {
-    for (const id of ["auric", "solenne", "vael"] as const) state.heroLevel[id] = 0;
+    for (const id of ["auric", "solenne", "vael"] as const) {
+      if (!(state.paidGods ?? []).includes(id)) state.heroLevel[id] = 0;
+    }
     if (!state.morvaxPaid) state.heroLevel.morvax = 0;
   }
   return state;
@@ -605,10 +617,13 @@ export function mergeProgress(local: GameState, incoming: GameState): GameState 
   }
   const founder = Boolean(local.founderClaimed || incoming.founderClaimed);
   const morvaxPaid = founder || Boolean(local.morvaxPaid || incoming.morvaxPaid);
+  const paidGods = [
+    ...new Set([...(local.paidGods ?? []), ...(incoming.paidGods ?? [])]),
+  ].filter((id): id is HeroId => id === "auric" || id === "solenne" || id === "vael");
   if (!founder) {
-    heroLevel.auric = 0;
-    heroLevel.solenne = 0;
-    heroLevel.vael = 0;
+    if (!paidGods.includes("auric")) heroLevel.auric = 0;
+    if (!paidGods.includes("solenne")) heroLevel.solenne = 0;
+    if (!paidGods.includes("vael")) heroLevel.vael = 0;
     if (!morvaxPaid) heroLevel.morvax = 0;
   }
   return migrate({
@@ -650,6 +665,7 @@ export function mergeProgress(local: GameState, incoming: GameState): GameState 
     founderClaimed: Boolean(local.founderClaimed || incoming.founderClaimed),
     founderKit: Math.max(local.founderKit ?? 0, incoming.founderKit ?? 0),
     morvaxPaid,
+    paidGods,
     lastSaveAt: Math.max(local.lastSaveAt ?? 0, incoming.lastSaveAt ?? 0),
     lastHuntAt: Math.max(local.lastHuntAt ?? 0, incoming.lastHuntAt ?? 0),
     badges: maxRec((local.badges ?? {}) as Record<string, number>, (incoming.badges ?? {}) as Record<string, number>),

@@ -727,7 +727,7 @@ export function rollContracts(p: Progress, avoid: ContractKind[] = []): Contract
     kinds.push(k);
   };
   push("slay");
-  push("depth");
+  if (p.maxFloor < FLOOR_CAP) push("depth");
   push("tyrants");
   push("crits");
   push("gold");

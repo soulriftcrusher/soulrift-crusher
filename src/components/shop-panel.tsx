@@ -3,13 +3,27 @@ import { Button } from "@/components/ui/button";
 import { GEM_PACKS, SOCKETS, WEAPONS } from "@/game/meta";
 import { FIRST_PACK_GEMS, FIRST_PACK_USD, HYMN_SKIP_GEMS } from "@/game/cash";
 import { RELICS, SCIENCES, HEROES, WEAPON_RANK_CAP, heroPortrait } from "@/game/data";
-import { queueIap } from "@/game/net";
+import { startCheckout } from "@/game/net";
 import { HERO_CRAFTS } from "@/game/gear";
 import { formatNum } from "@/game/format";
 import { sfx, unlockAudio } from "@/game/audio";
 import { sim } from "@/game/sim";
 import { useGame } from "@/game/store";
 import type { RelicSnap, ScienceSnap } from "@/game/types";
+
+function pay(packId: string) {
+  unlockAudio();
+  useGame.getState().setShopNote("Opening the card page…");
+  startCheckout({ data: { packId } })
+    .then((r) => {
+      if (r.url) window.location.href = r.url;
+      else useGame.getState().setShopNote("Stripe did not open. Try again.");
+    })
+    .catch((e: unknown) => {
+      const msg = e instanceof Error ? e.message : "Card payments are not switched on yet.";
+      useGame.getState().setShopNote(msg);
+    });
+}
 
 export function ShopPanel() {
   const snap = useGame((s) => s.snap);
@@ -173,11 +187,13 @@ export function ShopPanel() {
       <div className="mt-4 rounded-lg border border-amber-300/50 bg-wood p-4 text-fg">
         <h3 className="font-display text-lg font-semibold text-gold">Gods</h3>
         <p className="mt-2 text-sm text-fg/80">
-          Auric, Solenne, and Vael stay locked until payment is on. Morvax costs 1,000,000 gems. Own every god and the whole party hits harder.
+          Auric, Solenne, and Vael are bought with a card. Morvax costs 1,000,000 gems. Own every god and the whole party hits harder.
         </p>
         <ul className="mt-3 flex flex-col gap-2">
           {HEROES.filter((h) => h.acquire === "cash" || h.id === "morvax").map((h) => {
-            const owned = (snap.heroes.find((x) => x.id === h.id)?.level ?? 0) > 0;
+            const row = snap.heroes.find((x) => x.id === h.id);
+            const owned = (row?.level ?? 0) > 0;
+            const paid = Boolean(row?.godRebuy);
             return (
               <li key={h.id} className="flex items-center gap-3 rounded-lg border border-gold/40 bg-bg/50 p-3">
                 <img src={heroPortrait(h.id)} alt="" className="size-14 shrink-0 rounded-md object-cover" crossOrigin="anonymous" />
@@ -187,9 +203,11 @@ export function ShopPanel() {
                 </div>
                 {owned ? (
                   <span className="text-xs text-gold">Owned</span>
+                ) : paid ? (
+                  <span className="text-xs text-gold">Rehire with gold</span>
                 ) : h.acquire === "cash" ? (
-                  <Button size="sm" className="h-11" disabled>
-                    Locked · {h.usd}
+                  <Button size="sm" className="h-11" onClick={() => pay(`god-${h.id}`)}>
+                    Buy · {h.usd}
                   </Button>
                 ) : (
                   <Button
@@ -220,7 +238,7 @@ export function ShopPanel() {
           <h3 className="font-display text-base font-semibold">Gem shop</h3>
         </div>
         <p className="mt-2 text-sm leading-relaxed text-muted">
-          Apple and Google only take card money inside their stores. First Blood is $0.99 once — 10× the purse.
+          Apple and Google are not required. These packs charge a card through Stripe. Gems land when the payment clears.
         </p>
         {!snap.firstBuy ? (
           <div className="mt-3 flex items-center gap-3 rounded-md border border-gold/50 bg-gold/10 px-3 py-3">
@@ -228,26 +246,8 @@ export function ShopPanel() {
             <div className="min-w-0 flex-1">
             <p className="font-display text-sm text-gold">First Blood · {FIRST_PACK_USD}</p>
             <p className="text-xs text-muted">{FIRST_PACK_GEMS} gems. Once.</p>
-            <Button
-              className="mt-2 h-12 w-full"
-              onClick={() => {
-                unlockAudio();
-                if (sim.claimFirstBlood()) {
-                  sfx.win();
-                  refresh();
-                }
-                queueIap({ data: { packId: "firstblood" } })
-                  .then((r) => {
-                    useGame.getState().setShopNote(
-                      `${r.pack} (${r.usd}) queued for Play. Gems are on you now.`,
-                    );
-                  })
-                  .catch(() => {
-                    useGame.getState().setShopNote("Gems are yours. Play charges $0.99 when the listing is live.");
-                  });
-              }}
-            >
-              Claim First Blood · {FIRST_PACK_USD}
+            <Button className="mt-2 h-12 w-full" onClick={() => pay("firstblood")}>
+              Buy First Blood · {FIRST_PACK_USD}
             </Button>
             </div>
           </div>
@@ -285,18 +285,7 @@ export function ShopPanel() {
                 size="sm"
                 variant="secondary"
                 className="h-11 min-w-[4.5rem]"
-                onClick={() => {
-                  unlockAudio();
-                  queueIap({ data: { packId: p.id } })
-                    .then((r) => {
-                      useGame.getState().setShopNote(
-                        `${r.pack} (${r.usd}) is queued. Google Play charges it when the listing is live. Daily login gems are live now.`,
-                      );
-                    })
-                    .catch(() => {
-                      useGame.getState().setShopNote(`${p.usd} packs go through Play Store when this hunt is listed.`);
-                    });
-                }}
+                onClick={() => pay(p.id)}
               >
                 {p.usd}
               </Button>

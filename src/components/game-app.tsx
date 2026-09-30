@@ -22,7 +22,7 @@ import { isDemoHunt } from "@/game/demo-flag";
 import { HEROES, SKILLS, heroPortrait, type HeroId, type SkillId } from "@/game/data";
 import { formatNum, formatTime } from "@/game/format";
 import { prizeArt } from "@/game/prize-art";
-import { setHuntName, staffStatus, claimStaff } from "@/game/net";
+import { setHuntName, staffStatus, claimStaff, startCheckout } from "@/game/net";
 import { redeemCode } from "@/game/live-net";
 import { readHuntName, writeHuntName } from "@/game/name";
 import { stackRunes, describeRune, runeArt, RARITY_NAME, RARITY_RING, RUNE_BLURB, RUNE_JOB, type OwnedRune } from "@/game/gear";
@@ -992,8 +992,17 @@ function HeroRow({ hero, open, onPeek }: { hero: HeroSnap; open: boolean; onPeek
             </Button>
           ) : null}
           {hero.level <= 0 && def?.acquire === "cash" && !hero.godRebuy ? (
-            <Button disabled>
-              Locked · {def.usd}
+            <Button
+              onClick={() => {
+                unlockAudio();
+                startCheckout({ data: { packId: `god-${hero.id}` } })
+                  .then((r) => {
+                    if (r.url) window.location.href = r.url;
+                  })
+                  .catch(() => undefined);
+              }}
+            >
+              Buy · {def.usd}
             </Button>
           ) : null}
           {hero.level <= 0 && def?.acquire === "gems" && !hero.godRebuy ? (

@@ -107,7 +107,7 @@ export function CraftPage({ onClose }: { onClose: () => void }) {
     setSlots(next);
   }
 
-  function create() {
+  function create(times: number) {
     if (busy || filled === 0) return;
     unlockAudio();
     setBusy(true);
@@ -115,20 +115,34 @@ export function CraftPage({ onClose }: { onClose: () => void }) {
     setVerdict(null);
     sfx.hammer();
     window.setTimeout(() => {
-      const result = sim.tryCraft(slots.filter((s): s is LootId => !!s), catalyst);
+      const result = sim.tryCraftMany(
+        slots.filter((s): s is LootId => !!s),
+        catalyst,
+        times,
+      );
       refresh();
       const keep = stillStocked(slots, catalyst);
       if (!keep) {
         setSlots([null, null, null, null, null, null]);
         setCatalyst(null);
       }
-      if (result.fail || !result.ok) {
+      const swung = result.ok + result.fail;
+      if (swung === 0) {
         setVerdict("fail");
-        setNote(result.fail ? `Failed. ${result.name || "That craft"} burned the parts.` : result.blurb);
+        setNote("Missing parts.");
         sfx.fail();
+      } else if (result.ok === 0) {
+        setVerdict("fail");
+        setNote(`Failed all ${result.fail}. The parts burned.`);
+        sfx.fail();
+      } else if (result.fail === 0 && result.ok === result.asked) {
+        setVerdict("ok");
+        setNote(`Lucky. All ${result.ok} landed. ${result.name}.`);
+        sfx.chest();
       } else {
         setVerdict("ok");
-        setNote(keep ? `Success. You made ${result.name}. Tap Strike for another.` : `Success. You made ${result.name}. Out of parts.`);
+        const short = swung < result.asked ? ` Only had parts for ${swung}.` : "";
+        setNote(`Made ${result.ok}. Failed ${result.fail}. ${result.name}.${short}`);
         sfx.chest();
       }
       setBusy(false);
@@ -267,7 +281,7 @@ export function CraftPage({ onClose }: { onClose: () => void }) {
         <div className="min-w-0 flex-1">
           <p className="font-display text-base text-gold">{recipe ? recipe.name : filled ? "Random smash" : "Empty anvil"}</p>
           <p className="text-xs text-[#f0e6d8]">
-            {filled ? `${Math.round(chance * 100)}% strike` : "Put loot in the wells."}
+            {filled ? `${Math.round(chance * 100)}% each strike. A batch can miss, or luck into all of them.` : "Put loot in the wells."}
             {catalyst ? ` · ${LOOT.find((l) => l.id === catalyst)?.name}` : ""}
           </p>
           {filled ? (
@@ -276,10 +290,17 @@ export function CraftPage({ onClose }: { onClose: () => void }) {
             </div>
           ) : null}
         </div>
-        <Button className="h-16 w-20 shrink-0 flex-col gap-0 px-1" disabled={busy || filled === 0} onClick={create}>
+        <Button className="h-16 w-20 shrink-0 flex-col gap-0 px-1" disabled={busy || filled === 0} onClick={() => create(1)}>
           <img src="/shop/forge-hammer.jpg" alt="" className="size-8 rounded object-cover" crossOrigin="anonymous" />
-          <span className="text-[11px]">{busy ? "…" : "Strike"}</span>
+          <span className="text-[11px]">{busy ? "…" : "×1"}</span>
         </Button>
+      </div>
+      <div className="mt-2 grid grid-cols-3 gap-1.5">
+        {[10, 20, 25].map((n) => (
+          <Button key={n} variant="secondary" className="h-11" disabled={busy || filled === 0} onClick={() => create(n)}>
+            Strike ×{n}
+          </Button>
+        ))}
       </div>
       {verdict ? (
         <p

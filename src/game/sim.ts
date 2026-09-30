@@ -564,9 +564,25 @@ export class GameSim {
     const def = HEROES.find((h) => h.id === id);
     if (!def || def.acquire !== "gems") return false;
     if ((this.state.heroLevel[id] ?? 0) > 0) return false;
+    if ((this.state.godRebuy ?? []).includes(id)) return false;
     if (this.state.gems < def.gemCost) return false;
     if (!this.spendGems(def.gemCost)) return false;
     if (id === "morvax") this.state.morvaxPaid = true;
+    this.state.heroLevel[id] = 1;
+    this.state.hires += 1;
+    this.save();
+    this.pingHeroes();
+    return true;
+  }
+
+  unlockPaidGod(id: HeroId): boolean {
+    if (id !== "auric" && id !== "solenne" && id !== "vael") return false;
+    if (!this.state.paidGods) this.state.paidGods = [];
+    if (!this.state.paidGods.includes(id)) this.state.paidGods.push(id);
+    if ((this.state.heroLevel[id] ?? 0) > 0) {
+      this.save();
+      return true;
+    }
     this.state.heroLevel[id] = 1;
     this.state.hires += 1;
     this.save();
@@ -874,10 +890,26 @@ export class GameSim {
   }
 
   claimAllContracts(): boolean {
-    const kinds = this.state.contracts.filter((c) => !c.claimed).map((c) => c.kind);
-    let n = 0;
-    for (const kind of kinds) if (this.claimContract(kind)) n += 1;
-    return n > 0;
+    const ready = this.state.contracts.filter(
+      (c) => !c.claimed && contractProgress(c.kind, this.progress()) >= c.goal,
+    );
+    if (!ready.length) return false;
+    for (const c of ready) {
+      c.claimed = true;
+      this.state.gold += c.gold;
+      this.state.lootGold += c.gold;
+      this.state.souls += c.souls;
+      this.state.chests += c.chests;
+      this.state.influence += c.influence;
+    }
+    if (this.state.contracts.every((x) => x.claimed)) {
+      this.state.contracts = rollContracts(
+        this.progress(),
+        ready.map((c) => c.kind),
+      );
+    }
+    this.save();
+    return true;
   }
 
   claimContract(kind: ContractKind): boolean {
@@ -902,19 +934,8 @@ export class GameSim {
   }
 
   ensureContracts() {
-    const p = this.progress();
     const list = this.state.contracts ?? [];
-    if (!list.length) {
-      this.state.contracts = rollContracts(p);
-      return;
-    }
-    const ready = list.filter((c) => !c.claimed && contractProgress(c.kind, p) >= c.goal).length;
-    if (ready === list.length && list.length > 0) {
-      this.state.contracts = rollContracts(
-        p,
-        list.map((c) => c.kind),
-      );
-    }
+    if (!list.length) this.state.contracts = rollContracts(this.progress());
   }
 
   openChest(): { gold: number; souls: number; influence: number } | null {
@@ -929,10 +950,16 @@ export class GameSim {
     let gold = 0;
     let souls = 0;
     let influence = 0;
-    for (let i = 0; i < n; i++) {
-      gold += Math.floor(this.monsterGold(f, false) * this.goldMult() * (10 + Math.random() * 16));
-      souls += 1 + Math.floor(f / 18);
-      influence += 4 + Math.floor(f / 8);
+    if (n > 40) {
+      gold = Math.floor(this.monsterGold(f, false) * this.goldMult() * 18 * n);
+      souls = n * (1 + Math.floor(f / 18));
+      influence = n * (4 + Math.floor(f / 8));
+    } else {
+      for (let i = 0; i < n; i++) {
+        gold += Math.floor(this.monsterGold(f, false) * this.goldMult() * (10 + Math.random() * 16));
+        souls += 1 + Math.floor(f / 18);
+        influence += 4 + Math.floor(f / 8);
+      }
     }
     this.state.gold += gold;
     this.state.lootGold += gold;
@@ -1291,7 +1318,7 @@ export class GameSim {
     this.monster = this.makeMonster(this.state.floor, this.isBossFloor(this.state.floor));
   }
 
-  tryCraft(inputs: LootId[], catalyst: LootId | null): { ok: boolean; fail: boolean; name: string; blurb: string } {
+  tryCraft(inputs: LootId[], catalyst: LootId | null, quiet = false): { ok: boolean; fail: boolean; name: string; blurb: string } {
     if (!this.state.bag) this.state.bag = {} as GameState["bag"];
     const need = [...inputs];
     if (catalyst) need.push(catalyst);
@@ -1303,13 +1330,13 @@ export class GameSim {
     const chance = craftChance(recipe, catalyst);
     if (Math.random() > chance) {
       this.state.crafts = (this.state.crafts ?? 0) + 1;
-      this.save();
+      if (!quiet) this.save();
       return { ok: false, fail: true, name: recipe?.name ?? "Scrap", blurb: "Failed. The parts burned." };
     }
     this.state.crafts = (this.state.crafts ?? 0) + 1;
     if (!recipe) {
       this.state.ember += 4;
-      this.save();
+      if (!quiet) this.save();
       return { ok: true, fail: false, name: "Ash", blurb: "A little ember from scrap." };
     }
     const r = recipe.result;
@@ -1323,8 +1350,29 @@ export class GameSim {
       const hired = HEROES.find((h) => (this.state.heroLevel[h.id] ?? 0) > 0);
       if (hired) this.state.heroCraft[hired.id] = Math.min(8, (this.state.heroCraft[hired.id] ?? 0) + 1);
     }
-    this.save();
+    if (!quiet) this.save();
     return { ok: true, fail: false, name: recipe.name, blurb: recipe.blurb };
+  }
+
+  tryCraftMany(
+    inputs: LootId[],
+    catalyst: LootId | null,
+    times: number,
+  ): { ok: number; fail: number; name: string; asked: number } {
+    const asked = times === 10 || times === 20 || times === 25 ? times : 1;
+    let ok = 0;
+    let fail = 0;
+    let name = "";
+    for (let i = 0; i < asked; i++) {
+      const hit = this.tryCraft(inputs, catalyst, true);
+      if (!hit.ok && !hit.fail) break;
+      if (hit.ok) {
+        ok += 1;
+        name = hit.name;
+      } else fail += 1;
+    }
+    if (ok + fail > 0) this.save();
+    return { ok, fail, name, asked };
   }
 
   summon(hits: number): { name: string; kind: "hero" | "gems" } | null {
@@ -1584,8 +1632,9 @@ export class GameSim {
     const saved = (this.state.lineup ?? []).filter((id) => hired.includes(id) && !this.isBenched(id));
     const gods = hired.filter((id) => isGod(id));
     const rest = hired.filter((id) => !isGod(id));
-    if (saved.length) return saved.slice(0, 5);
-    return [...gods, ...rest].slice(0, 5);
+    if (!saved.length) return [...gods, ...rest].slice(0, 5);
+    const extra = hired.filter((id) => !saved.includes(id));
+    return [...saved, ...extra].slice(0, 5);
   }
 
   toggleLineup(id: HeroId): boolean {
@@ -1757,7 +1806,6 @@ export class GameSim {
   claimFirstBlood(): boolean {
     if (this.state.firstBuy) return false;
     this.state.firstBuy = true;
-    this.state.gems += FIRST_PACK_GEMS;
     this.state.vipSpent = (this.state.vipSpent ?? 0) + 1;
     this.state.badges = { ...(this.state.badges ?? {}), patron: Date.now() };
     const looks = ownedLooks(this.state.looks, true, this.state.founderClaimed);

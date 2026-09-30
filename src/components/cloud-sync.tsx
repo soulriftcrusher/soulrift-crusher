@@ -77,6 +77,8 @@ export function CloudSync() {
         }
         if (heroes.roster?.length) applyRoster(sim.state, heroes.roster);
         sim.keepOwnerGods();
+        if (cloud.firstBlood) sim.claimFirstBlood();
+        for (const id of cloud.paidGods ?? []) sim.unlockPaidGod(id as "auric" | "solenne" | "vael");
         if (cloud.grantGems > 0) sim.grantGems(cloud.grantGems);
         sim.applyGift({
           gold: cloud.grantGold,

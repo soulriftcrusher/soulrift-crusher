@@ -802,6 +802,12 @@ export const pullCloudSave = createServerFn({ method: "GET" })
         () => undefined,
       );
     }
+    const gods = await sql<{ hero_id: string }>`
+      select hero_id from paid_gods where user_id = ${context.userId}
+    `.catch(() => [] as { hero_id: string }[]);
+    const perks = await sql<{ first_blood: boolean }>`
+      select first_blood from paid_perks where user_id = ${context.userId}
+    `.catch(() => [] as { first_blood: boolean }[]);
     return {
       payload: rows[0]?.payload ?? null,
       updatedAt: rows[0]?.updated_at ?? null,
@@ -809,6 +815,8 @@ export const pullCloudSave = createServerFn({ method: "GET" })
       grantGold: gold,
       grantSouls: souls,
       grantChests: chests,
+      paidGods: gods.map((g) => g.hero_id),
+      firstBlood: Boolean(perks[0]?.first_blood),
     };
   });
 
@@ -1475,6 +1483,15 @@ export const queueIap = createServerFn({ method: "POST" })
       values (${context.userId}, ${pack.id}, ${pack.gems}, ${"pending"})
     `;
     return { ok: true as const, pending: true, pack: pack.name, usd: pack.usd };
+  });
+
+export const startCheckout = createServerFn({ method: "POST" })
+  .validator((d: { packId: string }) => d)
+  .middleware([authMiddleware])
+  .handler(async ({ context, data }) => {
+    const { startStripeCheckout } = await import("./stripe.server");
+    const url = await startStripeCheckout(context.userId, String(data.packId ?? ""), "https://soulriftcrusher.com");
+    return { url };
   });
 
 export type PlunderMark = {

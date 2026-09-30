@@ -34,6 +34,7 @@ export type GameState = {
   founderClaimed: boolean;
   founderKit: number;
   morvaxPaid: boolean;
+  paidGods: HeroId[];
   lastFreeWell: string;
   kills: number;
   clicks: number;
