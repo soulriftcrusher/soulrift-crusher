@@ -24,9 +24,33 @@ export function packCents(id: string): number {
   return CENTS[id] ?? 0;
 }
 
+export function runtimeValue(name: string): string {
+  try {
+    const read = new Function(
+      "n",
+      "try { var p = globalThis.process; if (!p || !p.env) return ''; var v = p.env[n]; return typeof v === 'string' ? v : ''; } catch (e) { return ''; }",
+    ) as (n: string) => string;
+    return read(name).trim();
+  } catch {
+    return "";
+  }
+}
+
+function cleanStripeKey(raw: string): string {
+  let key = raw.trim().replace(/^['"]+|['"]+$/g, "").trim();
+  const atRk = key.indexOf("rk_");
+  const atSk = key.indexOf("sk_");
+  const at = atRk >= 0 && (atSk < 0 || atRk < atSk) ? atRk : atSk;
+  if (at > 0) key = key.slice(at).trim();
+  return key;
+}
+
 export async function startStripeCheckout(userId: string, packId: string): Promise<string> {
-  const key = BAKED_STRIPE_SECRET_KEY || liveEnv("STRIPE_SECRET_KEY");
-  if (!key.startsWith("sk_") && !key.startsWith("rk_")) throw new Error("Stripe is not switched on yet.");
+  const key = cleanStripeKey(BAKED_STRIPE_SECRET_KEY || runtimeValue("STRIPE_SECRET_KEY") || liveEnv("STRIPE_SECRET_KEY"));
+  if (!key.startsWith("sk_") && !key.startsWith("rk_")) {
+    const hint = key ? `starts with ${key.slice(0, 3)}` : "blank";
+    throw new Error(`Stripe is not switched on yet (${hint}).`);
+  }
   const pack = GEM_PACKS.find((p) => p.id === packId);
   const cents = packCents(packId);
   if (!pack || cents < 50) throw new Error("Unknown pack.");

@@ -20,7 +20,7 @@ function payFault(e: unknown): string {
         : "";
   const msg = raw.trim();
   if (!msg || msg === "Unauthorized") return "Log in on this site, then buy.";
-  if (/not switched on/i.test(msg)) return "The card key is not on this deploy yet.";
+  if (/not switched on/i.test(msg)) return msg.replace("Stripe is not switched on yet", "The card key is not on this deploy yet");
   if (/permission|restricted key/i.test(msg)) return "That Stripe key cannot open a card page. Turn on Write for Checkout, Products, and Prices.";
   return msg;
 }
