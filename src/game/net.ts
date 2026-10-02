@@ -1490,7 +1490,7 @@ export const startCheckout = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .handler(async ({ context, data }) => {
     const { startStripeCheckout } = await import("./stripe.server");
-    const url = await startStripeCheckout(context.userId, String(data.packId ?? ""), "https://soulriftcrusher.com");
+    const url = await startStripeCheckout(context.userId, String(data.packId ?? ""));
     return { url };
   });
 

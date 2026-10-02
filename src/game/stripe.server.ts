@@ -22,15 +22,16 @@ export function packCents(id: string): number {
   return CENTS[id] ?? 0;
 }
 
-export async function startStripeCheckout(userId: string, packId: string, origin: string): Promise<string> {
-  const key = process.env.STRIPE_SECRET_KEY ?? "";
+export async function startStripeCheckout(userId: string, packId: string): Promise<string> {
+  const key = (process.env.STRIPE_SECRET_KEY ?? "").trim();
   if (!key.startsWith("sk_") && !key.startsWith("rk_")) throw new Error("Stripe is not switched on yet.");
   const pack = GEM_PACKS.find((p) => p.id === packId);
   const cents = packCents(packId);
   if (!pack || cents < 50) throw new Error("Unknown pack.");
-  const site = origin.startsWith("https://soulriftcrusher.com") ? "https://soulriftcrusher.com" : "https://soulriftcrusher.com";
+  const site = "https://www.soulriftcrusher.com";
   const body = new URLSearchParams();
   body.set("mode", "payment");
+  body.set("managed_payments[enabled]", "false");
   body.set("success_url", `${site}/?paid=1`);
   body.set("cancel_url", `${site}/?paid=0`);
   body.set("client_reference_id", userId);

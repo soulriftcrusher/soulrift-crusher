@@ -11,6 +11,20 @@ import { sim } from "@/game/sim";
 import { useGame } from "@/game/store";
 import type { RelicSnap, ScienceSnap } from "@/game/types";
 
+function payFault(e: unknown): string {
+  const raw =
+    e instanceof Error
+      ? e.message
+      : e && typeof e === "object" && "message" in e && typeof e.message === "string"
+        ? e.message
+        : "";
+  const msg = raw.trim();
+  if (!msg || msg === "Unauthorized") return "Log in on this site, then buy.";
+  if (/not switched on/i.test(msg)) return "The card key is not on this deploy yet.";
+  if (/permission|restricted key/i.test(msg)) return "That Stripe key cannot open a card page. Turn on Write for Checkout, Products, and Prices.";
+  return msg;
+}
+
 function pay(packId: string) {
   unlockAudio();
   useGame.getState().setShopNote("Opening the card page…");
@@ -20,8 +34,7 @@ function pay(packId: string) {
       else useGame.getState().setShopNote("Stripe did not open. Try again.");
     })
     .catch((e: unknown) => {
-      const msg = e instanceof Error ? e.message : "Card payments are not switched on yet.";
-      useGame.getState().setShopNote(msg);
+      useGame.getState().setShopNote(payFault(e));
     });
 }
 
@@ -240,6 +253,7 @@ export function ShopPanel() {
         <p className="mt-2 text-sm leading-relaxed text-muted">
           Apple and Google are not required. These packs charge a card through Stripe. Gems land when the payment clears.
         </p>
+        {note ? <p className="mt-3 rounded-md border border-gold/50 bg-gold/10 px-3 py-2 text-sm text-gold">{note}</p> : null}
         {!snap.firstBuy ? (
           <div className="mt-3 flex items-center gap-3 rounded-md border border-gold/50 bg-gold/10 px-3 py-3">
             <img src="/shop/firstblood.jpg" alt="" className="size-14 shrink-0 rounded-md object-cover" crossOrigin="anonymous" />
@@ -292,7 +306,6 @@ export function ShopPanel() {
             </li>
           ))}
         </ul>
-        {note ? <p className="mt-3 text-sm text-gold">{note}</p> : null}
       </div>
 
       <p className="mt-5 mb-2 text-xs tracking-wide text-muted uppercase">Weapons</p>
