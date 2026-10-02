@@ -1,4 +1,4 @@
-const CACHE = "soulrift-shell-v9";
+const CACHE = "soulrift-shell-v10";
 const PRECACHE = ["/", "/manifest.webmanifest", "/icon-192.png", "/icon-512.png"];
 const BG_DB = "soulrift-bg";
 const BG_STORE = "kv";
@@ -49,7 +49,13 @@ self.addEventListener("fetch", (event) => {
         }
         return res;
       })
-      .catch(() => caches.match(req).then((hit) => hit || caches.match("/"))),
+      .catch(() => {
+        const path = url.pathname;
+        if (path.endsWith(".js") || path.endsWith(".mjs") || path.endsWith(".css")) {
+          return new Response("", { status: 504, statusText: "Offline" });
+        }
+        return caches.match(req).then((hit) => hit || (req.mode === "navigate" ? caches.match("/") : Promise.resolve(new Response("", { status: 504 }))));
+      }),
   );
 });
 
