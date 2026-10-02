@@ -19,6 +19,17 @@ export const BAKED_BETTER_AUTH_URL = ${JSON.stringify(authUrl)};
 `,
 );
 
+const stripeKey = (process.env.STRIPE_SECRET_KEY || "").trim();
+const stripeWebhook = (process.env.STRIPE_WEBHOOK_SECRET || "").trim();
+
+writeFileSync(
+  new URL("../src/game/baked-stripe.ts", import.meta.url),
+  `/** Generated at build. Do not edit. */
+export const BAKED_STRIPE_SECRET_KEY = ${JSON.stringify(stripeKey)};
+export const BAKED_STRIPE_WEBHOOK_SECRET = ${JSON.stringify(stripeWebhook)};
+`,
+);
+
 console.log(
   "[bake-auth] googleId",
   googleId ? "yes" : "NO",
@@ -26,4 +37,8 @@ console.log(
   googleSecret.length,
   "authSecret",
   authSecret.length,
+  "stripeKey",
+  stripeKey.startsWith("rk_") || stripeKey.startsWith("sk_") ? "yes" : "NO",
+  "stripeWebhook",
+  stripeWebhook.startsWith("whsec_") ? "yes" : "NO",
 );

@@ -1,12 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { liveEnv } from "@/lib/auth/live-env";
+import { BAKED_STRIPE_WEBHOOK_SECRET } from "@/game/baked-stripe";
 
 export const Route = createFileRoute("/api/stripe/webhook")({
   server: {
     handlers: {
       POST: async ({ request }) => {
         const raw = await request.text();
-        const secret = liveEnv("STRIPE_WEBHOOK_SECRET");
+        const secret = BAKED_STRIPE_WEBHOOK_SECRET || liveEnv("STRIPE_WEBHOOK_SECRET");
         const header = request.headers.get("stripe-signature") ?? "";
         if (!secret || !header) return new Response("missing signature", { status: 400 });
         const { stripeSigned, fulfillStripeEvent } = await import("@/game/stripe.server");
