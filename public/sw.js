@@ -1,4 +1,4 @@
-const CACHE = "soulrift-shell-v10";
+const CACHE = "soulrift-shell-v11";
 const PRECACHE = ["/", "/manifest.webmanifest", "/icon-192.png", "/icon-512.png"];
 const BG_DB = "soulrift-bg";
 const BG_STORE = "kv";
@@ -23,9 +23,12 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const req = event.request;
   if (req.method !== "GET") return;
+  if (req.cache === "only-if-cached" && req.mode !== "same-origin") return;
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith("/api/")) return;
+  const path = url.pathname;
+  if (path.endsWith(".js") || path.endsWith(".mjs") || path.endsWith(".css")) return;
   if (req.mode === "navigate") {
     event.respondWith(
       fetch(req).catch(() => {
@@ -49,13 +52,7 @@ self.addEventListener("fetch", (event) => {
         }
         return res;
       })
-      .catch(() => {
-        const path = url.pathname;
-        if (path.endsWith(".js") || path.endsWith(".mjs") || path.endsWith(".css")) {
-          return new Response("", { status: 504, statusText: "Offline" });
-        }
-        return caches.match(req).then((hit) => hit || (req.mode === "navigate" ? caches.match("/") : Promise.resolve(new Response("", { status: 504 }))));
-      }),
+      .catch(() => caches.match(req).then((hit) => hit || new Response("", { status: 504 }))),
   );
 });
 
