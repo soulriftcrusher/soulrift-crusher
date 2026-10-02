@@ -6,6 +6,8 @@ void process.env.GOOGLE_CLIENT_ID;
 void process.env.BETTER_AUTH_SECRET;
 void process.env.BETTER_AUTH_URL;
 void process.env.DATABASE_URL;
+void process.env.STRIPE_SECRET_KEY;
+void process.env.STRIPE_WEBHOOK_SECRET;
 
 /** Read Vercel/Node env. Vite inlines `process.env.FOO`; `node:process`.env stays live. */
 export function liveEnv(name: string): string {

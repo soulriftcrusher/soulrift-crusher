@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { liveEnv } from "@/lib/auth/live-env";
 import { GEM_PACKS } from "./meta";
 
 const CENTS: Record<string, number> = {
@@ -23,7 +24,7 @@ export function packCents(id: string): number {
 }
 
 export async function startStripeCheckout(userId: string, packId: string): Promise<string> {
-  const key = (process.env.STRIPE_SECRET_KEY ?? "").trim();
+  const key = liveEnv("STRIPE_SECRET_KEY");
   if (!key.startsWith("sk_") && !key.startsWith("rk_")) throw new Error("Stripe is not switched on yet.");
   const pack = GEM_PACKS.find((p) => p.id === packId);
   const cents = packCents(packId);
