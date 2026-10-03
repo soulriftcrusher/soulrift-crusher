@@ -533,6 +533,18 @@ export class Renderer {
     return this.sim.lineupIds();
   }
 
+  /** iPad and other big touch screens. Phones stay on the small layout. */
+  private padScreen(): boolean {
+    return Math.min(this.w, this.h) >= 640;
+  }
+
+  private monsterSize(): number {
+    const m = this.sim.monster;
+    const base = Math.min(this.w, this.h);
+    const fill = Math.min(1.55, Math.max(1, this.h / 700));
+    return Math.round(base * 0.3 * fill * (m.isBoss ? 1.08 : 0.92) * (m.artScale || 1));
+  }
+
   private heroPos(id: HeroId): { x: number; y: number; scale: number; row: number } | null {
     const hired = this.hiredIds();
     const i = hired.indexOf(id);
@@ -543,15 +555,26 @@ export class Renderer {
     const rowFromBack = Math.floor(i / cols);
     const slot = i % cols;
     const inThis = rowFromBack === rows - 1 ? n - rowFromBack * cols : cols;
-    const span = 0.44;
-    const gap = inThis <= 1 ? 0 : span / (inThis - 1);
-    const x = this.w * (0.08 + slot * gap);
     const depth = rows - 1 - rowFromBack;
     const shrink = n > 16 ? 0.74 : n > 10 ? 0.86 : 1;
     const fill = Math.min(1.7, Math.max(1, this.h / 620));
-    const scale = (depth === 0 ? 1 : depth === 1 ? 0.8 : 0.66) * shrink * fill;
+    const pad = this.padScreen();
+    const scale = (depth === 0 ? 1 : depth === 1 ? 0.8 : 0.66) * shrink * fill * (pad ? 1.22 : 1);
     const lift = depth === 0 ? 0 : Math.max(28, this.h * 0.055) * depth;
     const y = this.groundY - 8 - lift;
+    let x: number;
+    if (pad) {
+      const size = this.monsterSize();
+      const heroHalf = 78 * scale;
+      const left = this.w * 0.09;
+      const right = Math.max(left + 48, this.monsterX - size / 2 - heroHalf - 28);
+      const gap = inThis <= 1 ? 0 : (right - left) / (inThis - 1);
+      x = left + slot * gap;
+    } else {
+      const span = 0.44;
+      const gap = inThis <= 1 ? 0 : span / (inThis - 1);
+      x = this.w * (0.08 + slot * gap);
+    }
     return { x, y, scale, row: depth };
   }
 
@@ -562,7 +585,10 @@ export class Renderer {
     this.groundY = Math.min(h * 0.72, h - Math.round(118 * Math.min(1.35, Math.max(1, h / 780))));
     const n = this.hiredIds().length;
     const crowd = Math.max(0, Math.min(1, (n - 3) / 7));
-    this.monsterX = w * (0.62 + crowd * 0.24);
+    const size = this.monsterSize();
+    this.monsterX = this.padScreen()
+      ? Math.min(this.w - size * 0.48, this.w * 0.78)
+      : this.w * (0.62 + crowd * 0.24);
     this.monsterY = this.groundY;
 
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -672,9 +698,7 @@ export class Renderer {
     if (art) {
       const hurt = this.monsterHurt;
       const dead = this.monsterDead;
-      const base = Math.min(this.w, this.h);
-      const fill = Math.min(1.55, Math.max(1, this.h / 700));
-      const size = Math.round(base * 0.3 * fill * (m.isBoss ? 1.08 : 0.92) * (m.artScale || 1));
+      const size = this.monsterSize();
       const wobble = hurt > 0 ? Math.sin(this.time * 48) * hurt * 5 : 0;
       const x = this.monsterX - size / 2 + wobble;
       const y = this.monsterY - size * 0.9 + dead * 16;
