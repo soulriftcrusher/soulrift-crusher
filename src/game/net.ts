@@ -1108,11 +1108,12 @@ export const staffSetPassword = createServerFn({ method: "POST" })
     if (password.length < 8) throw new Error("New password needs 8+ letters.");
     const { auth } = await import("@/lib/auth/server");
     const ctx = await auth.$context;
+    if (!ctx.password?.hash) throw new Error("Password tool is not ready.");
     const hash = await ctx.password.hash(password);
     const users = await sql<{ id: string }>`
       select id from "user" where lower(email) = ${email} limit 1
     `;
-    if (!users[0]) throw new Error("No hunter with that email.");
+    if (!users[0]) throw new Error("No hunter with that email. Use the email they signed up with.");
     const id = users[0].id;
     const have = await sql<{ id: string }>`
       select id from account where "userId" = ${id} and "providerId" = 'credential' limit 1
@@ -1476,6 +1477,24 @@ export const listReports = createServerFn({ method: "GET" })
       reason: r.reason,
       at: r.created_at,
     }));
+  });
+
+export const clearReport = createServerFn({ method: "POST" })
+  .validator((d: { id?: number; all?: boolean }) => d)
+  .middleware([authMiddleware])
+  .handler(async ({ context, data }) => {
+    const { getSql } = await import("@/lib/db");
+    const sql = await getSql();
+    const mine = await asStaff(sql, context.userId);
+    if (!mine[0]) throw new Error("Staff only.");
+    if (data.all) {
+      await sql`delete from reports`;
+    } else {
+      const id = Math.floor(Number(data.id) || 0);
+      if (id <= 0) throw new Error("Pick a report.");
+      await sql`delete from reports where id = ${id}`;
+    }
+    return { ok: true as const };
   });
 
 export const queueIap = createServerFn({ method: "POST" })

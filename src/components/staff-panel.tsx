@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { claimStaff, listReports, staffBan, staffCopySave, staffGift, staffRoster, staffSetPassword, staffStatus, staffUnban } from "@/game/net";
+import { claimStaff, clearReport, listReports, staffBan, staffCopySave, staffGift, staffRoster, staffSetPassword, staffStatus, staffUnban } from "@/game/net";
 import { formatNum } from "@/game/format";
 import { sfx, unlockAudio } from "@/game/audio";
 import { sim } from "@/game/sim";
@@ -201,16 +201,20 @@ export function StaffPanel() {
             />
             <Button
               className="mt-2 h-11 w-full"
-              disabled={busy || !resetEmail || resetPass.length < 8}
+              disabled={busy || !resetEmail.includes("@") || resetPass.length < 8}
               onClick={() =>
                 run(
                   () => staffSetPassword({ data: { email: resetEmail.trim(), password: resetPass } }),
-                  `Password set for ${resetEmail.trim().toLowerCase()}. Tell them to Sign in.`,
+                  `Password set for ${resetEmail.trim().toLowerCase()}. On the iPad, use Sign in. Do not tap Create hunter.`,
                 )
               }
             >
               Set password
             </Button>
+            {resetPass.length > 0 && resetPass.length < 8 ? (
+              <p className="mt-2 text-xs text-gold">The new password needs 8 characters or the button stays off.</p>
+            ) : null}
+            {note ? <p className="mt-2 text-sm text-gold">{note}</p> : null}
           </div>
           <input
             value={q}
@@ -277,19 +281,37 @@ export function StaffPanel() {
           <p className="mt-2 text-xs tabular-nums text-muted">{shown.length} hunters on this list</p>
           {reports.length ? (
             <div className="mt-3 rounded-md border border-accent/40 p-3">
-              <p className="text-xs tracking-wide text-accent uppercase">Reports</p>
-              <ul className="mt-2 flex flex-col gap-1">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs tracking-wide text-accent uppercase">Reports</p>
+                <button
+                  type="button"
+                  className="text-xs text-gold underline"
+                  onClick={() => run(() => clearReport({ data: { all: true } }), "Reports cleared.")}
+                >
+                  Clear all
+                </button>
+              </div>
+              <ul className="mt-2 flex flex-col gap-2">
                 {reports.map((r) => (
-                  <li key={r.id} className="text-xs">
-                    {r.fromName} reported{" "}
+                  <li key={r.id} className="flex items-start justify-between gap-2 text-xs">
+                    <span>
+                      {r.fromName} reported{" "}
+                      <button
+                        type="button"
+                        className="text-gold underline"
+                        onClick={() => openHunter(r.aboutId, r.aboutName)}
+                      >
+                        {r.aboutName}
+                      </button>{" "}
+                      · {r.reason}
+                    </span>
                     <button
                       type="button"
-                      className="text-gold underline"
-                      onClick={() => openHunter(r.aboutId, r.aboutName)}
+                      className="shrink-0 text-gold underline"
+                      onClick={() => run(() => clearReport({ data: { id: r.id } }), "Report cleared.")}
                     >
-                      {r.aboutName}
-                    </button>{" "}
-                    · {r.reason}
+                      Clear
+                    </button>
                   </li>
                 ))}
               </ul>

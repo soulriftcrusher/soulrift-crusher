@@ -76,6 +76,7 @@ export function HunterCard() {
   const [note, setNote] = useState("");
   const [profile, setProfile] = useState<HunterProfile | null>(null);
   const [loading, setLoading] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
   const userId = user?.id;
   const targetId = card?.userId;
 
@@ -83,6 +84,7 @@ export function HunterCard() {
     if (!targetId || !userId) return;
     let alive = true;
     setNote("");
+    setReportOpen(false);
     setLoading(true);
     staffStatus()
       .then((s) => {
@@ -240,10 +242,32 @@ export function HunterCard() {
                 variant="outline"
                 className="h-12"
                 disabled={busy}
-                onClick={() => run(() => reportHunter({ data: { userId: card.userId, reason: "report" } }), "Report sent to founders.")}
+                onClick={() => {
+                  unlockAudio();
+                  sfx.ui();
+                  setReportOpen((v) => !v);
+                }}
               >
                 Report
               </Button>
+            </div>
+          ) : null}
+          {reportOpen && !mine ? (
+            <div className="grid grid-cols-2 gap-2">
+              {["Cheating", "Harassment", "Spam", "Bad name", "Scam"].map((reason) => (
+                <Button
+                  key={reason}
+                  variant="secondary"
+                  className="h-11"
+                  disabled={busy}
+                  onClick={() => {
+                    setReportOpen(false);
+                    run(() => reportHunter({ data: { userId: card.userId, reason } }), `Reported for ${reason}.`);
+                  }}
+                >
+                  {reason}
+                </Button>
+              ))}
             </div>
           ) : null}
           {staff && !mine ? (

@@ -398,7 +398,9 @@ export const reportHunter = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const about = String(data.userId ?? "").slice(0, 80);
     if (!about || about === context.userId) throw new Error("Pick someone else.");
-    const reason = String(data.reason ?? "report").slice(0, 80);
+    const allowed = ["Cheating", "Harassment", "Spam", "Bad name", "Scam"];
+    const reason = allowed.includes(String(data.reason ?? "")) ? String(data.reason) : "";
+    if (!reason) throw new Error("Pick a reason.");
     const { getSql } = await import("@/lib/db");
     const sql = await getSql();
     await sql`insert into reports (from_id, about_id, reason) values (${context.userId}, ${about}, ${reason})`;
