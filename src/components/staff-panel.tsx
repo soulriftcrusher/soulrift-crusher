@@ -207,9 +207,11 @@ export function StaffPanel() {
                 setBusy(true);
                 setPassNote("");
                 staffSetPassword({ data: { email: resetEmail.trim(), password: resetPass } })
-                  .then((r) => {
+                  .then(() => {
                     sfx.chest();
-                    setPassNote(`Password set. On the iPad, Sign in with ${r.email}. Do not tap Create hunter.`);
+                    setPassNote(
+                      `Password set. On the iPad, Sign in with the name ${resetEmail.trim()}. Do not tap Create hunter.`,
+                    );
                   })
                   .catch((e) => setPassNote(errMessage(e)))
                   .finally(() => setBusy(false));

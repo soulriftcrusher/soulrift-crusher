@@ -1126,6 +1126,15 @@ export const staffSetPassword = createServerFn({ method: "POST" })
     if (users[1]) throw new Error("More than one hunter has that name. Use the email.");
     const id = users[0].id;
     const email = users[0].email;
+    if (!who.includes("@") && /^[a-z0-9_]{3,20}$/.test(key)) {
+      await sql`
+        update "user"
+        set username = ${key}, "displayUsername" = ${who}
+        where id = ${id}
+          and username is null
+          and not exists (select 1 from "user" taken where taken.username = ${key})
+      `;
+    }
     const have = await sql<{ id: string }>`
       select id from account where "userId" = ${id} and "providerId" = 'credential' limit 1
     `;

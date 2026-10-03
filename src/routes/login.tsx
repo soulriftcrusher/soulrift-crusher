@@ -78,25 +78,47 @@ function Login() {
     setErr("");
     setBusy(true);
     try {
-      const em = email.trim().toLowerCase();
-      if (!em || password.length < 8) throw new Error("Email and a password of at least 8 characters.");
-      if (em === REVIEWER_EMAIL) await ensureReviewer();
+      const raw = email.trim();
+      const isEmail = raw.includes("@");
+      if (!raw || password.length < 8) throw new Error("Username and a password of at least 8 characters.");
+      if (isEmail && raw.toLowerCase() === REVIEWER_EMAIL) await ensureReviewer();
       if (mode === "up") {
-        const { error } = await authClient.signUp.email({
-          email: em,
-          password,
-          name: em.split("@")[0] || "Hunter",
-          callbackURL: afterLogin,
-        });
-        if (error) {
-          const already = /exist|already/i.test(error.message ?? "");
-          if (!already) throw new Error(error.message ?? "Could not create hunter");
-          const again = await authClient.signIn.email({ email: em, password, callbackURL: "/" });
-          if (again.error) throw new Error(again.error.message ?? "Hunter exists — Sign in instead.");
+        if (isEmail) {
+          const em = raw.toLowerCase();
+          const local = (em.split("@")[0] ?? "").replace(/[^A-Za-z0-9_]/g, "");
+          const { error } = await authClient.signUp.email({
+            email: em,
+            password,
+            name: local || "Hunter",
+            ...(local.length >= 3 ? { username: local } : {}),
+            callbackURL: afterLogin,
+          });
+          if (error) {
+            const already = /exist|already|taken/i.test(error.message ?? "");
+            if (!already) throw new Error(error.message ?? "Could not create hunter");
+            const again = await authClient.signIn.email({ email: em, password, callbackURL: "/" });
+            if (again.error) throw new Error(again.error.message ?? "Hunter exists — Sign in instead.");
+          }
+        } else {
+          const username = raw.replace(/\s+/g, "");
+          if (!/^[A-Za-z0-9_]{3,20}$/.test(username)) {
+            throw new Error("Username is 3–20 letters or numbers. No spaces or symbols.");
+          }
+          const { error } = await authClient.signUp.email({
+            email: `${username.toLowerCase()}@players.soulriftcrusher.com`,
+            password,
+            name: username,
+            username,
+            callbackURL: afterLogin,
+          });
+          if (error) {
+            const taken = /taken|exist|already/i.test(error.message ?? "");
+            throw new Error(taken ? "That username is taken. Sign in, or pick another." : (error.message ?? "Could not create hunter"));
+          }
         }
-      } else {
+      } else if (isEmail) {
         const { error } = await authClient.signIn.email({
-          email: em,
+          email: raw.toLowerCase(),
           password,
           callbackURL: afterLogin,
         });
@@ -104,9 +126,18 @@ function Login() {
           const missing = /not found|invalid|credentials/i.test(error.message ?? "");
           throw new Error(
             missing
-              ? "No hunter with that email, or the password is wrong. Tap Create hunter the first time."
+              ? "No hunter with that email, or the password is wrong. You can also Sign in with the username."
               : (error.message ?? "Sign-in failed"),
           );
+        }
+      } else {
+        const { error } = await authClient.signIn.username({
+          username: raw,
+          password,
+          callbackURL: afterLogin,
+        });
+        if (error) {
+          throw new Error("No hunter with that username, or the password is wrong. Tap Create hunter the first time.");
         }
       }
       window.location.assign(afterLogin);
@@ -130,8 +161,8 @@ function Login() {
         <p className="font-display text-xs tracking-[0.28em] text-muted uppercase">Required to hunt</p>
         <h1 className="font-display mt-2 text-3xl font-semibold tracking-tight">Sign in to hunt</h1>
         <p className="mt-3 text-sm leading-relaxed text-muted">
-          Continue with Google, or use email so your hunter stays on this name. Never share your
-          email, password, or hunt code with anyone.
+          Continue with Google, or make a hunter with a username and password. An email is optional.
+          Never share your username, password, or hunt code with anyone.
         </p>
         {moveOpen() && !onCom ? (
           <div className="mt-3 flex flex-col gap-2">
@@ -172,9 +203,9 @@ function Login() {
             : null}
           <div className="rounded-md border border-gold/40 bg-bg/50 p-3">
             <input
-              type="email"
+              type="text"
               autoComplete="username"
-              placeholder="Email"
+              placeholder="Username or email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="h-10 w-full rounded-md border border-border bg-bg px-3 text-sm text-fg"
@@ -214,11 +245,7 @@ function Login() {
             </button>
             {forgot ? (
               <p className="mt-2 text-xs leading-relaxed text-muted">
-                Email{" "}
-                <a className="text-gold underline" href="mailto:soulriftcrusher@gmail.com?subject=Reset%20my%20Soulrift%20password">
-                  soulriftcrusher@gmail.com
-                </a>{" "}
-                from the same inbox. A founder will set a new password. Use that new password on Sign in — don’t tap Create hunter again.
+                Tell the founder the hunter name. They will set a new password. Then use Sign in with that username — don’t tap Create hunter again.
               </p>
             ) : null}
           </div>
