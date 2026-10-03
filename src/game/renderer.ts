@@ -548,7 +548,8 @@ export class Renderer {
     const x = this.w * (0.08 + slot * gap);
     const depth = rows - 1 - rowFromBack;
     const shrink = n > 16 ? 0.74 : n > 10 ? 0.86 : 1;
-    const scale = (depth === 0 ? 1 : depth === 1 ? 0.8 : 0.66) * shrink * Math.min(1.15, this.h / 560);
+    const fill = Math.min(1.7, Math.max(1, this.h / 620));
+    const scale = (depth === 0 ? 1 : depth === 1 ? 0.8 : 0.66) * shrink * fill;
     const lift = depth === 0 ? 0 : Math.max(28, this.h * 0.055) * depth;
     const y = this.groundY - 8 - lift;
     return { x, y, scale, row: depth };
@@ -558,7 +559,7 @@ export class Renderer {
     const ctx = this.ctx;
     const w = this.w;
     const h = this.h;
-    this.groundY = Math.min(h * 0.78, h - 128);
+    this.groundY = Math.min(h * 0.72, h - Math.round(118 * Math.min(1.35, Math.max(1, h / 780))));
     const n = this.hiredIds().length;
     const crowd = Math.max(0, Math.min(1, (n - 3) / 7));
     this.monsterX = w * (0.62 + crowd * 0.24);
@@ -672,7 +673,8 @@ export class Renderer {
       const hurt = this.monsterHurt;
       const dead = this.monsterDead;
       const base = Math.min(this.w, this.h);
-      const size = Math.round(base * 0.26 * (m.isBoss ? 1.12 : 0.95) * (m.artScale || 1));
+      const fill = Math.min(1.55, Math.max(1, this.h / 700));
+      const size = Math.round(base * 0.3 * fill * (m.isBoss ? 1.08 : 0.92) * (m.artScale || 1));
       const wobble = hurt > 0 ? Math.sin(this.time * 48) * hurt * 5 : 0;
       const x = this.monsterX - size / 2 + wobble;
       const y = this.monsterY - size * 0.9 + dead * 16;

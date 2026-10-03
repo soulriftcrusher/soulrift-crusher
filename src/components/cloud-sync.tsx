@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { queueBackgroundSync, registerBackgroundHunt } from "@/game/bg-sync";
-import { pullCloudSave, pullHeroRoster, pushCloudSave, pushHeroRoster } from "@/game/net";
+import { claimStripePack, pullCloudSave, pullHeroRoster, pushCloudSave, pushHeroRoster } from "@/game/net";
 import { readHuntName } from "@/game/name";
 import { applyIncoming, applyRoster, mergeProgress, recoverSave, rosterFromState } from "@/game/save";
 import { sim } from "@/game/sim";
@@ -61,6 +61,18 @@ export function CloudSync() {
         if (recovered) sim.hydrate(recovered);
         await registerBackgroundHunt();
         if (navigator.storage?.persist) void navigator.storage.persist();
+        const params = new URLSearchParams(window.location.search);
+        const sessionId = params.get("session_id") ?? "";
+        const justPaid = params.get("paid") === "1" || sessionId.startsWith("cs_");
+        if (sessionId.startsWith("cs_")) {
+          await claimStripePack({ data: { sessionId } }).catch(() => undefined);
+        }
+        if (justPaid) {
+          const url = new URL(window.location.href);
+          url.searchParams.delete("paid");
+          url.searchParams.delete("session_id");
+          window.history.replaceState({}, "", url.pathname + url.search + url.hash);
+        }
         const [cloud, heroes] = await Promise.all([pullCloudSave(), pullHeroRoster().catch(() => ({ roster: [] }))]);
         if (!alive || token !== pull) return;
         if (cloud.payload) {
@@ -97,6 +109,36 @@ export function CloudSync() {
         steal = false;
         ready.current = true;
         useGame.getState().setCloudReady(true);
+        if (justPaid) {
+          window.setTimeout(() => {
+            if (!alive) return;
+            void pullCloudSave()
+              .then((again) => {
+                if (!alive) return;
+                let changed = false;
+                if (again.firstBlood && sim.claimFirstBlood()) changed = true;
+                for (const id of again.paidGods ?? []) {
+                  if (!(sim.state.paidGods ?? []).includes(id as "auric" | "solenne" | "vael")) {
+                    sim.unlockPaidGod(id as "auric" | "solenne" | "vael");
+                    changed = true;
+                  }
+                }
+                if (again.grantGems > 0) {
+                  sim.grantGems(again.grantGems);
+                  changed = true;
+                }
+                if (again.grantGold > 0 || again.grantSouls > 0 || again.grantChests > 0) {
+                  sim.applyGift({ gold: again.grantGold, souls: again.grantSouls, gems: 0, chests: again.grantChests });
+                  changed = true;
+                }
+                if (!changed) return;
+                sim.save();
+                useGame.getState().refresh();
+                queueCloud(name);
+              })
+              .catch(() => undefined);
+          }, 4000);
+        }
       } catch {
         if (!alive || token !== pull) return;
         queueCloud(name);

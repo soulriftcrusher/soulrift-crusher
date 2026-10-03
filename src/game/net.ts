@@ -777,6 +777,15 @@ export const challengeCrusader = createServerFn({ method: "POST" })
     };
   });
 
+export const claimStripePack = createServerFn({ method: "POST" })
+  .validator((d: { sessionId: string }) => ({ sessionId: String(d?.sessionId ?? "").slice(0, 120) }))
+  .middleware([authMiddleware])
+  .handler(async ({ context, data }) => {
+    const { claimPaidSession } = await import("./stripe.server");
+    await claimPaidSession(context.userId, data.sessionId);
+    return { ok: true as const };
+  });
+
 export const pullCloudSave = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {

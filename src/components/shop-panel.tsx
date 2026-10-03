@@ -250,9 +250,6 @@ export function ShopPanel() {
           <img src="/tiles/hud-gem.png" alt="" className="size-6 object-contain" crossOrigin="anonymous" />
           <h3 className="font-display text-base font-semibold">Gem shop</h3>
         </div>
-        <p className="mt-2 text-sm leading-relaxed text-muted">
-          Apple and Google are not required. These packs charge a card through Stripe. Gems land when the payment clears.
-        </p>
         {note ? <p className="mt-3 rounded-md border border-gold/50 bg-gold/10 px-3 py-2 text-sm text-gold">{note}</p> : null}
         {!snap.firstBuy ? (
           <div className="mt-3 flex items-center gap-3 rounded-md border border-gold/50 bg-gold/10 px-3 py-3">

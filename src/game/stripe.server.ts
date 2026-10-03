@@ -58,7 +58,7 @@ export async function startStripeCheckout(userId: string, packId: string): Promi
   const body = new URLSearchParams();
   body.set("mode", "payment");
   body.set("managed_payments[enabled]", "false");
-  body.set("success_url", `${site}/?paid=1`);
+  body.set("success_url", `${site}/?paid=1&session_id={CHECKOUT_SESSION_ID}`);
   body.set("cancel_url", `${site}/?paid=0`);
   body.set("client_reference_id", userId);
   body.set("metadata[userId]", userId);
@@ -102,16 +102,14 @@ export function stripeSigned(raw: string, header: string, secret: string): boole
   });
 }
 
-type StripeEvent = {
-  type?: string;
-  data?: { object?: { id?: string; payment_status?: string; metadata?: { userId?: string; packId?: string } } };
+type PaidSession = {
+  id?: string;
+  payment_status?: string;
+  metadata?: { userId?: string; packId?: string };
 };
 
-export async function fulfillStripeEvent(raw: string): Promise<void> {
-  const event = JSON.parse(raw) as StripeEvent;
-  if (event.type !== "checkout.session.completed") return;
-  const session = event.data?.object;
-  if (!session?.id || session.payment_status !== "paid") return;
+async function grantPaidSession(session: PaidSession): Promise<void> {
+  if (!session.id || session.payment_status !== "paid") return;
   const userId = String(session.metadata?.userId ?? "");
   const packId = String(session.metadata?.packId ?? "");
   const pack = GEM_PACKS.find((p) => p.id === packId);
@@ -154,4 +152,24 @@ export async function fulfillStripeEvent(raw: string): Promise<void> {
       on conflict (user_id) do update set gems = gem_grants.gems + excluded.gems
     `;
   }
+}
+
+export async function fulfillStripeEvent(raw: string): Promise<void> {
+  const event = JSON.parse(raw) as { type?: string; data?: { object?: PaidSession } };
+  if (event.type !== "checkout.session.completed") return;
+  await grantPaidSession(event.data?.object ?? {});
+}
+
+export async function claimPaidSession(userId: string, sessionId: string): Promise<void> {
+  const id = sessionId.trim();
+  if (!id.startsWith("cs_") || id.length > 120) return;
+  const key = cleanStripeKey(BAKED_STRIPE_SECRET_KEY || runtimeValue("STRIPE_SECRET_KEY") || liveEnv("STRIPE_SECRET_KEY"));
+  if (!key.startsWith("sk_") && !key.startsWith("rk_")) return;
+  const res = await fetch(`https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(id)}`, {
+    headers: { Authorization: `Bearer ${key}` },
+  });
+  if (!res.ok) return;
+  const session = (await res.json()) as PaidSession;
+  if (String(session.metadata?.userId ?? "") !== userId) return;
+  await grantPaidSession({ ...session, id });
 }
