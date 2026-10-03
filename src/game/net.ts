@@ -1102,19 +1102,30 @@ export const staffSetPassword = createServerFn({ method: "POST" })
     const sql = await getSql();
     const mine = await asStaff(sql, context.userId);
     if (!mine[0]) throw new Error("Staff only.");
-    const email = String(data.email ?? "").trim().toLowerCase();
+    const who = String(data.email ?? "").trim();
     const password = String(data.password ?? "");
-    if (!email.includes("@")) throw new Error("Hunter email.");
+    if (who.length < 2) throw new Error("Type their email or hunter name.");
     if (password.length < 8) throw new Error("New password needs 8+ letters.");
     const { auth } = await import("@/lib/auth/server");
     const ctx = await auth.$context;
     if (!ctx.password?.hash) throw new Error("Password tool is not ready.");
     const hash = await ctx.password.hash(password);
-    const users = await sql<{ id: string }>`
-      select id from "user" where lower(email) = ${email} limit 1
-    `;
-    if (!users[0]) throw new Error("No hunter with that email. Use the email they signed up with.");
+    const key = who.toLowerCase();
+    const users = who.includes("@")
+      ? await sql<{ id: string; email: string }>`
+          select id, email from "user" where lower(email) = ${key} limit 2
+        `
+      : await sql<{ id: string; email: string }>`
+          select u.id, u.email
+          from "user" u
+          left join crusaders c on c.user_id = u.id
+          where lower(u.name) = ${key} or lower(c.name) = ${key}
+          limit 2
+        `;
+    if (!users[0]) throw new Error(who.includes("@") ? "No hunter with that email." : "No hunter with that name. Use the email if the name is shared.");
+    if (users[1]) throw new Error("More than one hunter has that name. Use the email.");
     const id = users[0].id;
+    const email = users[0].email;
     const have = await sql<{ id: string }>`
       select id from account where "userId" = ${id} and "providerId" = 'credential' limit 1
     `;

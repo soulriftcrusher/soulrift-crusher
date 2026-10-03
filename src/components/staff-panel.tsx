@@ -49,6 +49,7 @@ export function StaffPanel() {
   const [code, setCode] = useState("RIFT");
   const [resetEmail, setResetEmail] = useState("");
   const [resetPass, setResetPass] = useState("");
+  const [passNote, setPassNote] = useState("");
   const [q, setQ] = useState("");
   const [fromId, setFromId] = useState("");
   const [ontoId, setOntoId] = useState("");
@@ -186,10 +187,11 @@ export function StaffPanel() {
           </div>
           <div className="mt-3 rounded-md border border-gold/40 p-3">
             <p className="text-xs tracking-wide text-gold uppercase">Forgot password</p>
+            <p className="mt-1 text-[11px] text-muted">Type their hunter name or their email. Password needs 8 characters.</p>
             <input
               value={resetEmail}
               onChange={(e) => setResetEmail(e.target.value)}
-              placeholder="Hunter email"
+              placeholder="Hunter name or email"
               className="mt-2 h-11 w-full rounded-md border border-border bg-bg px-3 text-sm"
             />
             <input
@@ -201,20 +203,26 @@ export function StaffPanel() {
             />
             <Button
               className="mt-2 h-11 w-full"
-              disabled={busy || !resetEmail.includes("@") || resetPass.length < 8}
-              onClick={() =>
-                run(
-                  () => staffSetPassword({ data: { email: resetEmail.trim(), password: resetPass } }),
-                  `Password set for ${resetEmail.trim().toLowerCase()}. On the iPad, use Sign in. Do not tap Create hunter.`,
-                )
-              }
+              disabled={busy || resetEmail.trim().length < 2 || resetPass.length < 8}
+              onClick={() => {
+                if (busy) return;
+                setBusy(true);
+                setPassNote("");
+                staffSetPassword({ data: { email: resetEmail.trim(), password: resetPass } })
+                  .then((r) => {
+                    sfx.chest();
+                    setPassNote(`Password set. On the iPad, Sign in with ${r.email}. Do not tap Create hunter.`);
+                  })
+                  .catch((e) => setPassNote(errMessage(e)))
+                  .finally(() => setBusy(false));
+              }}
             >
               Set password
             </Button>
-            {resetPass.length > 0 && resetPass.length < 8 ? (
+            {resetEmail.trim().length >= 2 && resetPass.length > 0 && resetPass.length < 8 ? (
               <p className="mt-2 text-xs text-gold">The new password needs 8 characters or the button stays off.</p>
             ) : null}
-            {note ? <p className="mt-2 text-sm text-gold">{note}</p> : null}
+            {passNote ? <p className="mt-2 text-sm text-gold">{passNote}</p> : null}
           </div>
           <input
             value={q}
