@@ -30,15 +30,44 @@ type Floater = {
   color: string;
 };
 
+type AttackStyle =
+  | "slash"
+  | "bash"
+  | "arrow"
+  | "fire"
+  | "hammer"
+  | "knife"
+  | "soul"
+  | "lightning"
+  | "ember"
+  | "maw"
+  | "rift"
+  | "glass"
+  | "gold"
+  | "void"
+  | "moon"
+  | "coin"
+  | "axe"
+  | "vine"
+  | "frost"
+  | "spear"
+  | "beam"
+  | "well"
+  | "cut"
+  | "gem";
+
 type Bolt = {
-  x: number;
-  y: number;
+  ox: number;
+  oy: number;
   tx: number;
   ty: number;
   life: number;
   max: number;
   color: string;
+  accent: string;
   heroId: HeroId;
+  style: AttackStyle;
+  struck?: boolean;
 };
 
 type HeroArt = { img: HTMLImageElement; sheet: boolean };
@@ -158,16 +187,48 @@ function roundRect(
   ctx.closePath();
 }
 
-function boltColor(id: HeroId): string {
-  const map: Partial<Record<HeroId, string>> = {
-    kael: "#c45c4a",
-    lyra: "#9bb7c9",
-    vex: "#e8a090",
-    iskra: "#d4b483",
-    nyx: "#9bb7c9",
-    sable: "#8a7e74",
+function attackOf(id: HeroId): { style: AttackStyle; color: string; accent: string; dur: number } {
+  const table: Record<HeroId, { style: AttackStyle; color: string; accent: string; dur: number }> = {
+    kael: { style: "slash", color: "#f2f2f4", accent: "#7eb6ff", dur: 0.28 },
+    rook: { style: "bash", color: "#c5ccd6", accent: "#8a93a3", dur: 0.34 },
+    lyra: { style: "arrow", color: "#e8dcc8", accent: "#6fa86a", dur: 0.36 },
+    vex: { style: "fire", color: "#ff7a2a", accent: "#ffd27a", dur: 0.4 },
+    thane: { style: "hammer", color: "#d7dde6", accent: "#8d6a45", dur: 0.42 },
+    sable: { style: "knife", color: "#2a2428", accent: "#e23b4a", dur: 0.26 },
+    morr: { style: "soul", color: "#b388ff", accent: "#efe6ff", dur: 0.46 },
+    iskra: { style: "lightning", color: "#e8f4ff", accent: "#7ec8ff", dur: 0.22 },
+    brann: { style: "ember", color: "#ff9a3c", accent: "#ffe1a8", dur: 0.38 },
+    devourer: { style: "maw", color: "#6b1020", accent: "#ff4d4d", dur: 0.36 },
+    nyx: { style: "rift", color: "#c084fc", accent: "#f5d0fe", dur: 0.3 },
+    kira: { style: "glass", color: "#d8fff8", accent: "#7ee0ff", dur: 0.3 },
+    orin: { style: "gold", color: "#ffd56a", accent: "#fff1c2", dur: 0.34 },
+    vorr: { style: "void", color: "#1a1028", accent: "#a78bfa", dur: 0.34 },
+    selene: { style: "moon", color: "#f4f7ff", accent: "#9bb7ff", dur: 0.4 },
+    ashur: { style: "coin", color: "#f0c14a", accent: "#fff6d0", dur: 0.36 },
+    dax: { style: "axe", color: "#d0d4dc", accent: "#6b3a2a", dur: 0.38 },
+    wren: { style: "vine", color: "#7dce6a", accent: "#e7ffc8", dur: 0.4 },
+    jora: { style: "frost", color: "#d7f4ff", accent: "#7ecbff", dur: 0.36 },
+    pike: { style: "spear", color: "#e4e0d4", accent: "#8d7348", dur: 0.3 },
+    auric: { style: "beam", color: "#ffd56a", accent: "#fff6c8", dur: 0.28 },
+    solenne: { style: "well", color: "#7ee0ff", accent: "#f3fbff", dur: 0.32 },
+    vael: { style: "cut", color: "#ff4d6a", accent: "#ffe0ea", dur: 0.26 },
+    morvax: { style: "gem", color: "#ff4fa3", accent: "#7cf0ff", dur: 0.34 },
   };
-  return map[id] ?? "#d4b483";
+  return table[id];
+}
+
+function flight(b: Bolt, arc = 0) {
+  const p = 1 - b.life / Math.max(0.001, b.max);
+  const u = Math.min(1, p / 0.84);
+  const ease = u * u * (3 - 2 * u);
+  const dx = b.tx - b.ox;
+  const dy = b.ty - b.oy;
+  return {
+    x: b.ox + dx * ease,
+    y: b.oy + dy * ease - Math.sin(ease * Math.PI) * arc,
+    ang: Math.atan2(dy, dx),
+    p,
+  };
 }
 
 export class Renderer {
@@ -189,6 +250,7 @@ export class Renderer {
   private hitstop = 0;
   private monsterHurt = 0;
   private monsterDead = 0;
+  private strikeColor = "#fff6e0";
   private heroLunge: Record<string, number> = {};
   private reduced = false;
   private shakeOn = true;
@@ -428,13 +490,8 @@ export class Renderer {
     }
     this.floaters = this.floaters.filter((f) => f.life > 0).slice(this.reduced ? -3 : -10);
 
-    for (const b of this.bolts) {
-      b.life -= dt;
-      const u = 1 - b.life / b.max;
-      b.x += (b.tx - b.x) * Math.min(1, u * 3);
-      b.y += (b.ty - b.y) * Math.min(1, u * 3);
-    }
-    this.bolts = this.bolts.filter((b) => b.life > 0).slice(this.reduced ? -2 : -8);
+    for (const b of this.bolts) b.life -= dt;
+    this.bolts = this.bolts.filter((b) => b.life > 0).slice(this.reduced ? -6 : -16);
 
     if (!this.reduced && this.particles.length < 20 && Math.random() < dt * 0.6) {
       this.particles.push({
@@ -511,18 +568,21 @@ export class Renderer {
           kind: e.chest ? "coin" : "spark",
         });
       }
-    } else if (e.type === "heroAttack" && e.heroId && this.paint && !this.reduced && this.bolts.length < 8) {
+    } else if (e.type === "heroAttack" && e.heroId && this.paint && this.bolts.length < (this.reduced ? 6 : 16)) {
       const pos = this.heroPos(e.heroId);
       if (pos) {
+        const spec = attackOf(e.heroId);
         this.bolts.push({
-          x: pos.x,
-          y: pos.y - 40 * pos.scale,
-          tx: mx,
-          ty: my,
-          life: 0.22,
-          max: 0.22,
-          color: boltColor(e.heroId),
+          ox: pos.x + 8,
+          oy: pos.y - 46 * pos.scale,
+          tx: mx + (Math.random() - 0.5) * 22,
+          ty: my + (Math.random() - 0.5) * 18,
+          life: spec.dur + 0.1,
+          max: spec.dur + 0.1,
+          color: spec.color,
+          accent: spec.accent,
           heroId: e.heroId,
+          style: spec.style,
         });
         this.heroLunge[e.heroId] = 1;
       }
@@ -542,7 +602,7 @@ export class Renderer {
     const m = this.sim.monster;
     const base = Math.min(this.w, this.h);
     const fill = Math.min(1.55, Math.max(1, this.h / 700));
-    return Math.round(base * 0.3 * fill * (m.isBoss ? 1.08 : 0.92) * (m.artScale || 1));
+    return Math.round(base * 0.26 * fill * (m.isBoss ? 1.08 : 0.92) * (m.artScale || 1));
   }
 
   private heroPos(id: HeroId): { x: number; y: number; scale: number; row: number } | null {
@@ -571,7 +631,7 @@ export class Renderer {
       const gap = inThis <= 1 ? 0 : (right - left) / (inThis - 1);
       x = left + slot * gap;
     } else {
-      const span = 0.44;
+      const span = 0.34;
       const gap = inThis <= 1 ? 0 : span / (inThis - 1);
       x = this.w * (0.08 + slot * gap);
     }
@@ -587,8 +647,8 @@ export class Renderer {
     const crowd = Math.max(0, Math.min(1, (n - 3) / 7));
     const size = this.monsterSize();
     this.monsterX = this.padScreen()
-      ? Math.min(this.w - size * 0.48, this.w * 0.78)
-      : this.w * (0.62 + crowd * 0.24);
+      ? Math.min(this.w - size * 0.4, this.w * 0.84)
+      : Math.min(this.w - size * 0.38, this.w * (0.8 + crowd * 0.06));
     this.monsterY = this.groundY;
 
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -654,15 +714,18 @@ export class Renderer {
       if (!art) continue;
       const def = HEROES.find((h) => h.id === id);
       const lunge = this.heroLunge[id] ?? 0;
+      const melee = attackOf(id).style;
+      const heavy = melee === "slash" || melee === "bash" || melee === "hammer" || melee === "axe" || melee === "cut" || melee === "knife" || melee === "maw";
       const bob = Math.sin(t * 2.4 + id.charCodeAt(0)) * 2.4 * pos.scale;
       const ratio = art.img.width / Math.max(1, art.img.height);
       const tall = !art.sheet && ratio < 0.85;
       const dh = Math.round((tall ? 168 : 118) * pos.scale);
       const dw = Math.round((tall ? 168 * ratio : 118) * pos.scale);
       ctx.save();
-      ctx.translate(pos.x + lunge * 16 * pos.scale, pos.y + bob);
+      ctx.translate(pos.x + lunge * (heavy ? 34 : 12) * pos.scale, pos.y + bob - lunge * 6);
       // Walk sheets and the gods already face the beast. Portraits face left.
       if (!art.sheet && !def?.facesRight) ctx.scale(-1, 1);
+      ctx.rotate(lunge * (heavy ? -0.16 : -0.05));
       if (art.sheet) {
         const frame = Math.floor(t * 6 + id.charCodeAt(0)) % 4;
         const col = frame % 2;
@@ -705,6 +768,14 @@ export class Renderer {
       this.ctx.save();
       this.ctx.globalAlpha = Math.max(0.35, 1 - dead);
       this.ctx.drawImage(art, x, y, size, size);
+      if (hurt > 0.4) {
+        const flash = (hurt - 0.4) / 0.6;
+        this.ctx.globalAlpha = flash * 0.42;
+        this.ctx.fillStyle = this.strikeColor;
+        this.ctx.beginPath();
+        this.ctx.ellipse(x + size * 0.5, y + size * 0.46, size * 0.26, size * 0.32, 0, 0, Math.PI * 2);
+        this.ctx.fill();
+      }
       this.ctx.restore();
       return;
     }
@@ -723,21 +794,410 @@ export class Renderer {
 
   private drawBolts() {
     const ctx = this.ctx;
-    for (const b of this.bolts) {
-      const a = b.life / b.max;
-      ctx.strokeStyle = b.color;
-      ctx.globalAlpha = a;
+    for (const b of this.bolts) this.drawAttack(ctx, b);
+    ctx.globalAlpha = 1;
+    ctx.shadowBlur = 0;
+  }
+
+  private drawAttack(ctx: CanvasRenderingContext2D, b: Bolt) {
+    const arc = b.style === "arrow" || b.style === "frost" || b.style === "axe" ? 26 : b.style === "coin" || b.style === "gem" ? 14 : 0;
+    const f = flight(b, arc);
+    const traveling = b.style !== "lightning" && b.style !== "beam" && b.style !== "slash" && b.style !== "cut" && b.style !== "rift";
+    ctx.save();
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    if (traveling && f.p < 0.86) {
+      for (let i = 3; i >= 1; i--) {
+        const ghost = flight({ ...b, life: Math.min(b.max * 0.98, b.life + b.max * 0.07 * i) }, arc);
+        ctx.save();
+        ctx.globalAlpha = 0.14;
+        this.paintBody(ctx, b, ghost.x, ghost.y, ghost.ang, ghost.p);
+        ctx.restore();
+      }
+    }
+    ctx.globalAlpha = f.p > 0.92 ? Math.max(0, (1 - f.p) / 0.08) : 1;
+    this.paintBody(ctx, b, f.x, f.y, f.ang, f.p);
+    if (f.p > 0.84) {
+      if (!b.struck) {
+        b.struck = true;
+        this.monsterHurt = 1;
+        this.strikeColor = b.accent;
+      }
+      this.paintHit(ctx, b, (f.p - 0.84) / 0.16);
+    }
+    ctx.restore();
+  }
+
+  private paintBody(ctx: CanvasRenderingContext2D, b: Bolt, x: number, y: number, ang: number, p: number) {
+    switch (b.style) {
+      case "arrow":
+      case "frost":
+        this.paintArrow(ctx, x, y, ang, b.style === "frost");
+        break;
+      case "spear":
+      case "gold":
+        this.paintSpear(ctx, x, y, ang, b.color, b.accent);
+        break;
+      case "knife":
+        this.paintKnife(ctx, x, y, ang);
+        break;
+      case "slash":
+      case "cut":
+      case "rift":
+        this.paintSlash(ctx, p > 0.4 ? b.tx : x, p > 0.4 ? b.ty : y, p, b.color, b.accent);
+        break;
+      case "bash":
+        this.paintBash(ctx, x, y, p, b.tx, b.ty);
+        break;
+      case "hammer":
+      case "axe":
+        this.paintHammer(ctx, x, y, ang, p, b.style === "axe");
+        break;
+      case "fire":
+      case "ember":
+        this.paintFire(ctx, b, x, y, b.style === "ember");
+        break;
+      case "soul":
+      case "well":
+        this.paintOrb(ctx, x, y, p, b.color, b.accent);
+        break;
+      case "lightning":
+      case "beam":
+        this.paintBolt(ctx, b.ox, b.oy, b.tx, b.ty, p, b.color, b.style === "beam");
+        break;
+      case "moon":
+        this.paintMoon(ctx, x, y, ang);
+        break;
+      case "coin":
+        this.paintCoin(ctx, x, y, p);
+        break;
+      case "glass":
+      case "gem":
+        this.paintShards(ctx, x, y, ang, p, b.style === "gem");
+        break;
+      case "vine":
+        this.paintVine(ctx, x, y, ang);
+        break;
+      case "void":
+      case "maw":
+        this.paintMaw(ctx, p > 0.5 ? b.tx : x, p > 0.5 ? b.ty : y, p, b.style === "void");
+        break;
+      default:
+        break;
+    }
+  }
+
+  private paintHit(ctx: CanvasRenderingContext2D, b: Bolt, k: number) {
+    ctx.save();
+    ctx.translate(b.tx, b.ty);
+    ctx.globalAlpha = (1 - k) * 0.9;
+    if (b.style === "slash" || b.style === "cut" || b.style === "rift" || b.style === "knife" || b.style === "axe") {
+      ctx.strokeStyle = b.accent;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(-18, -14);
+      ctx.lineTo(20, 16);
+      ctx.stroke();
+      ctx.strokeStyle = "#fff";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    } else if (b.style === "hammer" || b.style === "bash") {
+      ctx.strokeStyle = "#e7e2d6";
       ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.moveTo(b.x, b.y);
-      ctx.lineTo(b.tx, b.ty);
+      ctx.ellipse(0, 10, 10 + k * 28, 4 + k * 6, 0, 0, Math.PI * 2);
       ctx.stroke();
-      ctx.fillStyle = b.color;
+    } else if (b.style === "fire" || b.style === "ember") {
+      ctx.fillStyle = k < 0.4 ? "#fff1c2" : "#ff7a2a";
       ctx.beginPath();
-      ctx.arc(b.x + (b.tx - b.x) * (1 - a), b.y + (b.ty - b.y) * (1 - a), 4, 0, Math.PI * 2);
+      ctx.arc(0, 0, 8 + k * 16, 0, Math.PI * 2);
       ctx.fill();
-      ctx.globalAlpha = 1;
+    } else if (b.style === "lightning" || b.style === "beam") {
+      ctx.strokeStyle = "#fff";
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(Math.cos(a) * (10 + k * 18), Math.sin(a) * (10 + k * 18));
+        ctx.stroke();
+      }
+    } else if (b.style === "frost" || b.style === "arrow" || b.style === "spear" || b.style === "gold") {
+      ctx.strokeStyle = b.accent;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(0, 0, 4 + k * 12, 0, Math.PI * 2);
+      ctx.stroke();
+    } else {
+      ctx.strokeStyle = b.accent;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(0, 0, 6 + k * 18, 0, Math.PI * 2);
+      ctx.stroke();
     }
+    ctx.restore();
+  }
+
+  private paintArrow(ctx: CanvasRenderingContext2D, x: number, y: number, ang: number, ice: boolean) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(ang);
+    ctx.scale(1.35, 1.35);
+    ctx.fillStyle = ice ? "#d7f6ff" : "#c4a574";
+    ctx.fillRect(-18, -1.4, 26, 2.8);
+    ctx.fillStyle = ice ? "#7ecbff" : "#e8e4dc";
+    ctx.beginPath();
+    ctx.moveTo(16, 0);
+    ctx.lineTo(6, -5);
+    ctx.lineTo(6, 5);
+    ctx.fill();
+    ctx.fillStyle = ice ? "#ffffff" : "#6fa86a";
+    ctx.beginPath();
+    ctx.moveTo(-18, 0);
+    ctx.lineTo(-10, -5);
+    ctx.lineTo(-10, 5);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  private paintSpear(ctx: CanvasRenderingContext2D, x: number, y: number, ang: number, head: string, wood: string) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(ang);
+    ctx.scale(1.3, 1.3);
+    ctx.fillStyle = wood;
+    ctx.fillRect(-22, -1.6, 30, 3.2);
+    ctx.fillStyle = head;
+    ctx.beginPath();
+    ctx.moveTo(18, 0);
+    ctx.lineTo(4, -6);
+    ctx.lineTo(4, 6);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  private paintKnife(ctx: CanvasRenderingContext2D, x: number, y: number, ang: number) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(ang);
+    ctx.scale(1.35, 1.35);
+    ctx.fillStyle = "#1a1214";
+    ctx.fillRect(-8, -1.2, 8, 2.4);
+    ctx.fillStyle = "#f2f2f2";
+    ctx.beginPath();
+    ctx.moveTo(14, 0);
+    ctx.lineTo(-2, -3.5);
+    ctx.lineTo(-2, 3.5);
+    ctx.fill();
+    ctx.fillStyle = "#e23b4a";
+    ctx.fillRect(-2, -1, 3, 2);
+    ctx.restore();
+  }
+
+  private paintSlash(ctx: CanvasRenderingContext2D, x: number, y: number, p: number, color: string, accent: string) {
+    const sweep = -0.9 + Math.min(1, p) * 1.8;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(sweep);
+    ctx.strokeStyle = accent;
+    ctx.lineWidth = 7;
+    ctx.globalAlpha *= 0.35;
+    ctx.beginPath();
+    ctx.arc(0, 0, 22, -0.9, 0.7);
+    ctx.stroke();
+    ctx.globalAlpha = 0.95;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(0, 0, 22, -0.9, 0.7);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  private paintBash(ctx: CanvasRenderingContext2D, x: number, y: number, p: number, tx: number, ty: number) {
+    const hit = p > 0.7;
+    const px = hit ? tx : x;
+    const py = hit ? ty : y;
+    ctx.save();
+    ctx.translate(px, py);
+    ctx.fillStyle = "#9aa3b2";
+    ctx.beginPath();
+    ctx.arc(0, 0, hit ? 16 : 11, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#f4f7fb";
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  private paintHammer(ctx: CanvasRenderingContext2D, x: number, y: number, ang: number, p: number, axe: boolean) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(ang + p * (axe ? 14 : 10));
+    ctx.scale(1.25, 1.25);
+    ctx.fillStyle = "#8d6a45";
+    ctx.fillRect(-3, -16, 6, 22);
+    ctx.fillStyle = axe ? "#d7dde6" : "#c5ccd4";
+    if (axe) {
+      ctx.beginPath();
+      ctx.moveTo(0, -18);
+      ctx.lineTo(16, -6);
+      ctx.lineTo(0, 2);
+      ctx.lineTo(-4, -6);
+      ctx.fill();
+    } else {
+      ctx.fillRect(-12, -20, 24, 10);
+    }
+    ctx.restore();
+  }
+
+  private paintFire(ctx: CanvasRenderingContext2D, b: Bolt, x: number, y: number, ember: boolean) {
+    const dx = b.tx - b.ox;
+    const dy = b.ty - b.oy;
+    for (let i = 3; i >= 1; i--) {
+      ctx.globalAlpha = 0.25;
+      ctx.fillStyle = ember ? "#ffd27a" : "#ff5a1f";
+      ctx.beginPath();
+      ctx.arc(x - dx * i * 0.06, y - dy * i * 0.06, 7 - i, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 0.95;
+    ctx.fillStyle = ember ? "#ff9a3c" : "#ff7a2a";
+    ctx.beginPath();
+    ctx.arc(x, y, ember ? 7 : 9, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#fff1c2";
+    ctx.beginPath();
+    ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  private paintOrb(ctx: CanvasRenderingContext2D, x: number, y: number, p: number, color: string, accent: string) {
+    ctx.fillStyle = color;
+    ctx.globalAlpha = 0.9;
+    ctx.beginPath();
+    ctx.arc(x, y, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = accent;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(x, y, 12, p * 6, p * 6 + 1.4);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(x, y, 12, p * 6 + Math.PI, p * 6 + Math.PI + 1.2);
+    ctx.stroke();
+  }
+
+  private paintBolt(ctx: CanvasRenderingContext2D, x0: number, y0: number, x1: number, y1: number, p: number, color: string, beam: boolean) {
+    if (beam) {
+      ctx.strokeStyle = color;
+      ctx.globalAlpha = 0.85;
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.moveTo(x0, y0);
+      ctx.lineTo(x0 + (x1 - x0) * p, y0 + (y1 - y0) * p);
+      ctx.stroke();
+      ctx.strokeStyle = "#fff6c8";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      return;
+    }
+    const segs = 7;
+    ctx.strokeStyle = "#7ec8ff";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    for (let i = 1; i <= segs; i++) {
+      const t = (i / segs) * p;
+      const wob = i === segs || t >= p ? 0 : Math.sin(this.time * 40 + i * 2.2) * 12;
+      ctx.lineTo(x0 + (x1 - x0) * t + wob, y0 + (y1 - y0) * t + wob * 0.4);
+    }
+    ctx.stroke();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.4;
+    ctx.stroke();
+  }
+
+  private paintMoon(ctx: CanvasRenderingContext2D, x: number, y: number, ang: number) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(ang);
+    ctx.fillStyle = "#f7f8ff";
+    ctx.beginPath();
+    ctx.arc(0, 0, 9, 0.5, Math.PI * 2 - 0.5);
+    ctx.arc(4, 0, 7, Math.PI * 2 - 0.6, 0.6, true);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  private paintCoin(ctx: CanvasRenderingContext2D, x: number, y: number, p: number) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(Math.cos(p * 16), 1);
+    ctx.fillStyle = "#f0c14a";
+    ctx.beginPath();
+    ctx.arc(0, 0, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#fff1c2";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  private paintShards(ctx: CanvasRenderingContext2D, x: number, y: number, ang: number, p: number, gem: boolean) {
+    const colors = gem ? ["#ff4fa3", "#7cf0ff", "#b388ff"] : ["#e8fffb", "#9aefff", "#ffffff"];
+    for (let i = 0; i < 3; i++) {
+      ctx.save();
+      ctx.translate(x, y + (i - 1) * 10);
+      ctx.rotate(ang + (i - 1) * 0.25 + p);
+      ctx.fillStyle = colors[i]!;
+      ctx.beginPath();
+      ctx.moveTo(10, 0);
+      ctx.lineTo(-6, -4);
+      ctx.lineTo(-3, 0);
+      ctx.lineTo(-6, 4);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  private paintVine(ctx: CanvasRenderingContext2D, x: number, y: number, ang: number) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(ang);
+    ctx.strokeStyle = "#3f8f45";
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(-14, 2);
+    ctx.quadraticCurveTo(-4, -6, 8, 0);
+    ctx.stroke();
+    ctx.fillStyle = "#8fe07a";
+    ctx.beginPath();
+    ctx.ellipse(10, 0, 6, 3.5, 0.4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  private paintMaw(ctx: CanvasRenderingContext2D, x: number, y: number, p: number, voidBite: boolean) {
+    const open = Math.sin(Math.min(1, p) * Math.PI) * 10;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.fillStyle = voidBite ? "#120818" : "#4a0c16";
+    ctx.beginPath();
+    ctx.ellipse(0, -open * 0.15, 12, 7 + open * 0.2, 0, Math.PI, 0);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(0, open * 0.35, 12, 6 + open * 0.15, 0, 0, Math.PI);
+    ctx.fill();
+    ctx.fillStyle = voidBite ? "#c4b5fd" : "#ff6b6b";
+    for (let i = -2; i <= 2; i++) {
+      ctx.beginPath();
+      ctx.moveTo(i * 4, -2);
+      ctx.lineTo(i * 4 + 1.5, 3);
+      ctx.lineTo(i * 4 - 1.5, 3);
+      ctx.fill();
+    }
+    ctx.restore();
   }
 
   private drawParticles() {

@@ -86,6 +86,37 @@ export function ShopPanel() {
             Convert all
           </Button>
         </div>
+        <p className="mt-3 text-xs text-fg/70">Turn gems into gold. 1 gem is a short stretch of hunt gold.</p>
+        <div className="mt-2 flex gap-2">
+          <Button
+            className="h-12 flex-1"
+            variant="secondary"
+            disabled={snap.gems < 1}
+            onClick={() => {
+              unlockAudio();
+              if (sim.sellGems(1)) {
+                sfx.gold();
+                refresh();
+              }
+            }}
+          >
+            1 gem → {formatNum(sim.gemGoldValue(1))} gold
+          </Button>
+          <Button
+            className="h-12 flex-1"
+            variant="secondary"
+            disabled={snap.gems < 1}
+            onClick={() => {
+              unlockAudio();
+              if (sim.sellAllGems()) {
+                sfx.gold();
+                refresh();
+              }
+            }}
+          >
+            All gems → gold
+          </Button>
+        </div>
       </div>
 
       <p className="mt-4 mb-2 text-xs tracking-wide text-muted uppercase">Craft for each hero</p>
@@ -200,7 +231,7 @@ export function ShopPanel() {
       <div className="mt-4 rounded-lg border border-amber-300/50 bg-wood p-4 text-fg">
         <h3 className="font-display text-lg font-semibold text-gold">Gods</h3>
         <p className="mt-2 text-sm text-fg/80">
-          Auric, Solenne, and Vael are bought with a card. Morvax costs 1,000,000 gems. Own every god and the whole party hits harder.
+          Auric, Solenne, Vael, and Morvax. Morvax costs 1,000,000 gems. Own every god and the whole party hits harder.
         </p>
         <ul className="mt-3 flex flex-col gap-2">
           {HEROES.filter((h) => h.acquire === "cash" || h.id === "morvax").map((h) => {

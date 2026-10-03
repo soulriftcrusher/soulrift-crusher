@@ -334,24 +334,6 @@ export function StaffPanel() {
                     >
                       +50k gold
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      className="h-10"
-                      disabled={busy}
-                      onClick={() => setFromId(r.userId)}
-                    >
-                      From
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      className="h-10"
-                      disabled={busy}
-                      onClick={() => setOntoId(r.userId)}
-                    >
-                      Onto
-                    </Button>
                     {r.banned ? (
                       <Button
                         size="sm"

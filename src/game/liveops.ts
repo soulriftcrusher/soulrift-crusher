@@ -106,10 +106,36 @@ export function monthDay(now = Date.now()): number {
   return new Date(now).getUTCDate();
 }
 
-export function monthReward(day: number): { gems: number; chests: number } {
-  const gems = day === 30 ? 2 : day % 7 === 0 ? 1 : 0;
-  const chests = day % 10 === 0 ? 1 : 0;
-  return { gems, chests };
+export type MonthLoot = {
+  gems: number;
+  chests: number;
+  gold: number;
+  souls: number;
+  ember: number;
+  rift: number;
+};
+
+export function monthReward(day: number): MonthLoot {
+  const d = Math.max(1, Math.min(31, Math.floor(day)));
+  const gems = d === 30 ? 2 : d % 7 === 0 ? 1 : 0;
+  const chests = d % 5 === 0 ? 1 : 0;
+  if (gems || chests) return { gems, chests, gold: 0, souls: chests ? 2 : 0, ember: 0, rift: 0 };
+  const kind = d % 4;
+  if (kind === 1) return { gems: 0, chests: 0, gold: 1, souls: 0, ember: 0, rift: 0 };
+  if (kind === 2) return { gems: 0, chests: 0, gold: 0, souls: 2, ember: 0, rift: 0 };
+  if (kind === 3) return { gems: 0, chests: 0, gold: 0, souls: 0, ember: 6, rift: 0 };
+  return { gems: 0, chests: 0, gold: 0, souls: 0, ember: 0, rift: 4 };
+}
+
+export function monthLootLine(r: MonthLoot): string {
+  const bits: string[] = [];
+  if (r.gems) bits.push(`${r.gems} gem${r.gems === 1 ? "" : "s"}`);
+  if (r.chests) bits.push(`${r.chests} chest${r.chests === 1 ? "" : "s"}`);
+  if (r.gold) bits.push("a pouch of gold");
+  if (r.souls) bits.push(`${r.souls} soul${r.souls === 1 ? "" : "s"}`);
+  if (r.ember) bits.push(`${r.ember} ember`);
+  if (r.rift) bits.push(`${r.rift} rift dust`);
+  return bits.join(" · ") || "nothing";
 }
 
 export const WEEKLY_LOGIN = [2, 3, 5, 8, 12, 18, 30];

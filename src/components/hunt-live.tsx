@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { formatNum, formatTime } from "@/game/format";
-import { monthReward, WATCH_GEMS, BP_PREMIUM } from "@/game/liveops";
+import { monthLootLine, monthReward, WATCH_GEMS, BP_PREMIUM, type MonthLoot } from "@/game/liveops";
 import { sim } from "@/game/sim";
 import { sfx, unlockAudio } from "@/game/audio";
 import { useGame } from "@/game/store";
@@ -12,15 +12,7 @@ export function HuntCalendar() {
   const snap = useGame((s) => s.snap);
   const refresh = useGame((s) => s.refresh);
   const today = monthReward(snap.monthDay);
-  const prize = today.gems || today.chests;
-  let next = 0;
-  for (let d = snap.monthDay; d <= 31; d++) {
-    const r = monthReward(d);
-    if (r.gems || r.chests) {
-      next = d;
-      break;
-    }
-  }
+  const line = monthLootLine(today);
   return (
     <div>
       <div className="overflow-hidden rounded-xl border-2 border-gold/50 bg-[#1a100c]/92 p-3 shadow-[0_6px_0_#3a1c10]">
@@ -28,13 +20,7 @@ export function HuntCalendar() {
           <img src="/shop/login-flame.jpg" alt="" className="size-14 rounded-lg object-cover" crossOrigin="anonymous" />
           <div className="min-w-0 flex-1">
             <p className="font-display text-lg text-gold">Month stamps · day {snap.monthDay}</p>
-            <p className="text-xs text-[#f0e6d8]">
-              {prize
-                ? `${today.gems ? `${today.gems} gem${today.gems === 1 ? "" : "s"}` : ""}${today.chests ? `${today.gems ? " · " : ""}${today.chests} chest${today.chests > 1 ? "s" : ""}` : ""}`
-                : next
-                  ? `Rest day. Next prize is day ${next}.`
-                  : "Rest day."}
-            </p>
+            <p className="text-xs text-[#f0e6d8]">Today: {line}</p>
           </div>
         </div>
         <Button
@@ -56,7 +42,7 @@ export function HuntCalendar() {
           const r = monthReward(d);
           const hit = snap.monthHits.includes(d);
           const now = d === snap.monthDay;
-          const loot = r.gems > 0 || r.chests > 0;
+          const loot = stampKind(r);
           return (
             <div
               key={d}
@@ -67,16 +53,7 @@ export function HuntCalendar() {
               )}
             >
               <p className="text-[10px] tabular-nums text-gold">{d}</p>
-              {loot ? (
-                <img
-                  src={r.chests ? prizeArt("chest") : prizeArt("gems")}
-                  alt=""
-                  className="mx-auto size-7 object-contain"
-                  crossOrigin="anonymous"
-                />
-              ) : (
-                <p className="mt-1 text-[9px] text-muted">—</p>
-              )}
+              <img src={prizeArt(loot)} alt="" className="mx-auto size-7 object-contain" crossOrigin="anonymous" />
               {hit ? (
                 <img
                   src="/shop/login-seal.jpg"
@@ -91,6 +68,15 @@ export function HuntCalendar() {
       </div>
     </div>
   );
+}
+
+function stampKind(r: MonthLoot): "gems" | "chest" | "gold" | "souls" | "ember" | "rift" {
+  if (r.gems) return "gems";
+  if (r.chests) return "chest";
+  if (r.gold) return "gold";
+  if (r.souls) return "souls";
+  if (r.ember) return "ember";
+  return "rift";
 }
 
 export function HuntPass() {
@@ -217,7 +203,7 @@ export function HuntCodex() {
       <p className="mt-2 text-xs tabular-nums text-muted">
         {snap.codex.length ? snap.codex.map((c) => `${c.id} ${formatNum(c.n)}`).join(" · ") : "Kill something to open the book."}
       </p>
-      <p className="mt-2 text-[11px] text-muted">Today’s stamp would be {monthReward(snap.monthDay).gems} gems.</p>
+      <p className="mt-2 text-[11px] text-muted">Today’s stamp: {monthLootLine(monthReward(snap.monthDay))}.</p>
     </div>
   );
 }

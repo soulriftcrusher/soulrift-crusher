@@ -194,6 +194,11 @@ function TitleScreen() {
 
   useEffect(() => {
     if (load < 100 || isPending || !user) return;
+    try {
+      if (sessionStorage.getItem("soulrift-hold-title") === "1") return;
+    } catch {
+      /* ignore */
+    }
     const tab = new URLSearchParams(window.location.search).get("tab");
     if (tab) enter(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -201,6 +206,11 @@ function TitleScreen() {
 
   function enter(fresh: boolean) {
     if (authEnabled && !user) return;
+    try {
+      sessionStorage.removeItem("soulrift-hold-title");
+    } catch {
+      /* ignore */
+    }
     unlockAudio();
     sfx.ui();
     if (fresh) {
@@ -839,7 +849,7 @@ function HeroPanel() {
           .map((hero) => {
           const on = selected === hero.id;
           const god = hero.acquire === "cash" || hero.id === "morvax";
-          const locked = hero.level <= 0 && !hero.unlocked && !hero.canGemHire;
+          const locked = hero.level <= 0 && hero.acquire === "gold" && !hero.unlocked;
           return (
             <li key={hero.id}>
               <button
@@ -1007,7 +1017,7 @@ function HeroRow({ hero, open, onPeek }: { hero: HeroSnap; open: boolean; onPeek
               Buy · {def.usd}
             </Button>
           ) : null}
-          {hero.level <= 0 && def?.acquire === "gems" && !hero.godRebuy ? (
+          {hero.level <= 0 && (def?.acquire === "gems" || def?.acquire === "summon") && (def?.gemCost ?? 0) > 0 && !hero.godRebuy ? (
             <Button
               variant="secondary"
               disabled={!hero.canGemHire}
@@ -1560,6 +1570,14 @@ function SettingsModal() {
           onClick={() => {
             sim.save();
             close();
+            try {
+              sessionStorage.setItem("soulrift-hold-title", "1");
+              const url = new URL(window.location.href);
+              url.searchParams.delete("tab");
+              window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+            } catch {
+              /* ignore */
+            }
             setScreen("title");
           }}
         >
@@ -1796,7 +1814,7 @@ function Modal({ onClose, title, children }: { onClose: () => void; title: strin
       onClick={onClose}
     >
       <div
-        className="scroll-sheet max-h-[min(78dvh,calc(var(--app-h,100dvh)-7rem))] w-full max-w-md overflow-y-auto overscroll-contain rounded-xl border border-gold/40 bg-bg p-4"
+        className="scroll-sheet max-h-[min(72dvh,calc(var(--app-h,100dvh)-6.5rem))] w-full max-w-md touch-pan-y overflow-y-auto overscroll-contain rounded-xl border border-gold/40 bg-bg p-4"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-3 flex items-center justify-between">

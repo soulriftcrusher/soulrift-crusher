@@ -582,7 +582,7 @@ export class GameSim {
 
   buyHeroGems(id: HeroId): boolean {
     const def = HEROES.find((h) => h.id === id);
-    if (!def || def.acquire !== "gems") return false;
+    if (!def || (def.acquire !== "gems" && def.acquire !== "summon") || def.gemCost <= 0) return false;
     if ((this.state.heroLevel[id] ?? 0) > 0) return false;
     if ((this.state.godRebuy ?? []).includes(id)) return false;
     if (this.state.gems < def.gemCost) return false;
@@ -701,6 +701,34 @@ export class GameSim {
     this.state.ember = (this.state.ember ?? 0) + packs * EMBER_FROM_GEMS;
     this.save();
     return true;
+  }
+
+  /** Gold one gem is worth right now. Stays finite even on deep floors. */
+  gemGoldValue(count = 1): number {
+    const n = Math.max(0, Math.floor(count));
+    if (n <= 0) return 0;
+    const floor = Math.min(800, Math.max(1, this.state.floor));
+    const mult = Math.min(this.goldMult(), 1e8);
+    const one = Math.max(250, Math.floor(this.monsterGold(floor, false) * mult * 45));
+    const total = one * n;
+    if (!Number.isFinite(total) || total > 1e300) return 1e300;
+    return total;
+  }
+
+  sellGems(count = 1): boolean {
+    const n = Math.max(1, Math.floor(count));
+    if (this.state.gems < n) return false;
+    if (!this.spendGems(n)) return false;
+    const next = this.state.gold + this.gemGoldValue(n);
+    if (Number.isFinite(next)) this.state.gold = next;
+    this.save();
+    return true;
+  }
+
+  sellAllGems(): boolean {
+    const n = Math.floor(this.state.gems);
+    if (n <= 0) return false;
+    return this.sellGems(n);
   }
 
   buyGemPouch(): boolean {
@@ -1765,6 +1793,15 @@ export class GameSim {
     const r = monthReward(day);
     this.state.gems += r.gems;
     this.state.chests += r.chests;
+    this.state.souls += r.souls;
+    this.state.ember = (this.state.ember ?? 0) + r.ember;
+    this.state.riftDust = (this.state.riftDust ?? 0) + r.rift;
+    if (r.gold) {
+      const floor = Math.min(500, Math.max(1, this.state.floor));
+      const add = Math.max(300, Math.floor(this.monsterGold(floor, false) * Math.min(this.goldMult(), 1e6) * 12));
+      const next = this.state.gold + add;
+      if (Number.isFinite(next)) this.state.gold = next;
+    }
     if ((this.state.cardUntil ?? 0) > Date.now()) this.state.gems += 1;
     this.save();
     return true;
@@ -2061,7 +2098,7 @@ export class GameSim {
         acquire: h.acquire,
         gemCost: h.gemCost,
         usd: h.usd ?? "",
-        canGemHire: h.acquire === "gems" && level <= 0 && this.state.gems >= h.gemCost,
+        canGemHire: (h.acquire === "gems" || h.acquire === "summon") && h.gemCost > 0 && level <= 0 && this.state.gems >= h.gemCost,
         stars: heroStars(h, gilds),
         legendName: legend?.name ?? "",
         legendBlurb: legend?.blurb ?? "",
